@@ -45,6 +45,16 @@ func TestSeq_AsGo(t *testing.T) {
 				Append(EntryInt(7)),
 			want: []hamt.Entry{EntryInt(3), EntryInt(2), EntryInt(7)},
 		},
+		{
+			name: "Should preserve the order of items - case 3",
+			seq: NewSeq().
+				Append(EntryInt(3)).
+				Append(EntryInt(1)).
+				Append(EntryInt(2)).
+				Remove(EntryInt(123456)). //  remove an unknown element (should have no effect)
+				Append(EntryInt(7)),
+			want: []hamt.Entry{EntryInt(3), EntryInt(1), EntryInt(2), EntryInt(7)},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

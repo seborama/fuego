@@ -33,6 +33,7 @@ func (s Set) Map(f func(hamt.Entry) hamt.Entry) Set {
 	return Set{set: newSet}
 }
 
+// Values returns the values of this Set in a Seq
 func (s Set) Values() Seq {
 	newSeq := NewSeq()
 

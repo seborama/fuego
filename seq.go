@@ -24,6 +24,7 @@ func (s Seq) Append(e hamt.Entry) Seq {
 	}
 }
 
+// find an element's index in the Seq's slice
 func (s Seq) find(e hamt.Entry) int {
 	for p, v := range s.seq {
 		if v.Equal(e) {
