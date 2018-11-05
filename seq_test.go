@@ -28,7 +28,7 @@ func TestSeq_AsGo(t *testing.T) {
 		want []hamt.Entry
 	}{
 		{
-			name: "Should preserve the order of items - case 1",
+			name: "Should preserve the order of items - case 1,2,3",
 			seq: NewSeq().
 				Append(EntryInt(1)).
 				Append(EntryInt(2)).
@@ -36,7 +36,7 @@ func TestSeq_AsGo(t *testing.T) {
 			want: []hamt.Entry{EntryInt(1), EntryInt(2), EntryInt(3)},
 		},
 		{
-			name: "Should preserve the order of items - case 2",
+			name: "Should preserve the order of items - case 3,2,7 with valid Remove",
 			seq: NewSeq().
 				Append(EntryInt(3)).
 				Append(EntryInt(1)).
@@ -46,7 +46,7 @@ func TestSeq_AsGo(t *testing.T) {
 			want: []hamt.Entry{EntryInt(3), EntryInt(2), EntryInt(7)},
 		},
 		{
-			name: "Should preserve the order of items - case 3",
+			name: "Should preserve the order of items - case 3,1,2,7 with invalid Remove",
 			seq: NewSeq().
 				Append(EntryInt(3)).
 				Append(EntryInt(1)).
