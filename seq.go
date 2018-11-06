@@ -1,6 +1,11 @@
 package fuego
 
-import "github.com/raviqqe/hamt"
+import (
+	"encoding/binary"
+	"hash/fnv"
+
+	"github.com/raviqqe/hamt"
+)
 
 // A Seq is a sequence
 type Seq struct {
@@ -9,12 +14,63 @@ type Seq struct {
 
 // NewSeq creates a new Seq
 func NewSeq() Seq {
-	return Seq{}
+	return Seq{
+		seq: []hamt.Entry{},
+	}
 }
 
-// Size returns the number of elements in the Seq
-func (s Seq) Size() int {
+// Head returns the first element or panics if none exists
+func (s Seq) Head() hamt.Entry {
+	return s.seq[0]
+}
+
+// HashCode returns the hash of the Seq
+func (s Seq) HashCode() uint32 {
+	h := fnv.New32a()
+	for _, e := range s.seq {
+		bs := make([]byte, 4)
+		binary.LittleEndian.PutUint32(bs, e.Hash())
+		h.Write(bs)
+	}
+	return h.Sum32()
+}
+
+// Last returns the last element or panics if none exists
+func (s Seq) Last() hamt.Entry {
+	return s.seq[len(s.seq)-1]
+}
+
+// Length returns the number of elements in the Seq
+func (s Seq) Length() int {
 	return len(s.seq)
+}
+
+// Tail returns a new Seq made of all but the first element of the Seq or
+// panics if no element exists.
+func (s Seq) Tail() Traversable {
+	return Seq{
+		seq: s.seq[1:],
+	}
+}
+
+// Get returns the first element or panics if none exists
+func (s Seq) Get() hamt.Entry {
+	return s.Head()
+}
+
+// IsEmpty checks if the Seq is empty
+func (s Seq) IsEmpty() bool {
+	return s.Length() == 0
+}
+
+// NonEmpty checks if the Seq is not empty
+func (s Seq) NonEmpty() bool {
+	return !s.IsEmpty()
+}
+
+// Size computes the number of elements of the Seq
+func (s Seq) Size() int {
+	return s.Length()
 }
 
 // Append an element
