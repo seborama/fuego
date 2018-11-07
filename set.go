@@ -32,7 +32,7 @@ func (s Set) Map(f func(hamt.Entry) hamt.Entry) Set {
 	}
 }
 
-// MapC returns a slice of channel of Set consisting of the results of applying the given function to the elements of this Set
+// MapC returns a slice of channels of interface{} consisting of the results of applying the given function to the elements of this Set
 func (s Set) MapC(f func(hamt.Entry) interface{}) []chan interface{} {
 	stream := make(chan interface{})
 
