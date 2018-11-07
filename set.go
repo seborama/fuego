@@ -4,19 +4,16 @@ import (
 	"github.com/raviqqe/hamt"
 )
 
-// A Set is a would-be functional Set
+// A Set is a Set
 type Set struct {
 	set hamt.Set
 }
 
 // NewSet creates a new Set
 func NewSet() Set {
-	return Set{set: hamt.NewSet()}
-}
-
-// Insert inserts a value into a set.
-func (s Set) Insert(e hamt.Entry) Set {
-	return Set{set: s.set.Insert(e)}
+	return Set{
+		set: hamt.NewSet(),
+	}
 }
 
 // Map returns a Set consisting of the results of applying the given function to the elements of this Set
@@ -30,19 +27,47 @@ func (s Set) Map(f func(hamt.Entry) hamt.Entry) Set {
 		newSet = newSet.Insert(f(e))
 	}
 
-	return Set{set: newSet}
+	return Set{
+		set: newSet,
+	}
 }
 
-// Values returns the values of this Set in a Seq
-func (s Set) Values() Seq {
-	newSeq := NewSeq()
+// MapC returns a slice of channel of Set consisting of the results of applying the given function to the elements of this Set
+func (s Set) MapC(f func(hamt.Entry) interface{}) []chan interface{} {
+	stream := make(chan interface{})
+
+	go func() {
+		subSet := s.set
+		for subSet.Size() != 0 {
+			var e hamt.Entry
+			e, subSet = subSet.FirstRest()
+			stream <- f(e)
+		}
+		close(stream)
+	}()
+
+	return []chan interface{}{
+		stream,
+	}
+}
+
+// Insert inserts a value into a set.
+func (s Set) Insert(e hamt.Entry) Set {
+	return Set{
+		set: s.set.Insert(e),
+	}
+}
+
+// Values returns the values of this Set
+func (s Set) Values() []hamt.Entry {
+	values := []hamt.Entry{}
 
 	subSet := s.set
 	for subSet.Size() != 0 {
 		var e hamt.Entry
 		e, subSet = subSet.FirstRest()
-		newSeq = newSeq.Append(e)
+		values = append(values, e)
 	}
 
-	return newSeq
+	return values
 }
