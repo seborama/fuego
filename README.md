@@ -2,9 +2,7 @@
 
 ## Overview
 
-This is a research project only.
-
-I'm referencing project [vavr](https://www.vavr.io/) for inspiration.
+This is a research project.
 
 ## Install
 
@@ -18,9 +16,9 @@ go get github.com/seborama/fuego
 
 Set is based on hamt.Set and entries must implement interface `hamt.Entry`.
 
-This is an elegant solution from (Yota Toyama)[https://github.com/raviqqe] that somewhat mimics generics: the type can be anything so long as it respects the simple behaviour of `hamt.Entry`.
+This is an elegant solution from [Yota Toyama](https://github.com/raviqqe) that somewhat mimics generics: the type can be anything so long as it respects the simple behaviour of `hamt.Entry`.
 
-An example `hamt.Entry` implementation is provided in (entry_test.go)[entry_test.go].
+An example `hamt.Entry` implementation is provided in [entry_test.go](entry_test.go).
 
 ```go
 // See entry_test.go for "EntryInt"
