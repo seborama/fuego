@@ -13,7 +13,7 @@ func (i EntryInt) Hash() uint32 {
 	return uint32(i)
 }
 
-func (i EntryInt) Value(e hamt.Entry) EntryInt {
+func (i EntryInt) Value() EntryInt {
 	return i
 }
 
