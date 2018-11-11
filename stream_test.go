@@ -55,8 +55,7 @@ func TestReferenceStream_Map(t *testing.T) {
 			want: NewStream(
 				NewBaseIterable(
 					NewSliceIterator([]interface{}{
-						EntryInt(8)}),
-				)),
+						EntryInt(8)}))),
 		},
 		{
 			name: "Should return a Stream of 3 doubles",
@@ -73,8 +72,7 @@ func TestReferenceStream_Map(t *testing.T) {
 					NewSliceIterator([]interface{}{
 						EntryInt(2),
 						EntryInt(4),
-						EntryInt(6)}),
-				)),
+						EntryInt(6)}))),
 		},
 	}
 	for _, tt := range tests {

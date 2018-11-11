@@ -28,6 +28,20 @@ func TestSet_Stream(t *testing.T) {
 						NewSet().
 							Insert(EntryInt(1))))),
 		},
+		{
+			name: "Should return values in same order when three value set",
+			set: NewSet().
+				Insert(EntryInt(1)).
+				Insert(EntryInt(2)).
+				Insert(EntryInt(3)),
+			want: NewStream(
+				NewBaseIterable(
+					NewSetIterator(
+						NewSet().
+							Insert(EntryInt(1)).
+							Insert(EntryInt(2)).
+							Insert(EntryInt(3))))),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
