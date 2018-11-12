@@ -62,7 +62,7 @@ See [iterator.go](iterator.go) for examples of convenience `Iterator`'s:
 NewSliceIterator([]interface{}{2, 3}) // returns an Iterator over []interface{2, 3}
 
 NewSetIterator(NewSet().
-				Insert(EntryInt(2))), // returns an Iterator over a Set that contains a single EntryInt(2)
+    Insert(EntryInt(2))), // returns an Iterator over a Set that contains a single EntryInt(2)
 ```
 
 ### Stream (partial implementation)
