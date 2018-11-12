@@ -18,14 +18,20 @@ func NewSet() Set {
 
 // Stream returns a sequential Stream with this collection as its source.
 func (s Set) Stream() Stream {
-	return NewStream(
-		NewBaseIterable(NewSetIterator(s)))
+	return NewStream(NewSetIterator(s))
 }
 
 // Insert inserts a value into a set.
 func (s Set) Insert(e hamt.Entry) Set {
 	return Set{
 		set: s.set.Insert(e),
+	}
+}
+
+// Delete deletes a value from a set.
+func (s Set) Delete(e hamt.Entry) Set {
+	return Set{
+		set: s.set.Delete(e),
 	}
 }
 

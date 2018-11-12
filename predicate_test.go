@@ -19,20 +19,6 @@ func (p intGreaterThanPredicate) Test(t interface{}) bool {
 	return t.(int) > p.number
 }
 
-type intLessThanPredicate struct {
-	number int
-}
-
-func newIntLessThanPredicate(number int) intLessThanPredicate {
-	return intLessThanPredicate{
-		number: number,
-	}
-}
-
-func (p intLessThanPredicate) Test(t interface{}) bool {
-	return t.(int) < p.number
-}
-
 func TestNotPredicate(t *testing.T) {
 	type args struct {
 		p Predicate

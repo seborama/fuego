@@ -1,26 +1,5 @@
 package fuego
 
-// Iterable performs the given action for each element
-// until all elements have been processed or the action panics.
-type Iterable interface {
-	Iterator() Iterator
-}
-
-// BaseIterable is a basic Iterable implementation.
-type BaseIterable struct {
-	iterator Iterator
-}
-
-// NewBaseIterable creates a new BaseIterable.
-func NewBaseIterable(i Iterator) Iterable {
-	return BaseIterable{iterator: i}
-}
-
-// Iterator returns this Iterable's Iterator.
-func (si BaseIterable) Iterator() Iterator {
-	return si.iterator
-}
-
 // An Iterator over a collection.
 type Iterator interface {
 	Forward() Iterator

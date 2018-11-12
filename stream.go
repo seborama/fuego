@@ -18,9 +18,9 @@ type ReferenceStream struct {
 
 // NewStream creates a new Stream.
 // TODO eventually change to Spliterable?
-func NewStream(it Iterable) Stream {
+func NewStream(it Iterator) Stream {
 	return ReferenceStream{
-		iterator: it.Iterator(),
+		iterator: it,
 	}
 }
 
@@ -33,6 +33,5 @@ func (rp ReferenceStream) Map(mapper Function) Stream {
 		s = append(s, mapper.Apply(val))
 	}
 
-	return NewStream(
-		NewBaseIterable(NewSliceIterator(s)))
+	return NewStream(NewSliceIterator(s))
 }
