@@ -1,14 +1,10 @@
 package fuego
 
-// Function that accepts one argument and produces a result.
-type Function interface {
-	Apply(i interface{}) interface{}
-}
-
 // Stream is a sequence of elements supporting sequential and parallel aggregate
 // operations (TODO: not yet supported).
 type Stream interface {
 	Map(mapper Function) Stream
+	Filter(predicate Predicate) Stream
 }
 
 // ReferenceStream is a simple implementation of a Stream.
@@ -29,8 +25,18 @@ func NewStream(it Iterator) Stream {
 func (rp ReferenceStream) Map(mapper Function) Stream {
 	s := []interface{}{}
 	for it := rp.iterator; it != nil; it = it.Forward() {
-		val := it.Value()
-		s = append(s, mapper.Apply(val))
+		s = append(s, mapper.Apply(it.Value()))
+	}
+
+	return NewStream(NewSliceIterator(s))
+}
+
+func (rp ReferenceStream) Filter(predicate Predicate) Stream {
+	s := []interface{}{}
+	for it := rp.iterator; it != nil; it = it.Forward() {
+		if predicate.Test(it.Value()) {
+			s = append(s, it.Value())
+		}
 	}
 
 	return NewStream(NewSliceIterator(s))

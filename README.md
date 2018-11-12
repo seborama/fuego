@@ -27,13 +27,43 @@ An example `hamt.Entry` implementation called `EntryInt` is provided in [entry_t
 NewSet().
     Insert(EntryInt(1)).
     Insert(EntryInt(2)).
+    Delete(EntryInt(1)).
     Insert(EntryInt(3)).
     Stream()
 ```
 
-### Interator
+### Function
 
-TBC
+```go
+type functionTimesTwo int
+
+func newFunctionTimesTwo() functionTimesTwo {
+	return *(new(functionTimesTwo))
+}
+
+func (f functionTimesTwo) Apply(i interface{}) interface{} {
+	num := i.(EntryInt).Value()
+	return interface{}(2 * num)
+}
+
+f := newFunctionTimesTwo()
+f.Apply(7) // returns EntryInt 7
+```
+
+### Iterator
+
+You can create you own `Iterator`'s.
+
+See [iterator.go](iterator.go) for examples of convenience `Iterator`'s:
+- NewSliceIterator
+- NewSetIterator
+
+```go
+NewSliceIterator([]interface{}{2, 3}) // returns an Iterator over []interface{2, 3}
+
+NewSetIterator(NewSet().
+				Insert(EntryInt(2))), // returns an Iterator over a Set that contains a single EntryInt(2)
+```
 
 ### Stream (partial implementation)
 
@@ -65,11 +95,24 @@ NewSet().
     Insert(EntryInt(3)).
     Stream().
     Map(NewFunctionTimesTwo())
+// returns EntryInt's {2,4,6}
 ```
 
 #### Filter
 
-This is not yet implemented. It will make use of `Predicate`'s.
+```go
+// See stream_test.go for "NewFunctionTimesTwo()"
+NewSet().
+    Insert(EntryInt(1)).
+    Insert(EntryInt(2)).
+    Insert(EntryInt(3)).
+    Stream().
+    Filter(Or(
+        NewFunctionPredicate(newEntryIntEqualsTo(EntryInt(1))),
+        NewFunctionPredicate(newEntryIntEqualsTo(EntryInt(3))),
+    ))
+// returns EntryInt's {1,3}
+```
 
 ## Predicates
 
@@ -81,6 +124,7 @@ For convenience, several pre-defined `Predicate`'s are supplied:
 - Or
 - And
 - Not
+- Function - a Predicate that wraps over a Function
 
 ```go
 type intGreaterThanPredicate struct {

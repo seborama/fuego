@@ -19,7 +19,6 @@ func NewSetIterator(s Set) Iterator {
 // Forward to the next element in the collection.
 func (si SetIterator) Forward() Iterator {
 	_, si2 := si.set.FirstRest()
-	// TODO: create a Iterator wrapper that manages state
 	if si2.Size() == 0 {
 		return nil
 	}

@@ -6,6 +6,23 @@ type Predicate interface {
 	Test(t interface{}) bool
 }
 
+// FunctionPredicate is a Predicate based on a Function.
+type FunctionPredicate struct {
+	function Function
+}
+
+// NewFunctionPredicate creates a FunctionPredicate.
+func NewFunctionPredicate(f Function) Predicate {
+	return FunctionPredicate{
+		function: f,
+	}
+}
+
+// Test evaluates this predicate on the given argument.
+func (p FunctionPredicate) Test(t interface{}) bool {
+	return (p.function.Apply(t)).(bool)
+}
+
 // A FalsePredicate always returns 'false'.
 type FalsePredicate struct{}
 

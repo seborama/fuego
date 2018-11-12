@@ -15,8 +15,8 @@ func newIntGreaterThanPredicate(number int) intGreaterThanPredicate {
 	}
 }
 
-func (p intGreaterThanPredicate) Test(t interface{}) bool {
-	return t.(int) > p.number
+func (p intGreaterThanPredicate) Test(subject interface{}) bool {
+	return subject.(int) > p.number
 }
 
 func TestNotPredicate(t *testing.T) {
