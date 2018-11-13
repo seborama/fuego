@@ -5,6 +5,13 @@ package fuego
 type Stream interface {
 	Map(mapper Function) Stream
 	Filter(predicate Predicate) Stream
+	FlatMap(mapper Function) []interface{}
+	None(predicate Predicate) Stream // TODO: a special case of Filter
+	All(predicate Predicate) Stream  // TODO: a special case of Filter, opposite of None()
+	FindFirst() Maybe
+	FindAny() Maybe
+	OfOne(i interface{}) Stream
+	Of(i ...interface{}) Stream
 }
 
 // ReferenceStream is a simple implementation of a Stream.
