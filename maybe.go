@@ -9,8 +9,8 @@ func NewMaybe(i interface{}) Maybe {
 	return Maybe{} // TODO: review implementation when Maybe struct is defined
 }
 
-func Empty() Maybe      {}
-func Of() Maybe         {}
-func OfNullable() Maybe {}
+// func Empty() Maybe      {}
+// func Of() Maybe         {}
+// func OfNullable() Maybe {}
 
-func Get() Maybe {}
+// func Get() Maybe {}
