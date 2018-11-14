@@ -36,7 +36,7 @@ NewSet().
 
 As with Set, Map is based on hamt.Map and entries must implement interface `hamt.Entry` for its keys but values can be anything (`interface{}`).
 
-See this [example_map_test.go](example_map_test.go).
+See this example for more details [example_map_test.go](example_map_test.go).
 
 ### Function
 
