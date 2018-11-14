@@ -96,7 +96,7 @@ func (m Map) HasValue(v interface{}) bool {
 
 	for subMap.Size() != 0 {
 		var v2 interface{}
-		_, v2, subMap = m.myMap.FirstRest()
+		_, v2, subMap = subMap.FirstRest()
 		if v2 == v {
 			return true
 		}
