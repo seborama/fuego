@@ -32,6 +32,12 @@ NewSet().
     Stream()
 ```
 
+### Map (partial implementation)
+
+As with Set, Map is based on hamt.Map and entries must implement interface `hamt.Entry` for its keys but values can be anything (`interface{}`).
+
+See this [example_map_test.go](example_map_test.go).
+
 ### Function
 
 ```go
@@ -114,7 +120,7 @@ NewSet().
 // returns EntryInt's {1,3}
 ```
 
-## Predicates
+### Predicates
 
 You can create you own `Predicate`'s.
 
