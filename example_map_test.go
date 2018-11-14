@@ -7,6 +7,8 @@ import (
 	"github.com/seborama/fuego"
 )
 
+// ExampleMap shows how to create a Map, add entries to it and stream filter the
+// even-numbered keys out of it using a Predicate.
 func ExampleMap() {
 	m := fuego.NewMap().
 		Insert(EntryInt(1), "one").
