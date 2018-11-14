@@ -47,6 +47,13 @@ func (s Set) FirstRest() (hamt.Entry, Set) {
 	return e, Set{set: s2}
 }
 
+// Merge merges 2 sets into one.
+func (s Set) Merge(t Set) Set {
+	return Set{
+		set: s.set.Merge(t.set),
+	}
+}
+
 // Values returns the values of this Set
 func (s Set) Values() []hamt.Entry {
 	values := []hamt.Entry{}
