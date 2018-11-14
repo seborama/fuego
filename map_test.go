@@ -386,3 +386,39 @@ func TestMap_FirstRest(t *testing.T) {
 		})
 	}
 }
+
+func TestMap_EntrySet(t *testing.T) {
+	type fields struct {
+		myMap Map
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   Set
+	}{
+		{
+			name: "Should return EntrySet",
+			fields: fields{
+				myMap: NewMap().
+					Insert(EntryInt(3), "three").
+					Insert(EntryInt(11), "eleven").
+					Insert(EntryInt(12), "twelve").
+					Insert(EntryInt(-23), "minus twenty three").
+					Insert(EntryInt(7), "seven"),
+			},
+			want: NewSet().
+				Insert(NewMapEntry(EntryInt(3), "three")).
+				Insert(NewMapEntry(EntryInt(11), "eleven")).
+				Insert(NewMapEntry(EntryInt(12), "twelve")).
+				Insert(NewMapEntry(EntryInt(-23), "minus twenty three")).
+				Insert(NewMapEntry(EntryInt(7), "seven")),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.fields.myMap.EntrySet(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Map.EntrySet() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

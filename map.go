@@ -16,10 +16,35 @@ func NewMap() Map {
 	}
 }
 
-// Stream returns a sequential Stream with this collection as its source.
-// func (m Map) Stream() Stream {
+// BiStream returns a sequential stream with this collection as its source.
+// TODO: implement this - it will iterator through the (k,v) pairs of the Map.
+// func (m Map) BiStream() BiStream {
 // 	return NewStream(NewMapIterator(m))
 // }
+
+// EntrySet returns a Set of MapEntry's from the (k, v) pairs contained in this map.
+// Since EntrySet returns a Set, it can be streamed with Set.Stream().
+func (m Map) EntrySet() Set {
+	s := Set{}
+
+	subMap := m.myMap
+	for subMap.Size() != 0 {
+		var k2 hamt.Entry
+		var v2 interface{}
+		k2, v2, subMap = subMap.FirstRest()
+		s = s.Insert(MapEntry{k2, v2})
+	}
+	return s
+}
+
+// KeySet returns a Set of keys contained in this map.
+// Since KeySet returns a Set, it can be streamed with Set.Stream().
+// Note that ValueSet() is not implemented because Values can be present
+// multiple times. This could possibly be implemented via []interface{}?
+// It also could be better to use the BiStream() proposed in this file.
+func (m Map) KeySet() Set {
+	panic("Not yet implemented")
+}
 
 // Insert inserts a value into a set.
 func (m Map) Insert(k hamt.Entry, v interface{}) Map {
@@ -104,17 +129,3 @@ func (m Map) HasValue(v interface{}) bool {
 
 	return false
 }
-
-// Values returns the values of thim Map
-// func (m Map) Values() []hamt.Entry {
-// 	values := []hamt.Entry{}
-
-// 	subSet := m.myMap
-// 	for subSet.Size() != 0 {
-// 		var e hamt.Entry
-// 		k, v, subSet = subSet.FirstRest()
-// 		values = append(values, e)
-// 	}
-
-// 	return values
-// }

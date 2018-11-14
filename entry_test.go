@@ -13,6 +13,7 @@ func (i EntryInt) Hash() uint32 {
 	return uint32(i)
 }
 
+// TODO Call this FlatMap instead?
 func (i EntryInt) Value() EntryInt {
 	return i
 }
