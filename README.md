@@ -4,7 +4,7 @@
 
 _Making Go come._
 
-This is a research project.
+This is a research project which I hope will prove useful!
 
 ## Install
 
