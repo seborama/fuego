@@ -161,6 +161,56 @@ func TestMap_Find(t *testing.T) {
 		name   string
 		fields fields
 		args   args
+		want   MapEntry
+	}{
+		{
+			name: "Should not find missing item",
+			fields: fields{
+				myMap: NewMap().
+					Insert(EntryInt(3), "three").
+					Insert(EntryInt(1), "one"),
+			},
+			args: args{
+				EntryInt(999),
+			},
+			want: MapEntry{},
+		},
+		{
+			name: "Should find existing item",
+			fields: fields{
+				myMap: NewMap().
+					Insert(EntryInt(3), "three").
+					Insert(EntryInt(1), "one"),
+			},
+			args: args{
+				EntryInt(3),
+			},
+			want: MapEntry{
+				K: EntryInt(3),
+				V: "three",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.fields.myMap.Find(tt.args.k); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Map.Find() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestMap_FindKey(t *testing.T) {
+	type fields struct {
+		myMap Map
+	}
+	type args struct {
+		k hamt.Entry
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
 		want   interface{}
 	}{
 		{
@@ -190,13 +240,12 @@ func TestMap_Find(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.fields.myMap.Find(tt.args.k); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Map.Find() = %v, want %v", got, tt.want)
+			if got := tt.fields.myMap.FindKey(tt.args.k); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Map.FindKey() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
-
 func TestMap_Has(t *testing.T) {
 	type fields struct {
 		myMap Map
@@ -418,6 +467,47 @@ func TestMap_EntrySet(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := tt.fields.myMap.EntrySet(); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Map.EntrySet() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestMap_KeySet(t *testing.T) {
+	type fields struct {
+		myMap Map
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   Set
+	}{
+		{
+			name:   "Should return an empty key set",
+			fields: fields{},
+			want:   NewSet(),
+		},
+		{
+			name: "Should return the key set",
+			fields: fields{
+				myMap: NewMap().
+					Insert(EntryInt(3), "three").
+					Insert(EntryInt(11), "eleven").
+					Insert(EntryInt(12), "twelve").
+					Insert(EntryInt(-23), "minus twenty three").
+					Insert(EntryInt(7), "seven"),
+			},
+			want: NewSet().
+				Insert(EntryInt(3)).
+				Insert(EntryInt(11)).
+				Insert(EntryInt(12)).
+				Insert(EntryInt(-23)).
+				Insert(EntryInt(7)),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.fields.myMap.KeySet(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Map.KeySet() = %v, want %v", got, tt.want)
 			}
 		})
 	}

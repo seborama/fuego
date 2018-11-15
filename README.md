@@ -94,20 +94,20 @@ NewStream(
 #### Map
 
 ```go
-// See stream_test.go for "NewFunctionTimesTwo()"
+// See in this README and in stream_test.go for "newFunctionTimesTwo()"
 NewSet().
     Insert(EntryInt(1)).
     Insert(EntryInt(2)).
     Insert(EntryInt(3)).
     Stream().
-    Map(NewFunctionTimesTwo())
+    Map(newFunctionTimesTwo())
 // returns EntryInt's {2,4,6}
 ```
 
 #### Filter
 
 ```go
-// See stream_test.go for "NewFunctionTimesTwo()"
+// See stream_test.go for "newEntryIntEqualsTo()"
 NewSet().
     Insert(EntryInt(1)).
     Insert(EntryInt(2)).
@@ -118,6 +118,22 @@ NewSet().
         NewFunctionPredicate(newEntryIntEqualsTo(EntryInt(3))),
     ))
 // returns EntryInt's {1,3}
+```
+
+#### ForEach
+
+```go
+total := 0
+computeSumTotal := func(value interface{}) {
+    total += int(value.(EntryInt).Value())
+}
+NewSet().
+    Insert(EntryInt(1)).
+    Insert(EntryInt(2)).
+    Insert(EntryInt(3)).
+    Stream().
+    ForEach(calculateSumTotal)
+// total == 6
 ```
 
 ### Predicates

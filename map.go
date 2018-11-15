@@ -43,7 +43,15 @@ func (m Map) EntrySet() Set {
 // multiple times. This could possibly be implemented via []interface{}?
 // It also could be better to use the BiStream() proposed in this file.
 func (m Map) KeySet() Set {
-	panic("Not yet implemented")
+	s := Set{}
+
+	subMap := m.myMap
+	for subMap.Size() != 0 {
+		var k2 hamt.Entry
+		k2, _, subMap = subMap.FirstRest()
+		s = s.Insert(k2)
+	}
+	return s
 }
 
 // Insert inserts a value into a set.
@@ -82,14 +90,20 @@ func (m Map) Merge(n Map) Map {
 
 // Find finds a value corresponding to a given key from a map.
 // It returns nil if no value is found.
-func (m Map) Find(k hamt.Entry) interface{} {
-	return m.myMap.Find(k)
+func (m Map) Find(k hamt.Entry) MapEntry {
+	v := m.myMap.Find(k)
+	if v == nil {
+		return MapEntry{nil, nil}
+	}
+
+	return MapEntry{K: k, V: v}
 }
 
 // FindKey finds a value corresponding to a given key from a map.
 // It returns nil if no value is found.
-// func (m Map) FindKey(interface{}) hamt.Entry {
-// }
+func (m Map) FindKey(k hamt.Entry) interface{} {
+	return m.myMap.Find(k)
+}
 
 // FindValue finds a value corresponding to a given key from a map.
 // It returns nil if no value is found.
@@ -101,7 +115,7 @@ func (m Map) Find(k hamt.Entry) interface{} {
 // Has returns true if a key-value pair corresponding with a given key is
 // included in a map, or false otherwise.
 func (m Map) Has(k hamt.Entry, v interface{}) bool {
-	value := m.Find(k)
+	value := m.FindKey(k)
 	if value != nil && value == v {
 		return true
 	}

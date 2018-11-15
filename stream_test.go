@@ -3,6 +3,8 @@ package fuego
 import (
 	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 type functionTimesTwo int
@@ -142,4 +144,19 @@ func TestReferenceStream_Filter(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestReferenceStream_ForEach(t *testing.T) {
+	total := 0
+	computeSumTotal := func(value interface{}) {
+		total += int(value.(EntryInt).Value())
+	}
+
+	iterator := NewSetIterator(NewSet().
+		Insert(EntryInt(4)).
+		Insert(EntryInt(1)).
+		Insert(EntryInt(3)))
+
+	NewStream(iterator).ForEach(computeSumTotal)
+	assert.Equal(t, 8, total)
 }

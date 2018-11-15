@@ -12,6 +12,7 @@ type Stream interface {
 	// FindAny() Maybe
 	// OfOne(i interface{}) Stream
 	// Of(i ...interface{}) Stream
+	ForEach(consumer func(value interface{}))
 }
 
 // ReferenceStream is a simple implementation of a Stream.
@@ -47,4 +48,11 @@ func (rp ReferenceStream) Filter(predicate Predicate) Stream {
 	}
 
 	return NewStream(NewSliceIterator(s))
+}
+
+// ForEach executes the given function for each entry in this stream .
+func (rp ReferenceStream) ForEach(consumer func(value interface{})) {
+	for it := rp.iterator; it != nil; it = it.Forward() {
+		consumer(it.Value())
+	}
 }
