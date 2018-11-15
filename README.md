@@ -36,7 +36,7 @@ NewSet().
 
 As with Set, Map is based on hamt.Map and entries must implement interface `hamt.Entry` for its keys but values can be anything (`interface{}`).
 
-See this [example_map_test.go](example_map_test.go) for more details.
+See [example_map_test.go](example_map_test.go) for more details of an example of Map with Stream and Filter combined together to extract entries which key are an even number.
 
 ### Function
 
