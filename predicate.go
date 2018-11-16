@@ -20,7 +20,7 @@ func NewFunctionPredicate(f Function) Predicate {
 
 // Test evaluates this predicate on the given argument.
 func (p FunctionPredicate) Test(t interface{}) bool {
-	return (p.function.Apply(t)).(bool)
+	return (p.function(t)).(bool)
 }
 
 // A FalsePredicate always returns 'false'.
