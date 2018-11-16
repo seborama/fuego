@@ -24,7 +24,7 @@ func ExampleMap_EntrySet_Stream() {
 
 	res := m.EntrySet().
 		Stream().
-		Filter(evenNumbers{})
+		Filter(isEvenNumber)
 	fmt.Printf("res=%+v\n", res)
 
 	// Output:
@@ -50,7 +50,7 @@ func ExampleMap_KeySet_Stream() {
 	}
 
 	m.KeySet().Stream().
-		Filter(isOddNumber{}).
+		Filter(isOddNumber).
 		ForEach(printEntry)
 
 	// Output:
@@ -81,16 +81,12 @@ func (i EntryInt) Equal(e hamt.Entry) bool {
 	return i == j
 }
 
-type evenNumbers struct{}
-
-func (en evenNumbers) Test(t interface{}) bool {
+func isEvenNumber(t interface{}) bool {
 	k := (t.(fuego.MapEntry)).K.(EntryInt)
 	return k.Value()&1 == 0
 }
 
-type isOddNumber struct{}
-
-func (on isOddNumber) Test(t interface{}) bool {
+func isOddNumber(t interface{}) bool {
 	v := t.(EntryInt)
 	return v&1 == 0
 }

@@ -110,10 +110,8 @@ func TestReferenceStream_Filter(t *testing.T) {
 					Insert(EntryInt(1)).
 					Insert(EntryInt(3)))},
 			args: args{
-				predicate: Or(
-					NewFunctionPredicate(entryIntEqualsTo(EntryInt(1))),
-					NewFunctionPredicate(entryIntEqualsTo(EntryInt(3))),
-				),
+				predicate: FunctionPredicate(entryIntEqualsTo(EntryInt(1))).
+					Or(FunctionPredicate(entryIntEqualsTo(EntryInt(3)))),
 			},
 			want: NewStream(
 				NewSliceIterator([]interface{}{

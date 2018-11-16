@@ -42,7 +42,7 @@ func (rp ReferenceStream) Map(mapper Function) Stream {
 func (rp ReferenceStream) Filter(predicate Predicate) Stream {
 	s := []interface{}{}
 	for it := rp.iterator; it != nil; it = it.Forward() {
-		if predicate.Test(it.Value()) {
+		if predicate(it.Value()) {
 			s = append(s, it.Value())
 		}
 	}
