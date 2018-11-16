@@ -7,20 +7,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type functionTimesTwo int
-
-func newFunctionTimesTwo() functionTimesTwo {
-	return *(new(functionTimesTwo))
-}
-
-func (f functionTimesTwo) Apply(i interface{}) interface{} {
-	num := i.(EntryInt).Value()
-	return interface{}(2 * num)
+func newFunctionTimesTwo() Function {
+	return func(i interface{}) interface{} {
+		num := i.(EntryInt).Value()
+		return interface{}(2 * num)
+	}
 }
 
 func TestReferenceStream_Map(t *testing.T) {
-	fi := newFunctionTimesTwo()
-
 	type fields struct {
 		iterator Iterator
 	}
@@ -38,7 +32,7 @@ func TestReferenceStream_Map(t *testing.T) {
 			fields: fields{
 				iterator: nil},
 			args: args{
-				mapper: fi,
+				mapper: newFunctionTimesTwo(),
 			},
 			want: NewStream(NewSliceIterator([]interface{}{})),
 		},
@@ -48,7 +42,7 @@ func TestReferenceStream_Map(t *testing.T) {
 				iterator: NewSetIterator(NewSet().
 					Insert(EntryInt(4)))},
 			args: args{
-				mapper: fi,
+				mapper: newFunctionTimesTwo(),
 			},
 			want: NewStream(
 				NewSliceIterator(
@@ -62,7 +56,7 @@ func TestReferenceStream_Map(t *testing.T) {
 					Insert(EntryInt(2)).
 					Insert(EntryInt(3)))},
 			args: args{
-				mapper: fi,
+				mapper: newFunctionTimesTwo(),
 			},
 			want: NewStream(
 				NewSliceIterator([]interface{}{
@@ -84,22 +78,15 @@ func TestReferenceStream_Map(t *testing.T) {
 	}
 }
 
-type entryIntEqualsTo struct {
-	entryInt EntryInt
-}
+func entryIntEqualsTo(number EntryInt) Function {
+	return func(subject interface{}) interface{} {
+		subjectEntryInt, ok := subject.(EntryInt)
+		if !ok {
+			return false
+		}
 
-func newEntryIntEqualsTo(e EntryInt) Function {
-	return entryIntEqualsTo{
-		entryInt: e,
+		return number.Equal(subjectEntryInt)
 	}
-}
-func (e entryIntEqualsTo) Apply(subject interface{}) interface{} {
-	subjectEntryInt, ok := subject.(EntryInt)
-	if !ok {
-		return false
-	}
-
-	return e.entryInt.Equal(subjectEntryInt)
 }
 
 func TestReferenceStream_Filter(t *testing.T) {
@@ -124,8 +111,8 @@ func TestReferenceStream_Filter(t *testing.T) {
 					Insert(EntryInt(3)))},
 			args: args{
 				predicate: Or(
-					NewFunctionPredicate(newEntryIntEqualsTo(EntryInt(1))),
-					NewFunctionPredicate(newEntryIntEqualsTo(EntryInt(3))),
+					NewFunctionPredicate(entryIntEqualsTo(EntryInt(1))),
+					NewFunctionPredicate(entryIntEqualsTo(EntryInt(3))),
 				),
 			},
 			want: NewStream(
