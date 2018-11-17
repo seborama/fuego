@@ -1,15 +1,25 @@
 # fuego - Functional Experiment in Go.
 
+[![godoc](https://img.shields.io/badge/godoc-reference-blue.svg)](https://godoc.org/github.com/seborama/fuego) [![Build Status](https://api.travis-ci.org/seborama/fuego.svg?branch=master)](https://travis-ci.org/seborama/fuego) [![goreportcard](https://img.shields.io/badge/go%20report-A%2B-brightgreen.svg)](http://goreportcard.com/report/seborama/fuego) [![License](http://img.shields.io/:license-mit-blue.svg)](https://github.com/seborama/fuego/blob/master/LICENSE) [![cover.run](https://cover.run/go/github.com/seborama/fuego.svg?style=flat&tag=golang-1.10)](https://cover.run/go?tag=golang-1.10&repo=github.com%2Fseborama%2Ffuego) 
+
 ## Overview
 
 _Making Go come._
 
-This is a research project which I hope will prove useful!
+This is a research project in functional programming which I hope will prove useful!
+
+Fuego brings a few functional paradigms to Go.
 
 ## Install
 
 ```bash
 go get github.com/seborama/fuego
+```
+
+Or for a specific version:
+
+```bash
+go get gopkg.in/seborama/govcr.v3
 ```
 
 ## Contribute
