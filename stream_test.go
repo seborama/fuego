@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func newFunctionTimesTwo() Function {
+func functionTimesTwo() Function {
 	return func(i interface{}) interface{} {
 		num := i.(EntryInt).Value()
 		return interface{}(2 * num)
@@ -32,7 +32,7 @@ func TestReferenceStream_Map(t *testing.T) {
 			fields: fields{
 				iterator: nil},
 			args: args{
-				mapper: newFunctionTimesTwo(),
+				mapper: functionTimesTwo(),
 			},
 			want: NewStream(NewSliceIterator([]interface{}{})),
 		},
@@ -42,7 +42,7 @@ func TestReferenceStream_Map(t *testing.T) {
 				iterator: NewSetIterator(NewSet().
 					Insert(EntryInt(4)))},
 			args: args{
-				mapper: newFunctionTimesTwo(),
+				mapper: functionTimesTwo(),
 			},
 			want: NewStream(
 				NewSliceIterator(
@@ -56,7 +56,7 @@ func TestReferenceStream_Map(t *testing.T) {
 					Insert(EntryInt(2)).
 					Insert(EntryInt(3)))},
 			args: args{
-				mapper: newFunctionTimesTwo(),
+				mapper: functionTimesTwo(),
 			},
 			want: NewStream(
 				NewSliceIterator([]interface{}{

@@ -6,9 +6,7 @@ import (
 	ƒ "github.com/seborama/fuego" // using ƒ as a short alias of fuego
 )
 
-// ExamplePredicates shows how to create a Map, add entries
-// to it and stream filter the even-numbered keys out of it
-// using a Predicate.
+// ExamplePredicate shows how to use and combine Predicates.
 func ExamplePredicate() {
 	res := ƒ.Predicate(ƒ.False).Not()(1)
 	fmt.Printf("Not False == %+v\n", res)
@@ -35,4 +33,37 @@ func ExamplePredicate() {
 	// True or False == true
 	// False And False Or True == true
 	// False And (False Or True) == false
+}
+
+// ExamplePredicate_custom1 shows how to create a custom Predicate using
+// the utility function fuego.FunctionPredicate().
+func ExamplePredicate_custom1() {
+	isEvenNumberPredicate := ƒ.FunctionPredicate(isEvenNumberFunction)
+
+	res := ƒ.Predicate(isEvenNumberPredicate).And(ƒ.True)(23)
+	fmt.Printf("res = %v", res)
+
+	// Output:
+	// res = false
+}
+
+func isEvenNumberFunction(i interface{}) interface{} {
+	return i.(int)&1 == 0
+}
+
+// ExamplePredicate_custom2 shows how to create a custom Predicate from
+// scratch.
+// Notice how we get all Predicate helpers (And, Or, Not, etc) for "free".
+func ExamplePredicate_custom2() {
+	res := ƒ.Predicate(intGreaterThanPredicate(50)).And(ƒ.True).Not()(23)
+	fmt.Printf("res = %v", res)
+
+	// Output:
+	// res = true
+}
+
+func intGreaterThanPredicate(rhs int) ƒ.Predicate {
+	return func(lhs interface{}) bool {
+		return lhs.(int) > rhs
+	}
 }

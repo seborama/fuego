@@ -40,21 +40,13 @@ See [example_map_test.go](example_map_test.go) for more details of an example of
 
 ### Function
 
+A `Function` is a normal Go function which signature is
+
 ```go
-type functionTimesTwo int
-
-func newFunctionTimesTwo() functionTimesTwo {
-	return *(new(functionTimesTwo))
-}
-
-func (f functionTimesTwo) Apply(i interface{}) interface{} {
-	num := i.(EntryInt).Value()
-	return interface{}(2 * num)
-}
-
-f := newFunctionTimesTwo()
-f.Apply(7) // returns EntryInt 7
+func(i interface{}) interface{}
 ```
+
+See [example_function_test.go](example_function_test.go) for a basic example and the other tests / examples for more uses.
 
 ### Iterator
 
@@ -94,13 +86,13 @@ NewStream(
 #### Map
 
 ```go
-// See in this README and in stream_test.go for "newFunctionTimesTwo()"
+// See in this README and in stream_test.go for "functionTimesTwo()"
 NewSet().
     Insert(EntryInt(1)).
     Insert(EntryInt(2)).
     Insert(EntryInt(3)).
     Stream().
-    Map(newFunctionTimesTwo())
+    Map(functionTimesTwo())
 // returns EntryInt's {2,4,6}
 ```
 
@@ -113,10 +105,8 @@ NewSet().
     Insert(EntryInt(2)).
     Insert(EntryInt(3)).
     Stream().
-    Filter(Or(
-        NewFunctionPredicate(newEntryIntEqualsTo(EntryInt(1))),
-        NewFunctionPredicate(newEntryIntEqualsTo(EntryInt(3))),
-    ))
+    Filter(FunctionPredicate(entryIntEqualsTo(EntryInt(1))).
+        Or(FunctionPredicate(entryIntEqualsTo(EntryInt(3)))))
 // returns EntryInt's {1,3}
 ```
 
@@ -124,9 +114,11 @@ NewSet().
 
 ```go
 total := 0
+
 computeSumTotal := func(value interface{}) {
     total += int(value.(EntryInt).Value())
 }
+
 NewSet().
     Insert(EntryInt(1)).
     Insert(EntryInt(2)).
@@ -138,31 +130,32 @@ NewSet().
 
 ### Predicates
 
-You can create you own `Predicate`'s.
+A `Predicate` is a normal Go function which signature is
 
-For convenience, several pre-defined `Predicate`'s are supplied:
-- True
-- False
+```go
+func(t interface{}) bool
+```
+
+A `Predicate` has convenient pre-defined methods:
 - Or
 - And
 - Not
-- Function - a Predicate that wraps over a Function
+
+Several pre-defined `Predicate`'s exist too:
+- True
+- False
+- FunctionPredicate - a Predicate that wraps over a Function
+
+See [example_predicate_test.go](example_predicate_test.go) for some examples.
 
 ```go
-type intGreaterThanPredicate struct {
-	number int
-}
+_ = ƒ.Predicate(ƒ.False).And(ƒ.Predicate(ƒ.False).Or(ƒ.True))(1) // returns false
 
-func newIntGreaterThanPredicate(number int) intGreaterThanPredicate {
-	return intGreaterThanPredicate{
-		number: number,
+res := ƒ.Predicate(intGreaterThanPredicate(50)).And(ƒ.True).Not()(23) // res = true
+
+func intGreaterThanPredicate(rhs int) ƒ.Predicate {
+	return func(lhs interface{}) bool {
+		return lhs.(int) > rhs
 	}
 }
-
-func (p intGreaterThanPredicate) Test(t interface{}) bool {
-	return t.(int) > p.number
-}
-
-newIntGreaterThanPredicate(2).Test(7) // returns false
-Not(newIntGreaterThanPredicate(2)).Test(7) // returns true
 ```
