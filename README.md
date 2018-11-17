@@ -50,6 +50,8 @@ NewSet().
     Stream()
 ```
 
+Uses of streams with Sets are also available in [example_map_test.go](example_map_test.go).
+
 ### Map (partial implementation)
 
 As with Set, Map is based on hamt.Map and entries must implement interface `hamt.Entry` for its keys but values can be anything (`interface{}`).
