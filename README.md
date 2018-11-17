@@ -8,7 +8,9 @@ _Making Go come._
 
 This is a research project in functional programming which I hope will prove useful!
 
-Fuego brings a few functional paradigms to Go.
+Fuego brings a few functional paradigms to Go. The intent is to save development time while promoting code readability and reduce the risk of complex bugs.
+
+
 
 ## Install
 
@@ -31,6 +33,10 @@ For contributions, you must develop in TDD fashion and ideally provide Go testab
 ## Main features
 
 The code documentation can be found on [godoc](http://godoc.org/github.com/seborama/fuego).
+
+The tests form the best source of documentation. Fuego comes with a good collection of unit tests and testable Go examples. Don't be shy, open them up and read them and tinker with them!
+
+Have fun!!
 
 ### Set (partial implementation)
 
@@ -169,6 +175,7 @@ Several pre-defined `Predicate`'s exist too:
 See [example_predicate_test.go](example_predicate_test.go) for some examples.
 
 ```go
+// ƒ is ALT+f on Mac. For other OSes, search the internet,  for instance,  this page: https://en.wikipedia.org/wiki/%C6%91#Appearance_in_computer_fonts
 _ = ƒ.Predicate(ƒ.False).And(ƒ.Predicate(ƒ.False).Or(ƒ.True))(1) // returns false
 
 res := ƒ.Predicate(intGreaterThanPredicate(50)).And(ƒ.True).Not()(23) // res = true
