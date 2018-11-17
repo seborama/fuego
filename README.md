@@ -12,6 +12,12 @@ This is a research project which I hope will prove useful!
 go get github.com/seborama/fuego
 ```
 
+## Contribute
+
+Contributions and feedback are welcome.
+
+For contributions, you must develop in TDD fashion and ideally provide Go testable examples (if meaningful).
+
 ## Main features
 
 ### Set (partial implementation)
