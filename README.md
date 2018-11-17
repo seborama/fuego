@@ -96,17 +96,15 @@ NewSetIterator(NewSet().
 ```go
 someGoSlice := []int{1, 2, 3}
 NewStream(
-    NewBaseIterable(
-        NewSliceIterator(someGoSlice))),
+    NewSliceIterator(someGoSlice)),
 ```
 
 ```go
 NewStream(
-    NewBaseIterable(
-        NewSetIterator(
-            NewSet().
-                Insert(EntryInt(1)).
-                Insert(EntryInt(2)))))
+    NewSetIterator(
+        NewSet().
+            Insert(EntryInt(1)).
+            Insert(EntryInt(2))))
 ```
 
 #### Map
