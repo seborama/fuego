@@ -5,6 +5,7 @@ type Maybe struct {
 	//TODO: implement! NEED MORE RESEARCH - SEARCH VAVR.OPTION
 }
 
+// NewMaybe creates a new Maybe.
 func NewMaybe(i interface{}) Maybe {
 	return Maybe{} // TODO: review implementation when Maybe struct is defined
 }

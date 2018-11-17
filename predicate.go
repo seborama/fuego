@@ -3,7 +3,7 @@ package fuego
 // Predicate represents a predicate (boolean-valued function) of one argument.
 type Predicate func(t interface{}) bool
 
-// AndPredicate is a composed predicate that represents a short-circuiting logical
+// And is a composed predicate that represents a short-circuiting logical
 // AND of this predicate and another.
 func (p Predicate) And(other Predicate) Predicate {
 	return func(t interface{}) bool {
@@ -14,7 +14,7 @@ func (p Predicate) And(other Predicate) Predicate {
 	}
 }
 
-// OrPredicate is a composed predicate that represents a short-circuiting logical
+// Or is a composed predicate that represents a short-circuiting logical
 // OR of two predicates.
 func (p Predicate) Or(other Predicate) Predicate {
 	return func(t interface{}) bool {

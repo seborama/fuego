@@ -10,7 +10,7 @@ import (
 // ExampleMap_EntrySet_Stream shows how to create a Map, add entries
 // to it and stream filter the even-numbered keys out of it
 // using a Predicate.
-func ExampleMap_EntrySet_Stream() {
+func ExampleMap_EntrySet_stream() {
 	m := fuego.NewMap().
 		Insert(EntryInt(1), "one").
 		Insert(EntryInt(2), "two").
@@ -33,7 +33,7 @@ func ExampleMap_EntrySet_Stream() {
 
 // ExampleMap_KeySet_Stream shows how to create a Map, add entries to it and stream filter the
 // even-numbered keys out of it using a Predicate.
-func ExampleMap_KeySet_Stream() {
+func ExampleMap_KeySet_stream() {
 	m := fuego.NewMap().
 		Insert(EntryInt(1), "one").
 		Insert(EntryInt(2), "two").

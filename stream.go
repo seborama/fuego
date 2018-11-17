@@ -39,6 +39,8 @@ func (rp ReferenceStream) Map(mapper Function) Stream {
 	return NewStream(NewSliceIterator(s))
 }
 
+// Filter returns a stream consisting of the elements of this stream that match
+// the given predicate.
 func (rp ReferenceStream) Filter(predicate Predicate) Stream {
 	s := []interface{}{}
 	for it := rp.iterator; it != nil; it = it.Forward() {
@@ -50,7 +52,7 @@ func (rp ReferenceStream) Filter(predicate Predicate) Stream {
 	return NewStream(NewSliceIterator(s))
 }
 
-// ForEach executes the given function for each entry in this stream .
+// ForEach executes the given function for each entry in this stream.
 func (rp ReferenceStream) ForEach(consumer Consumer) {
 	for it := rp.iterator; it != nil; it = it.Forward() {
 		consumer(it.Value())
