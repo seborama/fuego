@@ -5,18 +5,10 @@ import (
 	"testing"
 )
 
-type intGreaterThanPredicate struct {
-	number int
-}
-
-func newIntGreaterThanPredicate(number int) intGreaterThanPredicate {
-	return intGreaterThanPredicate{
-		number: number,
+func intGreaterThanPredicate(rhs int) Predicate {
+	return func(lhs interface{}) bool {
+		return lhs.(int) > rhs
 	}
-}
-
-func (p intGreaterThanPredicate) Test(subject interface{}) bool {
-	return subject.(int) > p.number
 }
 
 func TestNotPredicate(t *testing.T) {
@@ -32,7 +24,7 @@ func TestNotPredicate(t *testing.T) {
 		{
 			name: "Should negate the predicate",
 			args: args{
-				p: newIntGreaterThanPredicate(5),
+				p: intGreaterThanPredicate(5),
 				t: 7,
 			},
 			want: false,
@@ -40,7 +32,7 @@ func TestNotPredicate(t *testing.T) {
 		{
 			name: "Should negate the predicate",
 			args: args{
-				p: newIntGreaterThanPredicate(5),
+				p: intGreaterThanPredicate(5),
 				t: 2,
 			},
 			want: true,
@@ -56,7 +48,7 @@ func TestNotPredicate(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := Not(tt.args.p).Test(tt.args.t); !reflect.DeepEqual(got, tt.want) {
+			if got := tt.args.p.Not()(tt.args.t); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Not() = %v, want %v", got, tt.want)
 			}
 		})
@@ -124,8 +116,8 @@ func TestFalsePredicate(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := False().Test(tt.args.t); !got == tt.want {
-				t.Errorf("False.Test() = %v, want %v", got, tt.want)
+			if got := False(tt.args.t); !got == tt.want {
+				t.Errorf("False = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -192,7 +184,7 @@ func TestTruePredicate(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := True().Test(tt.args.t); !got == tt.want {
+			if got := True(tt.args.t); !got == tt.want {
 				t.Errorf("False.Test() = %v, want %v", got, tt.want)
 			}
 		})
@@ -213,8 +205,8 @@ func TestAndPredicate(t *testing.T) {
 		{
 			name: "Should return true for: true AND true",
 			args: args{
-				p1: True(),
-				p2: True(),
+				p1: True,
+				p2: True,
 				t:  1,
 			},
 			want: true,
@@ -222,8 +214,8 @@ func TestAndPredicate(t *testing.T) {
 		{
 			name: "Should return false for: true AND false",
 			args: args{
-				p1: True(),
-				p2: False(),
+				p1: True,
+				p2: False,
 				t:  1,
 			},
 			want: false,
@@ -231,8 +223,8 @@ func TestAndPredicate(t *testing.T) {
 		{
 			name: "Should return false for: false AND true",
 			args: args{
-				p1: False(),
-				p2: True(),
+				p1: False,
+				p2: True,
 				t:  1,
 			},
 			want: false,
@@ -240,8 +232,8 @@ func TestAndPredicate(t *testing.T) {
 		{
 			name: "Should return false for: false AND false",
 			args: args{
-				p1: False(),
-				p2: False(),
+				p1: False,
+				p2: False,
 				t:  1,
 			},
 			want: false,
@@ -250,7 +242,7 @@ func TestAndPredicate(t *testing.T) {
 			name: "Should return false for: nil AND true",
 			args: args{
 				p1: nil,
-				p2: True(),
+				p2: True,
 				t:  1,
 			},
 			want: false,
@@ -258,7 +250,7 @@ func TestAndPredicate(t *testing.T) {
 		{
 			name: "Should return false for: true AND nil",
 			args: args{
-				p1: True(),
+				p1: True,
 				p2: nil,
 				t:  1,
 			},
@@ -268,7 +260,7 @@ func TestAndPredicate(t *testing.T) {
 			name: "Should return false for: nil AND false",
 			args: args{
 				p1: nil,
-				p2: False(),
+				p2: False,
 				t:  1,
 			},
 			want: false,
@@ -276,7 +268,7 @@ func TestAndPredicate(t *testing.T) {
 		{
 			name: "Should return false for: false AND nil",
 			args: args{
-				p1: False(),
+				p1: False,
 				p2: nil,
 				t:  1,
 			},
@@ -294,7 +286,7 @@ func TestAndPredicate(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := And(tt.args.p1, tt.args.p2).Test(tt.args.t); !reflect.DeepEqual(got, tt.want) {
+			if got := tt.args.p1.And(tt.args.p2)(tt.args.t); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("And() = %v, want %v", got, tt.want)
 			}
 		})
@@ -315,8 +307,8 @@ func TestOrPredicate(t *testing.T) {
 		{
 			name: "Should return true for: true OR true",
 			args: args{
-				p1: True(),
-				p2: True(),
+				p1: True,
+				p2: True,
 				t:  1,
 			},
 			want: true,
@@ -324,8 +316,8 @@ func TestOrPredicate(t *testing.T) {
 		{
 			name: "Should return true for: true OR false",
 			args: args{
-				p1: True(),
-				p2: False(),
+				p1: True,
+				p2: False,
 				t:  1,
 			},
 			want: true,
@@ -333,8 +325,8 @@ func TestOrPredicate(t *testing.T) {
 		{
 			name: "Should return true for: false OR true",
 			args: args{
-				p1: False(),
-				p2: True(),
+				p1: False,
+				p2: True,
 				t:  1,
 			},
 			want: true,
@@ -342,8 +334,8 @@ func TestOrPredicate(t *testing.T) {
 		{
 			name: "Should return false for: false OR false",
 			args: args{
-				p1: False(),
-				p2: False(),
+				p1: False,
+				p2: False,
 				t:  1,
 			},
 			want: false,
@@ -352,7 +344,7 @@ func TestOrPredicate(t *testing.T) {
 			name: "Should return true for: nil OR true",
 			args: args{
 				p1: nil,
-				p2: True(),
+				p2: True,
 				t:  1,
 			},
 			want: true,
@@ -360,7 +352,7 @@ func TestOrPredicate(t *testing.T) {
 		{
 			name: "Should return true for: true OR nil",
 			args: args{
-				p1: True(),
+				p1: True,
 				p2: nil,
 				t:  1,
 			},
@@ -370,7 +362,7 @@ func TestOrPredicate(t *testing.T) {
 			name: "Should return false for: nil OR false",
 			args: args{
 				p1: nil,
-				p2: False(),
+				p2: False,
 				t:  1,
 			},
 			want: false,
@@ -378,7 +370,7 @@ func TestOrPredicate(t *testing.T) {
 		{
 			name: "Should return false for: false OR nil",
 			args: args{
-				p1: False(),
+				p1: False,
 				p2: nil,
 				t:  1,
 			},
@@ -396,7 +388,7 @@ func TestOrPredicate(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := Or(tt.args.p1, tt.args.p2).Test(tt.args.t); !reflect.DeepEqual(got, tt.want) {
+			if got := tt.args.p1.Or(tt.args.p2)(tt.args.t); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Or() = %v, want %v", got, tt.want)
 			}
 		})
