@@ -20,6 +20,8 @@ For contributions, you must develop in TDD fashion and ideally provide Go testab
 
 ## Main features
 
+The code documentation can be found on [godoc](http://godoc.org/github.com/seborama/fuego).
+
 ### Set (partial implementation)
 
 Set is based on hamt.Set and entries must implement interface `hamt.Entry`.
