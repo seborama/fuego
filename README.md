@@ -91,13 +91,14 @@ You can create you own `Iterator`'s.
 
 See [iterator.go](iterator.go) for several convenience implementations of iterators:
 - NewSliceIterator
-- NewSetIterator
+- NewHamtSetIterator
+- NewOrderedSetIterator
 
 ```go
 NewSliceIterator([]interface{}{2, 3}) // returns an Iterator over []interface{2, 3}
 
-NewSetIterator(NewSet().
-    Insert(EntryInt(2))), // returns an Iterator over a Set that contains a single EntryInt(2)
+NewHamtSetIterator(NewHamtSet().
+    Insert(EntryInt(2))), // returns an Iterator over a HamtSet that contains a single EntryInt(2)
 ```
 
 ### Stream
@@ -145,7 +146,7 @@ NewSet().
 // returns EntryInt's {1,3}
 ```
 
-#### Reduce
+#### Reduce / LeftReduce / RightReduce
 
 ```go
 // See helpers_test.go for "concatenateStringsBiFunc()"
@@ -213,4 +214,5 @@ func intGreaterThanPredicate(rhs int) ƒ.Predicate {
 
 ## Known limitations
 
-- hamt.Set and hamt.Map are not ordered as per their initialisation but rather following their Hash. Eventually, it would be useful to have an ordered Set. (PS: ordered, not sorted although this would also be useful)
+- hamt.Set and hamt.Map are not ordered as per their initialisation but rather following their Hash. Use OrderedSet as an alternative.
+- several operations may be memory intensive or poorly performing, notably - but not limited to - in OrderedSet.
