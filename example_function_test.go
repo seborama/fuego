@@ -8,8 +8,7 @@ import (
 
 // ExampleFunction shows how to use Function's.
 // There are more interesting examples through the code.
-// Search for `Function` or the Function signature such as
-// `func([^)]*interface{}) interface{}` (as a regexp).
+// Search for `Function` or the Function signature.
 func ExampleFunction() {
 	timesTwoFunction := timesTwo()
 	res := timesTwoFunction(7)
@@ -19,9 +18,21 @@ func ExampleFunction() {
 	// res = 14
 }
 
-// timesTwo returns a fuego.Function
-func timesTwo() fuego.Function {
-	return func(i interface{}) interface{} {
-		return (EntryInt(2 * i.(int)))
-	}
+// ExampleBiFunction shows how to use BiFunction's.
+// There are more interesting examples through the code.
+// Search for `BiFunction` or the BiFunction signature.
+func ExampleBiFunction() {
+	res := fuego.NewSet().
+		Insert(EntryString("four")).
+		Insert(EntryString("twelve")).
+		Insert(EntryString("one")).
+		Insert(EntryString("six")).
+		Insert(EntryString("three")).
+		Stream().
+		Reduce(concatenateStringsBiFunc)
+
+	fmt.Printf("res = %+v\n", res)
+
+	// Output:
+	// res = one-three-twelve-six-four
 }

@@ -1,10 +1,11 @@
-package fuego
+package fuego_test
 
 import (
 	"hash/crc32"
 	"testing"
 
 	"github.com/raviqqe/hamt"
+	ƒ "github.com/seborama/fuego"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -72,4 +73,45 @@ func TestEntryString(t *testing.T) {
 
 func TestEntryStringKey(t *testing.T) {
 	assert.Equal(t, uint32(0x4a17b156), EntryString("Hello World").Hash())
+}
+
+// isEvenNumber is a Predicate for even numbers.
+func isEvenNumber(t interface{}) bool {
+	k := (t.(ƒ.MapEntry)).K.(EntryInt)
+	return k.Value()&1 == 0
+}
+
+// isOddNumber is a Predicate for odd numbers.
+func isOddNumber(t interface{}) bool {
+	v := t.(EntryInt)
+	return v&1 == 0
+}
+
+// concatenateStringsBiFunc returns a fuego.BiFunction that
+// joins 'i' and 'j' together with a '-' in between.
+func concatenateStringsBiFunc(i, j interface{}) interface{} {
+	iStr := i.(EntryString)
+	jStr := j.(EntryString)
+	return EntryString(iStr + "-" + jStr)
+}
+
+// timesTwo returns a fuego.Function than multiplies 'i' by 2.
+func timesTwo() ƒ.Function {
+	return func(i interface{}) interface{} {
+		return (EntryInt(2 * i.(int)))
+	}
+}
+
+// isEvenNumberFunction is a Function that returns true when 'i' is
+// an even number.
+func isEvenNumberFunction(i interface{}) interface{} {
+	return i.(int)&1 == 0
+}
+
+// intGreaterThanPredicate is a Predicate for numbers greater than
+// 'rhs'.
+func intGreaterThanPredicate(rhs int) ƒ.Predicate {
+	return func(lhs interface{}) bool {
+		return lhs.(int) > rhs
+	}
 }

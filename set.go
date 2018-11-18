@@ -53,17 +53,3 @@ func (s Set) Merge(t Set) Set {
 		set: s.set.Merge(t.set),
 	}
 }
-
-// Values returns the values of this Set
-func (s Set) Values() []hamt.Entry {
-	values := []hamt.Entry{}
-
-	subSet := s.set
-	for subSet.Size() != 0 {
-		var e hamt.Entry
-		e, subSet = subSet.FirstRest()
-		values = append(values, e)
-	}
-
-	return values
-}

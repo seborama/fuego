@@ -3,7 +3,6 @@ package fuego_test
 import (
 	"fmt"
 
-	"github.com/raviqqe/hamt"
 	"github.com/seborama/fuego"
 )
 
@@ -28,7 +27,7 @@ func ExampleMap_EntrySet_stream() {
 	fmt.Printf("res=%+v\n", res)
 
 	// Output:
-	// res={iterator:{slice:[{K:2 V:two} {K:4 V:four} {K:6 V:six} {K:8 V:eight}] size:4}}
+	// res={iterator:{slice:[{K:2 V:two} {K:4 V:four} {K:6 V:six} {K:8 V:eight}]}}
 }
 
 // ExampleMap_KeySet_Stream shows how to create a Map, add entries to it and stream filter the
@@ -58,35 +57,4 @@ func ExampleMap_KeySet_stream() {
 	// Number: 4
 	// Number: 6
 	// Number: 8
-}
-
-type EntryInt int
-
-func (i EntryInt) Hash() uint32 {
-	return uint32(i)
-}
-
-// TODO Call this FlatMap instead?
-func (i EntryInt) Value() EntryInt {
-	return i
-}
-
-func (i EntryInt) Equal(e hamt.Entry) bool {
-	j, ok := e.(EntryInt)
-
-	if !ok {
-		return false
-	}
-
-	return i == j
-}
-
-func isEvenNumber(t interface{}) bool {
-	k := (t.(fuego.MapEntry)).K.(EntryInt)
-	return k.Value()&1 == 0
-}
-
-func isOddNumber(t interface{}) bool {
-	v := t.(EntryInt)
-	return v&1 == 0
 }

@@ -37,7 +37,7 @@ func ExamplePredicate() {
 
 // ExamplePredicate_custom1 shows how to create a custom Predicate using
 // the utility function fuego.FunctionPredicate().
-func ExamplePredicate_custom1() {
+func ExamplePredicate_functionPredicate() {
 	isEvenNumberPredicate := ƒ.FunctionPredicate(isEvenNumberFunction)
 
 	res := ƒ.Predicate(isEvenNumberPredicate).And(ƒ.True)(23)
@@ -47,23 +47,13 @@ func ExamplePredicate_custom1() {
 	// res = false
 }
 
-func isEvenNumberFunction(i interface{}) interface{} {
-	return i.(int)&1 == 0
-}
-
 // ExamplePredicate_custom2 shows how to create a custom Predicate from
 // scratch.
 // Notice how we get all Predicate helpers (And, Or, Not, etc) for "free".
-func ExamplePredicate_custom2() {
+func ExamplePredicate_predicate() {
 	res := ƒ.Predicate(intGreaterThanPredicate(50)).And(ƒ.True).Not()(23)
 	fmt.Printf("res = %v", res)
 
 	// Output:
 	// res = true
-}
-
-func intGreaterThanPredicate(rhs int) ƒ.Predicate {
-	return func(lhs interface{}) bool {
-		return lhs.(int) > rhs
-	}
 }

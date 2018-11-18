@@ -13,6 +13,7 @@ type Stream interface {
 	// OfOne(i interface{}) Stream
 	// Of(i ...interface{}) Stream
 	ForEach(consumer Consumer)
+	Reduce(f2 BiFunction) interface{}
 }
 
 // ReferenceStream is a simple implementation of a Stream.
@@ -49,7 +50,7 @@ func (rp ReferenceStream) Filter(predicate Predicate) Stream {
 		}
 	}
 
-	return NewStream(NewSliceIterator(s))
+	return NewStream(NewSliceIterator(s)) // TODO remove SliceIterator??
 }
 
 // ForEach executes the given function for each entry in this stream.
@@ -57,4 +58,18 @@ func (rp ReferenceStream) ForEach(consumer Consumer) {
 	for it := rp.iterator; it != nil; it = it.Forward() {
 		consumer(it.Value())
 	}
+}
+
+// Reduce accumulates the elements of this Set by
+// applying the given function
+func (rp ReferenceStream) Reduce(f2 BiFunction) interface{} {
+	if rp.iterator.Size() == 0 {
+		return nil
+	}
+	it := rp.iterator
+	res := it.Value()
+	for it = it.Forward(); it != nil; it = it.Forward() {
+		res = f2(res, it.Value())
+	}
+	return res
 }

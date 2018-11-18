@@ -38,7 +38,7 @@ The tests form the best source of documentation. Fuego comes with a good collect
 
 Have fun!!
 
-### Set (partial implementation)
+### Set
 
 Set is based on hamt.Set and entries must implement interface `hamt.Entry`.
 
@@ -58,21 +58,32 @@ NewSet().
 
 Uses of streams with Sets are also available in [example_map_test.go](example_map_test.go).
 
-### Map (partial implementation)
+### Map
 
 As with Set, Map is based on hamt.Map and entries must implement interface `hamt.Entry` for its keys but values can be anything (`interface{}`).
 
 See [example_map_test.go](example_map_test.go) for more details of an example of Map with Stream and Filter combined together to extract entries which keys are an even number.
 
-### Function
+### Functions
 
+See [example_function_test.go](example_function_test.go) for basic example uses of `Function` and `BiFunction` and the other tests / examples for more uses.
+
+#### Function
 A `Function` is a normal Go function which signature is
 
 ```go
 func(i interface{}) interface{}
 ```
 
-See [example_function_test.go](example_function_test.go) for a basic example and the other tests / examples for more uses.
+#### BiFunction
+
+A `BiFunction` is a normal Go function which signature is
+
+```go
+func(i,j interface{}) interface{}
+```
+
+`BiFunction`'s are used with Stream.Reduce() for instance, as seen in [stream_test.go](stream_test.go).
 
 ### Iterator
 
@@ -89,7 +100,7 @@ NewSetIterator(NewSet().
     Insert(EntryInt(2))), // returns an Iterator over a Set that contains a single EntryInt(2)
 ```
 
-### Stream (partial implementation)
+### Stream
 
 #### Creation
 
@@ -132,6 +143,21 @@ NewSet().
     Filter(FunctionPredicate(entryIntEqualsTo(EntryInt(1))).
         Or(FunctionPredicate(entryIntEqualsTo(EntryInt(3)))))
 // returns EntryInt's {1,3}
+```
+
+#### Reduce
+
+```go
+// See stream_test.go for "concatenateStringsBiFunc()"
+NewSet().
+    Insert(EntryString("four")).
+    Insert(EntryString("twelve")).
+    Insert(EntryString("one")).
+    Insert(EntryString("six")).
+    Insert(EntryString("three"))
+    Stream().
+    Reduce(concatenateStringsBiFunc)
+// returns EntryString("one-three-twelve-six-four")
 ```
 
 #### ForEach
@@ -184,3 +210,7 @@ func intGreaterThanPredicate(rhs int) ƒ.Predicate {
 	}
 }
 ```
+
+## Known limitations
+
+- hamt.Set and hamt.Map are not ordered as per their initialisation but rather following their Hash. Eventually, it would be useful to have an ordered Set. (PS: ordered, not sorted although this would also be useful)

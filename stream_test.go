@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func functionTimesTwo() Function {
@@ -107,16 +108,16 @@ func TestReferenceStream_Filter(t *testing.T) {
 			fields: fields{
 				iterator: NewSetIterator(NewSet().
 					Insert(EntryInt(4)).
-					Insert(EntryInt(1)).
+					Insert(EntryInt(17)).
 					Insert(EntryInt(3)))},
 			args: args{
-				predicate: FunctionPredicate(entryIntEqualsTo(EntryInt(1))).
+				predicate: FunctionPredicate(entryIntEqualsTo(EntryInt(17))).
 					Or(FunctionPredicate(entryIntEqualsTo(EntryInt(3)))),
 			},
 			want: NewStream(
 				NewSliceIterator([]interface{}{
-					EntryInt(1),
-					EntryInt(3)})),
+					EntryInt(3),
+					EntryInt(17)})),
 		},
 	}
 	for _, tt := range tests {
@@ -144,4 +145,56 @@ func TestReferenceStream_ForEach(t *testing.T) {
 
 	NewStream(iterator).ForEach(computeSumTotal)
 	assert.Equal(t, 8, total)
+}
+
+func TestReferenceStream_Reduce(t *testing.T) {
+	concatenateStringsBiFunc := func(i, j interface{}) interface{} {
+		iStr := i.(EntryString)
+		jStr := j.(EntryString)
+		return EntryString(iStr + "-" + jStr)
+	}
+
+	type fields struct {
+		iterator Iterator
+	}
+	type args struct {
+		f2 BiFunction
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   interface{}
+	}{
+		{
+			name: "Should return nil for an empty Stream",
+			fields: fields{
+				iterator: NewSetIterator(NewSet()),
+			},
+			args: args{f2: concatenateStringsBiFunc},
+			want: nil,
+		},
+		{
+			name: "Should return reduction of Set",
+			fields: fields{
+				iterator: NewSetIterator(NewSet().
+					Insert(EntryString("four")).
+					Insert(EntryString("twelve")).
+					Insert(EntryString("one")).
+					Insert(EntryString("six")).
+					Insert(EntryString("three"))),
+			},
+			args: args{f2: concatenateStringsBiFunc},
+			want: EntryString("one-three-twelve-six-four"),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rp := ReferenceStream{
+				iterator: tt.fields.iterator,
+			}
+			got := rp.Reduce(tt.args.f2)
+			require.Equal(t, tt.want, got)
+		})
+	}
 }
