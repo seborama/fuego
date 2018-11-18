@@ -89,7 +89,7 @@ func(i,j interface{}) interface{}
 
 You can create you own `Iterator`'s.
 
-See [iterator.go](iterator.go) for examples of convenience `Iterator`'s:
+See [iterator.go](iterator.go) for several convenience implementations of iterators:
 - NewSliceIterator
 - NewSetIterator
 
@@ -121,7 +121,7 @@ NewStream(
 #### Map
 
 ```go
-// See in this README and in stream_test.go for "functionTimesTwo()"
+// See in this README and in helpers_test.go for "functionTimesTwo()"
 NewSet().
     Insert(EntryInt(1)).
     Insert(EntryInt(2)).
@@ -134,7 +134,7 @@ NewSet().
 #### Filter
 
 ```go
-// See stream_test.go for "newEntryIntEqualsTo()"
+// See helpers_test.go for "newEntryIntEqualsTo()"
 NewSet().
     Insert(EntryInt(1)).
     Insert(EntryInt(2)).
@@ -148,7 +148,7 @@ NewSet().
 #### Reduce
 
 ```go
-// See stream_test.go for "concatenateStringsBiFunc()"
+// See helpers_test.go for "concatenateStringsBiFunc()"
 NewSet().
     Insert(EntryString("four")).
     Insert(EntryString("twelve")).
