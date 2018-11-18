@@ -145,3 +145,27 @@ func TestEntrySliceIterator_Size(t *testing.T) {
 		})
 	}
 }
+
+func TestEntrySliceIterator_Reverse(t *testing.T) {
+	panic("not yet written")
+	type fields struct {
+		slice []hamt.Entry
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   Iterator
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			si := EntrySliceIterator{
+				slice: tt.fields.slice,
+			}
+			if got := si.Reverse(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("EntrySliceIterator.Reverse() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

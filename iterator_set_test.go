@@ -144,3 +144,27 @@ func TestSetIterator_Size(t *testing.T) {
 		})
 	}
 }
+
+func TestSetIterator_Reverse(t *testing.T) {
+	panic("not yet written")
+	type fields struct {
+		set Set
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   Iterator
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			si := SetIterator{
+				set: tt.fields.set,
+			}
+			if got := si.Reverse(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("SetIterator.Reverse() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
