@@ -25,14 +25,14 @@ func NewMap() Map {
 // EntrySet returns a Set of MapEntry's from the (k, v) pairs contained in this map.
 // Since EntrySet returns a Set, it can be streamed with Set.Stream().
 func (m Map) EntrySet() Set {
-	s := Set{}
+	s := NewHamtSet()
 
 	subMap := m.myMap
 	for subMap.Size() != 0 {
 		var k2 hamt.Entry
 		var v2 interface{}
 		k2, v2, subMap = subMap.FirstRest()
-		s = s.Insert(MapEntry{k2, v2})
+		s = s.Insert(MapEntry{k2, v2}).(HamtSet)
 	}
 	return s
 }
@@ -43,13 +43,13 @@ func (m Map) EntrySet() Set {
 // multiple times. This could possibly be implemented via []interface{}?
 // It also could be better to use the BiStream() proposed in this file.
 func (m Map) KeySet() Set {
-	s := Set{}
+	s := NewHamtSet()
 
 	subMap := m.myMap
 	for subMap.Size() != 0 {
 		var k2 hamt.Entry
 		k2, _, subMap = subMap.FirstRest()
-		s = s.Insert(k2)
+		s = s.Insert(k2).(HamtSet)
 	}
 	return s
 }

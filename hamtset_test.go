@@ -7,39 +7,39 @@ import (
 	"github.com/raviqqe/hamt"
 )
 
-func TestSet_Stream(t *testing.T) {
+func TestHamtSet_Stream(t *testing.T) {
 	tests := []struct {
 		name string
-		set  Set
+		set  HamtSet
 		want Stream
 	}{
 		{
 			name: "Should return an empty stream when empty set",
-			set:  NewSet(),
+			set:  NewHamtSet(),
 			want: NewStream(
 				NewSetIterator(
-					NewSet())),
+					NewHamtSet())),
 		},
 		{
 			name: "Should return value when one value set",
-			set:  NewSet().Insert(EntryInt(1)),
+			set:  NewHamtSet().Insert(EntryInt(1)).(HamtSet),
 			want: NewStream(
 				NewSetIterator(
-					NewSet().
+					NewHamtSet().
 						Insert(EntryInt(1)))),
 		},
 		{
-			name: "Should return values in same order when three value set with operations",
-			set: NewSet().
+			name: "Should return values present in the Set",
+			set: NewHamtSet().
 				Insert(EntryInt(1)).
 				Insert(EntryInt(2)).
 				Delete(EntryInt(1)).
 				Insert(EntryInt(3)).
 				Insert(EntryInt(1)).
-				Insert(EntryInt(2)),
+				Insert(EntryInt(2)).(HamtSet),
 			want: NewStream(
 				NewSetIterator(
-					NewSet().
+					NewHamtSet().
 						Insert(EntryInt(2)).
 						Insert(EntryInt(3)).
 						Insert(EntryInt(1)))),
@@ -54,52 +54,52 @@ func TestSet_Stream(t *testing.T) {
 	}
 }
 
-func TestSet_Merge(t *testing.T) {
+func TestHamtSet_Merge(t *testing.T) {
 	type fields struct {
-		set Set
+		set HamtSet
 	}
 	type args struct {
-		t Set
+		t HamtSet
 	}
 	tests := []struct {
 		name   string
 		fields fields
 		args   args
-		want   Set
+		want   HamtSet
 	}{
 		{
 			name: "Should merge two excluding sets",
 			fields: fields{
-				set: NewSet().
+				set: NewHamtSet().
 					Insert(EntryInt(7)).
-					Insert(EntryInt(2)),
+					Insert(EntryInt(2)).(HamtSet),
 			},
 			args: args{
-				t: NewSet().
+				t: NewHamtSet().
 					Insert(EntryInt(3)).
-					Insert(EntryInt(9)),
+					Insert(EntryInt(9)).(HamtSet),
 			},
-			want: NewSet().
+			want: NewHamtSet().
 				Insert(EntryInt(7)).
 				Insert(EntryInt(2)).
 				Insert(EntryInt(3)).
-				Insert(EntryInt(9)),
+				Insert(EntryInt(9)).(HamtSet),
 		},
 		{
 			name: "Should merge two overlapping sets",
 			fields: fields{
-				set: NewSet().
+				set: NewHamtSet().
 					Insert(EntryInt(3)).
-					Insert(EntryInt(1)),
+					Insert(EntryInt(1)).(HamtSet),
 			},
 			args: args{
-				t: NewSet().
+				t: NewHamtSet().
 					Insert(EntryInt(3)).
-					Insert(EntryInt(1)),
+					Insert(EntryInt(1)).(HamtSet),
 			},
-			want: NewSet().
+			want: NewHamtSet().
 				Insert(EntryInt(3)).
-				Insert(EntryInt(1)),
+				Insert(EntryInt(1)).(HamtSet),
 		},
 	}
 	for _, tt := range tests {
@@ -111,28 +111,28 @@ func TestSet_Merge(t *testing.T) {
 	}
 }
 
-func TestSet_FirstRest(t *testing.T) {
+func TestHamtSet_FirstRest(t *testing.T) {
 	type fields struct {
-		set Set
+		set HamtSet
 	}
 	tests := []struct {
 		name   string
 		fields fields
 		want   hamt.Entry
-		want1  Set
+		want1  HamtSet
 	}{
 		{
 			name: "Should pop first and return rest",
 			fields: fields{
-				set: NewSet().
+				set: NewHamtSet().
 					Insert(EntryInt(3)).
 					Insert(EntryInt(2)).
-					Insert(EntryInt(7)),
+					Insert(EntryInt(7)).(HamtSet),
 			},
 			want: EntryInt(2), // note: hamt.Set entries are seemingly sorted based on their hash
-			want1: NewSet().
+			want1: NewHamtSet().
 				Insert(EntryInt(3)).
-				Insert(EntryInt(7)),
+				Insert(EntryInt(7)).(HamtSet),
 		},
 	}
 	for _, tt := range tests {
@@ -143,6 +143,43 @@ func TestSet_FirstRest(t *testing.T) {
 			}
 			if !reflect.DeepEqual(got1, tt.want1) {
 				t.Errorf("Set.FirstRest() got1 = %v, want %v", got1, tt.want1)
+			}
+		})
+	}
+}
+
+func TestHamtSet_Size(t *testing.T) {
+	type fields struct {
+		set Set
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   int
+	}{
+		{
+			name: "Should return 0 for empty Set",
+			fields: fields{
+				set: NewHamtSet(),
+			},
+			want: 0,
+		},
+		{
+			name: "Should return size",
+			fields: fields{
+				set: NewHamtSet().
+					Insert(EntryInt(7)).
+					Insert(EntryInt(6)).
+					Insert(EntryInt(1)).
+					Insert(EntryInt(2)),
+			},
+			want: 4,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.fields.set.Size(); got != tt.want {
+				t.Errorf("HamtSet.Size() = %v, want %v", got, tt.want)
 			}
 		})
 	}

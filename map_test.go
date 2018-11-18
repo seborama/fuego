@@ -455,7 +455,7 @@ func TestMap_EntrySet(t *testing.T) {
 					Insert(EntryInt(-23), "minus twenty three").
 					Insert(EntryInt(7), "seven"),
 			},
-			want: NewSet().
+			want: NewHamtSet().
 				Insert(NewMapEntry(EntryInt(3), "three")).
 				Insert(NewMapEntry(EntryInt(11), "eleven")).
 				Insert(NewMapEntry(EntryInt(12), "twelve")).
@@ -484,7 +484,7 @@ func TestMap_KeySet(t *testing.T) {
 		{
 			name:   "Should return an empty key set",
 			fields: fields{},
-			want:   NewSet(),
+			want:   NewHamtSet(),
 		},
 		{
 			name: "Should return the key set",
@@ -496,7 +496,7 @@ func TestMap_KeySet(t *testing.T) {
 					Insert(EntryInt(-23), "minus twenty three").
 					Insert(EntryInt(7), "seven"),
 			},
-			want: NewSet().
+			want: NewHamtSet().
 				Insert(EntryInt(3)).
 				Insert(EntryInt(11)).
 				Insert(EntryInt(12)).

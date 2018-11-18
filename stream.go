@@ -1,5 +1,9 @@
 package fuego
 
+import (
+	"github.com/raviqqe/hamt"
+)
+
 // Stream is a sequence of elements supporting sequential and parallel aggregate
 // operations (TODO: not yet supported).
 type Stream interface {
@@ -14,6 +18,8 @@ type Stream interface {
 	// Of(i ...interface{}) Stream
 	ForEach(consumer Consumer)
 	Reduce(f2 BiFunction) interface{}
+	LeftReduce(f2 BiFunction) interface{}
+	RightReduce(f2 BiFunction) interface{}
 }
 
 // ReferenceStream is a simple implementation of a Stream.
@@ -32,25 +38,25 @@ func NewStream(it Iterator) Stream {
 // Map returns a stream consisting of the results of applying the given
 // function to the elements of this stream.
 func (rp ReferenceStream) Map(mapper Function) Stream {
-	s := []interface{}{}
+	s := []hamt.Entry{}
 	for it := rp.iterator; it != nil; it = it.Forward() {
-		s = append(s, mapper(it.Value()))
+		s = append(s, mapper(it.Value()).(hamt.Entry))
 	}
 
-	return NewStream(NewSliceIterator(s))
+	return NewStream(NewEntrySliceIterator(s))
 }
 
 // Filter returns a stream consisting of the elements of this stream that match
 // the given predicate.
 func (rp ReferenceStream) Filter(predicate Predicate) Stream {
-	s := []interface{}{}
+	s := []hamt.Entry{}
 	for it := rp.iterator; it != nil; it = it.Forward() {
 		if predicate(it.Value()) {
-			s = append(s, it.Value())
+			s = append(s, it.Value().(hamt.Entry))
 		}
 	}
 
-	return NewStream(NewSliceIterator(s)) // TODO remove SliceIterator??
+	return NewStream(NewEntrySliceIterator(s)) // TODO remove SliceIterator??
 }
 
 // ForEach executes the given function for each entry in this stream.
@@ -60,9 +66,9 @@ func (rp ReferenceStream) ForEach(consumer Consumer) {
 	}
 }
 
-// Reduce accumulates the elements of this Set by
-// applying the given function
-func (rp ReferenceStream) Reduce(f2 BiFunction) interface{} {
+// LeftReduce accumulates the elements of this Set by
+// applying the given function.
+func (rp ReferenceStream) LeftReduce(f2 BiFunction) interface{} {
 	if rp.iterator.Size() == 0 {
 		return nil
 	}
@@ -72,4 +78,16 @@ func (rp ReferenceStream) Reduce(f2 BiFunction) interface{} {
 		res = f2(res, it.Value())
 	}
 	return res
+}
+
+// Reduce is an alias for LeftReduce.
+func (rp ReferenceStream) Reduce(f2 BiFunction) interface{} {
+	return rp.LeftReduce(f2)
+}
+
+// RightReduce accumulates the elements of this Set by
+// applying the given function
+func (rp ReferenceStream) RightReduce(f2 BiFunction) interface{} {
+	reverse := NewStream(rp.iterator.Reverse())
+	return reverse.LeftReduce(f2)
 }

@@ -22,7 +22,7 @@ func ExampleFunction() {
 // There are more interesting examples through the code.
 // Search for `BiFunction` or the BiFunction signature.
 func ExampleBiFunction() {
-	res := fuego.NewSet().
+	res := fuego.NewHamtSet().
 		Insert(EntryString("four")).
 		Insert(EntryString("twelve")).
 		Insert(EntryString("one")).

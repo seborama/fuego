@@ -42,7 +42,7 @@ Have fun!!
 
 Set is based on hamt.Set and entries must implement interface `hamt.Entry`.
 
-This is an elegant solution from [Yota Toyama](https://github.com/raviqqe) that somewhat mimics generics: the type can be anything so long as it respects the simple behaviour of `hamt.Entry`.
+This is an elegant solution from [Yota Toyama](https://github.com/raviqqe): the type can be anything so long as it respects the simple behaviour of `hamt.Entry`.
 
 An example `hamt.Entry` implementation called `EntryInt` is provided in [entry_test.go](entry_test.go).
 
