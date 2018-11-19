@@ -144,3 +144,57 @@ func TestSetIterator_Size(t *testing.T) {
 		})
 	}
 }
+
+func TestSetIterator_Reverse(t *testing.T) {
+	type fields struct {
+		set Set
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   Iterator
+	}{
+		{
+			name: "Should provide an empty set when no data exist",
+			fields: fields{
+				set: NewHamtSet(),
+			},
+			want: NewSetIterator(NewOrderedSet()),
+		},
+		{
+			name: "Should provide a same set for a single entry set",
+			fields: fields{
+				set: NewHamtSet().
+					Insert(EntryInt(1)),
+			},
+			want: NewSetIterator(NewOrderedSet().
+				Insert(EntryInt(1))),
+		},
+		{
+			name: "Should provide reverse set",
+			fields: fields{
+				// reminder: hamt.Set is unnaturally ordered: 1, 2, 6, 7
+				set: NewHamtSet().
+					Insert(EntryInt(7)).
+					Insert(EntryInt(6)).
+					Insert(EntryInt(1)).
+					Insert(EntryInt(2)),
+			},
+			want: NewSetIterator(NewOrderedSet().
+				Insert(EntryInt(7)).
+				Insert(EntryInt(6)).
+				Insert(EntryInt(2)).
+				Insert(EntryInt(1))),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			si := SetIterator{
+				set: tt.fields.set,
+			}
+			if got := si.Reverse(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("SetIterator.Reverse() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

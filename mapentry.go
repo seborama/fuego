@@ -28,7 +28,8 @@ func (me MapEntry) Equal(e hamt.Entry) bool {
 	return me.Hash() == e.Hash()
 }
 
-// DeepEqual compares the key and value of this MapEntry with those of the given MapEntry.
+// DeepEqual compares the key and value of this MapEntry with those
+// of the given MapEntry.
 func (me MapEntry) DeepEqual(o MapEntry) bool {
 	return me.K == o.K && me.V == o.V
 }

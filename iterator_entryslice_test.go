@@ -145,3 +145,58 @@ func TestEntrySliceIterator_Size(t *testing.T) {
 		})
 	}
 }
+
+func TestEntrySliceIterator_Reverse(t *testing.T) {
+	type fields struct {
+		slice []hamt.Entry
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   Iterator
+	}{
+		{
+			name: "Should provide an empty set when no data exist",
+			fields: fields{
+				slice: []hamt.Entry{},
+			},
+			want: NewEntrySliceIterator(
+				[]hamt.Entry{}),
+		},
+		{
+			name: "Should provide a same set for a single entry set",
+			fields: fields{
+				slice: []hamt.Entry{EntryInt(1)},
+			},
+			want: NewEntrySliceIterator(
+				[]hamt.Entry{
+					EntryInt(1)}),
+		},
+		{
+			name: "Should provide reverse set",
+			fields: fields{
+				slice: []hamt.Entry{
+					EntryInt(7),
+					EntryInt(6),
+					EntryInt(1),
+					EntryInt(2)},
+			},
+			want: NewEntrySliceIterator(
+				[]hamt.Entry{
+					EntryInt(2),
+					EntryInt(1),
+					EntryInt(6),
+					EntryInt(7)}),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			si := EntrySliceIterator{
+				slice: tt.fields.slice,
+			}
+			if got := si.Reverse(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("EntrySliceIterator.Reverse() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

@@ -272,3 +272,75 @@ func TestReferenceStream_RightReduce(t *testing.T) {
 		})
 	}
 }
+
+func TestReferenceStream_Intersperse(t *testing.T) {
+	type fields struct {
+		iterator Iterator
+	}
+	type args struct {
+		e hamt.Entry
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   Stream
+	}{
+		{
+			name:   "Should return a Stream of nil",
+			fields: fields{iterator: nil},
+			args: args{
+				e: EntryString(" - "),
+			},
+			want: NewStream(
+				NewEntrySliceIterator([]hamt.Entry{})),
+		},
+		{
+			name: "Should return the original Set when it has a single value",
+			fields: fields{
+				iterator: NewSetIterator(NewHamtSet().
+					Insert(EntryString("four")))},
+			args: args{
+				e: EntryString(" - "),
+			},
+			want: NewStream(
+				NewEntrySliceIterator([]hamt.Entry{
+					EntryString("four")})),
+		},
+		{
+			name: "Should return the Set with given value interspersed",
+			fields: fields{
+				iterator: NewSetIterator(NewOrderedSet().
+					Insert(EntryString("four")).
+					Insert(EntryString("twelve")).
+					Insert(EntryString("one")).
+					Insert(EntryString("six")).
+					Insert(EntryString("three"))),
+			},
+			args: args{
+				e: EntryString(" - "),
+			},
+			want: NewStream(
+				NewEntrySliceIterator([]hamt.Entry{
+					EntryString("four"),
+					EntryString(" - "),
+					EntryString("twelve"),
+					EntryString(" - "),
+					EntryString("one"),
+					EntryString(" - "),
+					EntryString("six"),
+					EntryString(" - "),
+					EntryString("three")})),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rp := ReferenceStream{
+				iterator: tt.fields.iterator,
+			}
+			if got := rp.Intersperse(tt.args.e); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ReferenceStream.Intersperse() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
