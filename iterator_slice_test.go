@@ -130,7 +130,6 @@ func TestSliceIterator_Size(t *testing.T) {
 }
 
 func TestSliceIterator_Reverse(t *testing.T) {
-	panic("not yet written")
 	type fields struct {
 		slice []interface{}
 	}
@@ -139,7 +138,27 @@ func TestSliceIterator_Reverse(t *testing.T) {
 		fields fields
 		want   Iterator
 	}{
-		// TODO: Add test cases.
+		{
+			name: "Should provide an empty set when no data exist",
+			fields: fields{
+				slice: []interface{}{},
+			},
+			want: NewSliceIterator([]interface{}{}),
+		},
+		{
+			name: "Should provide a same set for a single entry set",
+			fields: fields{
+				slice: []interface{}{1},
+			},
+			want: NewSliceIterator([]interface{}{1}),
+		},
+		{
+			name: "Should provide reverse set",
+			fields: fields{
+				slice: []interface{}{7, 6, 1, 2},
+			},
+			want: NewSliceIterator([]interface{}{2, 1, 6, 7}),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
