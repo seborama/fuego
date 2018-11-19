@@ -48,7 +48,7 @@ An example `hamt.Entry` implementation called `EntryInt` is provided in [entry_t
 
 ```go
 // See entry_test.go for "EntryInt"
-NewSet().
+NewOrderedSet().
     Insert(EntryInt(1)).
     Insert(EntryInt(2)).
     Delete(EntryInt(1)).
@@ -94,6 +94,12 @@ See [iterator.go](iterator.go) for several convenience implementations of iterat
 - NewHamtSetIterator
 - NewOrderedSetIterator
 
+Iterator supports:
+- Forward
+- Value
+- Reverse
+- Size
+
 ```go
 NewSliceIterator([]interface{}{2, 3}) // returns an Iterator over []interface{2, 3}
 
@@ -114,7 +120,7 @@ NewStream(
 ```go
 NewStream(
     NewSetIterator(
-        NewSet().
+        NewOrderedSet().
             Insert(EntryInt(1)).
             Insert(EntryInt(2))))
 ```
@@ -123,7 +129,7 @@ NewStream(
 
 ```go
 // See in this README and in helpers_test.go for "functionTimesTwo()"
-NewSet().
+NewOrderedSet().
     Insert(EntryInt(1)).
     Insert(EntryInt(2)).
     Insert(EntryInt(3)).
@@ -136,7 +142,7 @@ NewSet().
 
 ```go
 // See helpers_test.go for "newEntryIntEqualsTo()"
-NewSet().
+NewOrderedSet().
     Insert(EntryInt(1)).
     Insert(EntryInt(2)).
     Insert(EntryInt(3)).
@@ -150,7 +156,7 @@ NewSet().
 
 ```go
 // See helpers_test.go for "concatenateStringsBiFunc()"
-NewSet().
+NewOrderedSet().
     Insert(EntryString("four")).
     Insert(EntryString("twelve")).
     Insert(EntryString("one")).
@@ -170,13 +176,25 @@ computeSumTotal := func(value interface{}) {
     total += int(value.(EntryInt).Value())
 }
 
-NewSet().
+NewOrderedSet().
     Insert(EntryInt(1)).
     Insert(EntryInt(2)).
     Insert(EntryInt(3)).
     Stream().
     ForEach(calculateSumTotal)
 // total == 6
+```
+
+#### Intersperse
+
+```go
+NewOrderedSet().
+    Insert(EntryString("three")).
+    Insert(EntryString("two")).
+    Insert(EntryString("four")).
+    Stream().
+    Intersperse(EntryString(" - "))
+// "three - two - four"
 ```
 
 ### Predicates

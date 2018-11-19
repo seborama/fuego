@@ -4,7 +4,6 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/seborama/fuego"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -66,7 +65,7 @@ func TestSliceIterator_Value(t *testing.T) {
 			fields: fields{
 				slice: []interface{}{},
 			},
-			wantErr: fuego.PanicNoSuchElement,
+			wantErr: PanicNoSuchElement,
 		},
 		{
 			name: "Should return the current value",

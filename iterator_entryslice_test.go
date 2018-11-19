@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/raviqqe/hamt"
-	"github.com/seborama/fuego"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -75,7 +74,7 @@ func TestEntrySliceIterator_Value(t *testing.T) {
 			fields: fields{
 				slice: []hamt.Entry{},
 			},
-			wantErr: fuego.PanicNoSuchElement,
+			wantErr: PanicNoSuchElement,
 		},
 		{
 			name: "Should return the current value",
