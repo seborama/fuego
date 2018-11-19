@@ -1,0 +1,5 @@
+{
+  "Enable": ["deadcode", "gochecknoglobals", "gochecknoinits", "lll", "megacheck", "nakedret", "test", "testify", "unparam", "unconvert"],
+  "cyclo-over": 10,
+  "deadline": "120s"
+}

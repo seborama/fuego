@@ -129,7 +129,8 @@ func TestHamtSet_FirstRest(t *testing.T) {
 					Insert(EntryInt(2)).
 					Insert(EntryInt(7)).(HamtSet),
 			},
-			want: EntryInt(2), // note: hamt.Set entries are seemingly sorted based on their hash
+			// note: hamt.Set entries are seemingly sorted based on their hash
+			want: EntryInt(2),
 			want1: NewHamtSet().
 				Insert(EntryInt(3)).
 				Insert(EntryInt(7)).(HamtSet),

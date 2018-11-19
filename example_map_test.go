@@ -30,7 +30,8 @@ func ExampleMap_EntrySet_stream() {
 	// res={iterator:{slice:[{K:2 V:two} {K:4 V:four} {K:6 V:six} {K:8 V:eight}]}}
 }
 
-// ExampleMap_KeySet_Stream shows how to create a Map, add entries to it and stream filter the
+// ExampleMap_KeySet_Stream shows how to create a Map,
+// add entries to it and stream filter the
 // even-numbered keys out of it using a Predicate.
 func ExampleMap_KeySet_stream() {
 	m := fuego.NewMap().

@@ -22,7 +22,8 @@ func NewMap() Map {
 // 	return NewStream(NewMapIterator(m))
 // }
 
-// EntrySet returns a Set of MapEntry's from the (k, v) pairs contained in this map.
+// EntrySet returns a Set of MapEntry's from the (k, v) pairs contained
+// in this map.
 // Since EntrySet returns a Set, it can be streamed with Set.Stream().
 func (m Map) EntrySet() Set {
 	s := NewHamtSet()
@@ -109,7 +110,8 @@ func (m Map) FindKey(k hamt.Entry) interface{} {
 // It returns nil if no value is found.
 // func (m Map) FindValue(k hamt.Entry) interface{} {
 // TODO implement.
-// NOTE this would have to return a Set of values, but Set only accepts Entry so the values will have to be wrapped
+// NOTE this would have to return a Set of values, but Set only
+// accepts Entry so the values will have to be wrapped
 // }
 
 // Has returns true if a key-value pair corresponding with a given key is

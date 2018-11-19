@@ -20,6 +20,7 @@ type Stream interface {
 	Reduce(f2 BiFunction) interface{}
 	LeftReduce(f2 BiFunction) interface{}
 	RightReduce(f2 BiFunction) interface{}
+	Intersperse(e hamt.Entry) Stream
 }
 
 // ReferenceStream is a simple implementation of a Stream.
@@ -86,8 +87,26 @@ func (rp ReferenceStream) Reduce(f2 BiFunction) interface{} {
 }
 
 // RightReduce accumulates the elements of this Set by
-// applying the given function
+// applying the given function.
 func (rp ReferenceStream) RightReduce(f2 BiFunction) interface{} {
 	reverse := NewStream(rp.iterator.Reverse())
 	return reverse.LeftReduce(f2)
+}
+
+// Intersperse inserts an element between all elements of this Stream.
+func (rp ReferenceStream) Intersperse(e hamt.Entry) Stream {
+	if rp.iterator == nil || rp.iterator.Size() == 0 {
+		return NewStream(NewEntrySliceIterator([]hamt.Entry{}))
+	}
+
+	s := make([]hamt.Entry, rp.iterator.Size()*2-1)
+
+	for it, idx := rp.iterator, 0; it != nil; it, idx = it.Forward(), idx+1 {
+		s[2*idx] = it.Value().(hamt.Entry)
+		if idx > 0 {
+			s[2*idx-1] = e
+		}
+	}
+
+	return NewStream(NewEntrySliceIterator(s))
 }

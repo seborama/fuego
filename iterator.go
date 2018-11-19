@@ -62,7 +62,8 @@ func (si SetIterator) Reverse() Iterator {
 	}
 }
 
-// Value returns the element of the collection currently pointed to by the Iterator.
+// Value returns the element of the collection currently pointed
+// to by the Iterator.
 func (si SetIterator) Value() interface{} {
 	if si.Size() == 0 {
 		panic(PanicNoSuchElement)
@@ -115,7 +116,8 @@ func (si SliceIterator) Reverse() Iterator {
 	}
 }
 
-// Value returns the element of the collection currently pointed to by the Iterator.
+// Value returns the element of the collection currently pointed
+// to by the Iterator.
 func (si SliceIterator) Value() interface{} {
 	if si.slice == nil || len(si.slice) == 0 {
 		panic(PanicNoSuchElement)
@@ -167,7 +169,8 @@ func (si EntrySliceIterator) Reverse() Iterator {
 	}
 }
 
-// Value returns the element of the collection currently pointed to by the Iterator.
+// Value returns the element of the collection currently pointed
+// to by the Iterator.
 func (si EntrySliceIterator) Value() interface{} {
 	if si.slice == nil || len(si.slice) == 0 {
 		panic(PanicNoSuchElement)
