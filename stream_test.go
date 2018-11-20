@@ -344,3 +344,50 @@ func TestReferenceStream_Intersperse(t *testing.T) {
 		})
 	}
 }
+
+func TestReferenceStream_GroupBy(t *testing.T) {
+	type fields struct {
+		iterator Iterator
+	}
+	type args struct {
+		classifier Function
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   Map
+	}{
+		{
+			// List.of(1, 2, 3, 4).groupBy(i -> i % 2);
+			name: "Should group by odd / even numbers",
+			fields: fields{
+				iterator: NewSetIterator(NewOrderedSet().
+					Insert(EntryInt(1)).
+					Insert(EntryInt(2)).
+					Insert(EntryInt(3)).
+					Insert(EntryInt(4))),
+			},
+			args: args{
+				classifier: func(i interface{}) interface{} {
+					return i.(EntryInt).Value() % 2
+				},
+			},
+			want: NewHamtMap().
+				Insert(EntryInt(0), EntryInt(2)).
+				Insert(EntryInt(0), EntryInt(4)).
+				Insert(EntryInt(1), EntryInt(1)).
+				Insert(EntryInt(1), EntryInt(3)),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rp := ReferenceStream{
+				iterator: tt.fields.iterator,
+			}
+			if got := rp.GroupBy(tt.args.classifier); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ReferenceStream.GroupBy() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

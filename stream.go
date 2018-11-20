@@ -20,7 +20,7 @@ type Stream interface {
 	LeftReduce(f2 BiFunction) interface{}
 	RightReduce(f2 BiFunction) interface{}
 	Intersperse(e hamt.Entry) Stream
-	//GroupBy(classifier Function) Map // Need to implement OrderedMap (if this useful??)
+	GroupBy(classifier Function) Map
 }
 
 // ReferenceStream is a simple implementation of a Stream.
@@ -109,4 +109,10 @@ func (rp ReferenceStream) Intersperse(e hamt.Entry) Stream {
 	}
 
 	return NewStream(NewEntrySliceIterator(s))
+}
+
+// GroupBy groups the elements of this Stream by classifying them.
+func (rp ReferenceStream) GroupBy(classifier Function) Map {
+	// Need to implement OrderedMap (if this useful??)
+	return OrderedMap{}
 }
