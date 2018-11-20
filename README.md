@@ -38,9 +38,11 @@ The tests form the best source of documentation. Fuego comes with a good collect
 
 Have fun!!
 
-### Set
+### HamtSet
 
-Set is based on hamt.Set and entries must implement interface `hamt.Entry`.
+`HamtSet` is based on hamt.Set and entries must implement interface `hamt.Entry`.
+
+It is an unordered collection, yet unnaturally sorted (i.e. sorting is based on the hash of the `hamt.Entry`).
 
 This is an elegant solution from [Yota Toyama](https://github.com/raviqqe): the type can be anything so long as it respects the simple behaviour of `hamt.Entry`.
 
@@ -48,7 +50,7 @@ An example `hamt.Entry` implementation called `EntryInt` is provided in [entry_t
 
 ```go
 // See entry_test.go for "EntryInt"
-NewOrderedSet().
+NewHamtSet().
     Insert(EntryInt(1)).
     Insert(EntryInt(2)).
     Delete(EntryInt(1)).
@@ -58,11 +60,17 @@ NewOrderedSet().
 
 Uses of streams with Sets are also available in [example_map_test.go](example_map_test.go).
 
-### Map
+### OrderedSet
 
-As with Set, Map is based on hamt.Map and entries must implement interface `hamt.Entry` for its keys but values can be anything (`interface{}`).
+This is an **ordered** implementation of a `Set`.
 
-See [example_map_test.go](example_map_test.go) for more details of an example of Map with Stream and Filter combined together to extract entries which keys are an even number.
+### HamtMap
+
+As with `HamtSet`, `HamtMap` is based on hamt.Map and entries must implement interface `hamt.Entry` for its keys but values can be anything (`interface{}`).
+
+It is an unordered collection, yet unnaturally sorted (i.e. sorting is based on the hash of the `hamt.Entry` keys).
+
+See [example_map_test.go](example_map_test.go) for more details of an example of `HamtMap` with Stream and Filter combined together to extract entries which keys are an even number.
 
 ### Tuple
 
