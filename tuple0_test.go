@@ -1,7 +1,6 @@
 package fuego
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
 )
@@ -27,18 +26,10 @@ func TestTuple0_Hash(t *testing.T) {
 	}
 }
 
-func Test_Something(t *testing.T) {
-	st := []Tuple{Tuple0{}, Tuple1{E1: EntryInt(3)}}
-	for _, tu := range st {
-		tuple := Tuple(tu)
-		fmt.Printf("DEBUG - %v\n", tuple.Equal(Tuple1{E1: EntryInt(3)}))
-	}
-}
-
 func TestTuple0_Equal(t *testing.T) {
 	refTuple := Tuple0{}
 	type args struct {
-		o interface{}
+		o Tuple
 	}
 	tests := []struct {
 		name string
@@ -96,7 +87,7 @@ func TestTuple0_ToSet(t *testing.T) {
 		want Set
 	}{
 		{
-			name: "Should return 1 for Tuple0",
+			name: "Should return empty set for Tuple0",
 			t:    Tuple0{},
 			want: NewOrderedSet(),
 		},

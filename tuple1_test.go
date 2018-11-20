@@ -1,10 +1,10 @@
 package fuego
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/raviqqe/hamt"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestTuple1_Hash(t *testing.T) {
@@ -12,31 +12,25 @@ func TestTuple1_Hash(t *testing.T) {
 		E1 hamt.Entry
 	}
 	tests := []struct {
-		name      string
-		fields    fields
-		want      uint32
-		wantPanic bool
+		name   string
+		fields fields
+		want   uint32
 	}{
 		{
-			name:      "Should panic for nil value Tuple1",
-			fields:    fields{E1: nil},
-			wantPanic: true,
+			name:   "Should panic for nil value Tuple1",
+			fields: fields{E1: nil},
+			want:   0,
 		},
 		{
-			name:      `Should return 1 for Tuple1{"hello"}`,
-			fields:    fields{E1: EntryString("hello")},
-			want:      907060870,
-			wantPanic: false,
+			name:   `Should return hash for Tuple1`,
+			fields: fields{E1: EntryString("hello")},
+			want:   907060870,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t1 := Tuple1{
 				E1: tt.fields.E1,
-			}
-			if tt.wantPanic {
-				assert.Panics(t, func() { t1.Hash() })
-				return
 			}
 			if got := t1.Hash(); got != tt.want {
 				t.Errorf("Tuple1.Hash() = %v, want %v", got, tt.want)
@@ -50,7 +44,7 @@ func TestTuple1_Equal(t *testing.T) {
 		E1 hamt.Entry
 	}
 	type args struct {
-		o interface{}
+		o Tuple
 	}
 	tests := []struct {
 		name   string
@@ -63,7 +57,9 @@ func TestTuple1_Equal(t *testing.T) {
 			fields: fields{
 				E1: nil,
 			},
-			args: args{o: EntryString("hi")},
+			args: args{
+				o: Tuple1{
+					E1: EntryString("hi")}},
 			want: false,
 		},
 		{
@@ -75,19 +71,19 @@ func TestTuple1_Equal(t *testing.T) {
 			want: false,
 		},
 		{
-			name: "Should equal: nil == nil",
-			fields: fields{
-				E1: nil,
-			},
-			args: args{o: nil},
-			want: true,
+			name:   "Should equal: nil == nil",
+			fields: fields{E1: nil},
+			args:   args{o: nil},
+			want:   false,
 		},
 		{
 			name: "Should equal: hi == hi",
 			fields: fields{
 				E1: EntryString("hi"),
 			},
-			args: args{o: EntryString("hi")},
+			args: args{
+				o: Tuple1{
+					E1: EntryString("hi")}},
 			want: true,
 		},
 		{
@@ -95,7 +91,8 @@ func TestTuple1_Equal(t *testing.T) {
 			fields: fields{
 				E1: EntryString("hi"),
 			},
-			args: args{o: EntryString("bye")},
+			args: args{
+				o: Tuple1{E1: EntryString("bye")}},
 			want: false,
 		},
 	}
@@ -111,48 +108,57 @@ func TestTuple1_Equal(t *testing.T) {
 	}
 }
 
-// func TestTuple1_Arity(t *testing.T) {
-// 	type fields struct {
-// 		E1 hamt.Entry
-// 	}
-// 	tests := []struct {
-// 		name   string
-// 		fields fields
-// 		want   int
-// 	}{
-// 		// TODO: Add test cases.
-// 	}
-// 	for _, tt := range tests {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			t := Tuple1{
-// 				E1: tt.fields.E1,
-// 			}
-// 			if got := t.Arity(); got != tt.want {
-// 				t.Errorf("Tuple1.Arity() = %v, want %v", got, tt.want)
-// 			}
-// 		})
-// 	}
-// }
+func TestTuple1_Arity(t *testing.T) {
+	type fields struct {
+		E1 hamt.Entry
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   int
+	}{
+		{
+			name:   "Should return 1 for Tuple1",
+			fields: fields{},
+			want:   1,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t1 := Tuple1{
+				E1: tt.fields.E1,
+			}
+			if got := t1.Arity(); got != tt.want {
+				t.Errorf("Tuple1.Arity() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
 
-// func TestTuple1_ToSet(t *testing.T) {
-// 	type fields struct {
-// 		E1 hamt.Entry
-// 	}
-// 	tests := []struct {
-// 		name   string
-// 		fields fields
-// 		want   Set
-// 	}{
-// 		// TODO: Add test cases.
-// 	}
-// 	for _, tt := range tests {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			t := Tuple1{
-// 				E1: tt.fields.E1,
-// 			}
-// 			if got := t.ToSet(); !reflect.DeepEqual(got, tt.want) {
-// 				t.Errorf("Tuple1.ToSet() = %v, want %v", got, tt.want)
-// 			}
-// 		})
-// 	}
-// }
+func TestTuple1_ToSet(t *testing.T) {
+	type fields struct {
+		E1 hamt.Entry
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   Set
+	}{
+		{
+			name:   "Should return 1-set with value",
+			fields: fields{E1: EntryString("hi")},
+			want: NewOrderedSet().
+				Insert(EntryString("hi")),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t1 := Tuple1{
+				E1: tt.fields.E1,
+			}
+			if got := t1.ToSet(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Tuple1.ToSet() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

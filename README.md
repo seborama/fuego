@@ -64,6 +64,15 @@ As with Set, Map is based on hamt.Map and entries must implement interface `hamt
 
 See [example_map_test.go](example_map_test.go) for more details of an example of Map with Stream and Filter combined together to extract entries which keys are an even number.
 
+### Tuple
+
+fuego provides these `Tuple`'s:
+- Tuple0
+- Tuple1
+- Tuple2
+
+The values of fuego `Tuples` is of type `hamt.Entry` but can represent any type (see EntryInt and EntryString examples).
+
 ### Functions
 
 See [example_function_test.go](example_function_test.go) for basic example uses of `Function` and `BiFunction` and the other tests / examples for more uses.
