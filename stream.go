@@ -11,7 +11,6 @@ type Stream interface {
 	Filter(predicate Predicate) Stream
 	// FlatMap(mapper Function) []interface{}
 	// None(predicate Predicate) Stream // TODO: a special case of Filter
-	// All(predicate Predicate) Stream  // TODO: a special case of Filter, opposite of None()
 	// FindFirst() Maybe
 	// FindAny() Maybe
 	// OfOne(i interface{}) Stream
@@ -21,6 +20,7 @@ type Stream interface {
 	LeftReduce(f2 BiFunction) interface{}
 	RightReduce(f2 BiFunction) interface{}
 	Intersperse(e hamt.Entry) Stream
+	//GroupBy(classifier Function) Map // Need to implement OrderedMap (if this useful??)
 }
 
 // ReferenceStream is a simple implementation of a Stream.
