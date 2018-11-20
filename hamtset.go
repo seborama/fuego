@@ -4,7 +4,7 @@ import (
 	"github.com/raviqqe/hamt"
 )
 
-// A HamtSet is a set
+// A HamtSet is an unnaturally ordered set
 type HamtSet struct {
 	set hamt.Set
 }

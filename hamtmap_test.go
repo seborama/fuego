@@ -25,14 +25,14 @@ func TestMap_Insert(t *testing.T) {
 		{
 			name: "Should Insert entries into Map",
 			fields: fields{
-				myMap: NewMap().
+				myMap: NewHamtMap().
 					Insert(EntryInt(1), "one"),
 			},
 			args: args{
 				k: EntryInt(5),
 				v: "five",
 			},
-			want: NewMap().
+			want: NewHamtMap().
 				Insert(EntryInt(1), "one").
 				Insert(EntryInt(5), "five"),
 		},
@@ -62,7 +62,7 @@ func TestMap_Delete(t *testing.T) {
 		{
 			name: "Should Insert entries into Map",
 			fields: fields{
-				myMap: NewMap().
+				myMap: NewHamtMap().
 					Insert(EntryInt(1), "one").
 					Insert(EntryInt(5), "five").
 					Insert(EntryInt(2), "two"),
@@ -70,7 +70,7 @@ func TestMap_Delete(t *testing.T) {
 			args: args{
 				k: EntryInt(5),
 			},
-			want: NewMap().
+			want: NewHamtMap().
 				Insert(EntryInt(1), "one").
 				Insert(EntryInt(2), "two"),
 		},
@@ -85,7 +85,7 @@ func TestMap_Delete(t *testing.T) {
 }
 
 func TestMap_Size(t *testing.T) {
-	m := NewMap().
+	m := NewHamtMap().
 		Insert(EntryInt(1), "one").
 		Insert(EntryInt(5), "five").
 		Insert(EntryInt(2), "two")
@@ -109,16 +109,16 @@ func TestMap_Merge(t *testing.T) {
 		{
 			name: "Should merge two excluding maps",
 			fields: fields{
-				myMap: NewMap().
+				myMap: NewHamtMap().
 					Insert(EntryInt(7), "seven").
 					Insert(EntryInt(2), "two"),
 			},
 			args: args{
-				t: NewMap().
+				t: NewHamtMap().
 					Insert(EntryInt(3), "three").
 					Insert(EntryInt(9), "nine"),
 			},
-			want: NewMap().
+			want: NewHamtMap().
 				Insert(EntryInt(7), "seven").
 				Insert(EntryInt(2), "two").
 				Insert(EntryInt(3), "three").
@@ -127,16 +127,16 @@ func TestMap_Merge(t *testing.T) {
 		{
 			name: "Should merge two overlapping sets",
 			fields: fields{
-				myMap: NewMap().
+				myMap: NewHamtMap().
 					Insert(EntryInt(3), "three").
 					Insert(EntryInt(1), "one"),
 			},
 			args: args{
-				t: NewMap().
+				t: NewHamtMap().
 					Insert(EntryInt(3), "three").
 					Insert(EntryInt(1), "one"),
 			},
-			want: NewMap().
+			want: NewHamtMap().
 				Insert(EntryInt(3), "three").
 				Insert(EntryInt(1), "one"),
 		},
@@ -166,7 +166,7 @@ func TestMap_Find(t *testing.T) {
 		{
 			name: "Should not find missing item",
 			fields: fields{
-				myMap: NewMap().
+				myMap: NewHamtMap().
 					Insert(EntryInt(3), "three").
 					Insert(EntryInt(1), "one"),
 			},
@@ -178,7 +178,7 @@ func TestMap_Find(t *testing.T) {
 		{
 			name: "Should find existing item",
 			fields: fields{
-				myMap: NewMap().
+				myMap: NewHamtMap().
 					Insert(EntryInt(3), "three").
 					Insert(EntryInt(1), "one"),
 			},
@@ -216,7 +216,7 @@ func TestMap_FindKey(t *testing.T) {
 		{
 			name: "Should not find missing item",
 			fields: fields{
-				myMap: NewMap().
+				myMap: NewHamtMap().
 					Insert(EntryInt(3), "three").
 					Insert(EntryInt(1), "one"),
 			},
@@ -228,7 +228,7 @@ func TestMap_FindKey(t *testing.T) {
 		{
 			name: "Should find existing item",
 			fields: fields{
-				myMap: NewMap().
+				myMap: NewHamtMap().
 					Insert(EntryInt(3), "three").
 					Insert(EntryInt(1), "one"),
 			},
@@ -263,7 +263,7 @@ func TestMap_Has(t *testing.T) {
 		{
 			name: "Should not have missing item",
 			fields: fields{
-				myMap: NewMap().
+				myMap: NewHamtMap().
 					Insert(EntryInt(3), "three").
 					Insert(EntryInt(1), "one"),
 			},
@@ -276,7 +276,7 @@ func TestMap_Has(t *testing.T) {
 		{
 			name: "Should have existing item",
 			fields: fields{
-				myMap: NewMap().
+				myMap: NewHamtMap().
 					Insert(EntryInt(3), "three").
 					Insert(EntryInt(1), "one"),
 			},
@@ -312,7 +312,7 @@ func TestMap_HasKey(t *testing.T) {
 		{
 			name: "Should not have missing item",
 			fields: fields{
-				myMap: NewMap().
+				myMap: NewHamtMap().
 					Insert(EntryInt(3), "three").
 					Insert(EntryInt(1), "one"),
 			},
@@ -324,7 +324,7 @@ func TestMap_HasKey(t *testing.T) {
 		{
 			name: "Should have existing item",
 			fields: fields{
-				myMap: NewMap().
+				myMap: NewHamtMap().
 					Insert(EntryInt(3), "three").
 					Insert(EntryInt(1), "one"),
 			},
@@ -359,7 +359,7 @@ func TestMap_HasValue(t *testing.T) {
 		{
 			name: "Should not have missing item",
 			fields: fields{
-				myMap: NewMap().
+				myMap: NewHamtMap().
 					Insert(EntryInt(3), "three").
 					Insert(EntryInt(1), "one"),
 			},
@@ -371,7 +371,7 @@ func TestMap_HasValue(t *testing.T) {
 		{
 			name: "Should have existing item",
 			fields: fields{
-				myMap: NewMap().
+				myMap: NewHamtMap().
 					Insert(EntryInt(3), "three").
 					Insert(EntryInt(1), "one"),
 			},
@@ -404,7 +404,7 @@ func TestMap_FirstRest(t *testing.T) {
 		{
 			name: "Should have existing item",
 			fields: fields{
-				myMap: NewMap().
+				myMap: NewHamtMap().
 					Insert(EntryInt(3), "three").
 					Insert(EntryInt(11), "eleven").
 					Insert(EntryInt(12), "twelve").
@@ -413,7 +413,7 @@ func TestMap_FirstRest(t *testing.T) {
 			},
 			want:  EntryInt(3),
 			want1: "three",
-			want2: NewMap().
+			want2: NewHamtMap().
 				Insert(EntryInt(11), "eleven").
 				Insert(EntryInt(12), "twelve").
 				Insert(EntryInt(-23), "minus twenty three").
@@ -448,7 +448,7 @@ func TestMap_EntrySet(t *testing.T) {
 		{
 			name: "Should return EntrySet",
 			fields: fields{
-				myMap: NewMap().
+				myMap: NewHamtMap().
 					Insert(EntryInt(3), "three").
 					Insert(EntryInt(11), "eleven").
 					Insert(EntryInt(12), "twelve").
@@ -482,14 +482,16 @@ func TestMap_KeySet(t *testing.T) {
 		want   Set
 	}{
 		{
-			name:   "Should return an empty key set",
-			fields: fields{},
-			want:   NewHamtSet(),
+			name: "Should return an empty key set",
+			fields: fields{
+				myMap: HamtMap{},
+			},
+			want: NewHamtSet(),
 		},
 		{
 			name: "Should return the key set",
 			fields: fields{
-				myMap: NewMap().
+				myMap: NewHamtMap().
 					Insert(EntryInt(3), "three").
 					Insert(EntryInt(11), "eleven").
 					Insert(EntryInt(12), "twelve").
@@ -506,6 +508,7 @@ func TestMap_KeySet(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			_ = tt.fields.myMap.KeySet()
 			if got := tt.fields.myMap.KeySet(); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Map.KeySet() = %v, want %v", got, tt.want)
 			}
