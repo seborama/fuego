@@ -6,13 +6,13 @@ import (
 
 // A OrderedMap is an ordered map
 type OrderedMap struct {
-	myMap map[hamt.Entry]interface{}
+	entries []MapEntry
 }
 
 // NewOrderedMap creates a new Map
 func NewOrderedMap() OrderedMap {
 	return OrderedMap{
-		myMap: map[hamt.Entry]interface{}{},
+		entries: []MapEntry{},
 	}
 }
 
@@ -26,11 +26,11 @@ func NewOrderedMap() OrderedMap {
 // in this map.
 // Since EntrySet returns a Set, it can be streamed with Set.Stream().
 func (m OrderedMap) EntrySet() Set {
-	s := NewOrderedSet()
-	for k, v := range m.myMap {
-		s = s.Insert(MapEntry{k, v}).(OrderedSet)
+	newSet := NewOrderedSet()
+	for _, e := range m.entries {
+		newSet = newSet.Insert(MapEntry{e.K, e.V}).(OrderedSet)
 	}
-	return s
+	return newSet
 }
 
 // KeySet returns a Set of keys contained in this map.
@@ -39,110 +39,129 @@ func (m OrderedMap) EntrySet() Set {
 // multiple times. This could possibly be implemented via []interface{}?
 // It also could be better to use the BiStream() proposed in this file.
 func (m OrderedMap) KeySet() Set {
-	s := NewOrderedSet()
-	for k := range m.myMap {
-		s = s.Insert(k).(OrderedSet)
+	newSet := NewOrderedSet()
+	for _, e := range m.entries {
+		newSet = newSet.Insert(e.K).(OrderedSet)
 	}
-	return s
+	return newSet
 }
 
-// Insert inserts a value into this map.
+// Insert a value into this map.
 func (m OrderedMap) Insert(k hamt.Entry, v interface{}) Map {
-	newMap := make(map[hamt.Entry]interface{}, len(m.myMap))
-	for k2, v2 := range m.myMap {
-		newMap[k2] = v2
+	newMap := make([]MapEntry, len(m.entries)+1) // keep room for the '(k,v)' if not already present
+	copy(newMap, m.entries)
+
+	foundExisting := false
+	for _, e := range m.entries {
+		if e.Equal(k) {
+			foundExisting = true
+			newMap = append(newMap, MapEntry{K: k, V: v})
+			break
+		}
 	}
-	newMap[k] = v
+	if !foundExisting {
+		newMap[len(newMap)-1] = MapEntry{K: k, V: v}
+	}
+
 	return OrderedMap{
-		myMap: newMap,
+		entries: newMap,
 	}
 }
 
-// Delete deletes a value from this map.
+// Delete a value from this map.
 func (m OrderedMap) Delete(k hamt.Entry) Map {
-	newMap := make(map[hamt.Entry]interface{}, len(m.myMap))
-	for k2, v2 := range m.myMap {
-		newMap[k2] = v2
+	for idx, e := range m.entries {
+		if e.K.Equal(k) {
+			var sCopy []MapEntry
+			if idx == 0 {
+				sCopy = make([]MapEntry, len(m.entries)-1)
+				copy(sCopy, m.entries[1:])
+			} else if idx == m.Size()-1 {
+				sCopy = make([]MapEntry, len(m.entries)-1)
+				copy(sCopy, m.entries[:idx])
+			} else {
+				sCopy = append(m.entries[:idx], m.entries[idx+1:]...)
+			}
+			return OrderedMap{
+				entries: sCopy,
+			}
+		}
 	}
-	delete(newMap, k)
+
+	// 'k' not found (includes the case where s.entries is empty)
+	sCopy := make([]MapEntry, len(m.entries))
+	copy(sCopy, m.entries)
 	return OrderedMap{
-		myMap: newMap,
+		entries: sCopy,
 	}
 }
 
 // Size of the Set.
 func (m OrderedMap) Size() int {
-	return len(m.myMap)
+	return len(m.entries)
 }
 
 // FirstRest returns a key-value pair in a map and a rest of the map.
 // This method is useful for iteration.
 // The key and value would be nil if the map is empty.
 func (m OrderedMap) FirstRest() (hamt.Entry, interface{}, Map) {
-	k, v, m2 := m.myMap.FirstRest()
-	return k, v, OrderedMap{myMap: m2}
+	sCopy := make([]MapEntry, len(m.entries)-1)
+	copy(sCopy, m.entries[1:])
+	return m.entries[0].K, m.entries[0].V, OrderedMap{entries: sCopy}
 }
 
-// Merge merges 2 maps into one.
+// Merge this map and given map.
 func (m OrderedMap) Merge(n Map) Map {
+	merge := make([]MapEntry, len(m.entries))
+	copy(merge, m.entries)
+
+	for _, entry := range n.(OrderedMap).entries {
+		merge = append(merge, entry)
+	}
 	return OrderedMap{
-		myMap: m.myMap.Merge(n.(OrderedMap).myMap),
+		entries: merge,
 	}
 }
 
-// Find finds a value corresponding to a given key from a map.
+type notFound struct{}
+
+// Get a value in this map corresponding to a given key.
 // It returns nil if no value is found.
-func (m OrderedMap) Find(k hamt.Entry) MapEntry {
-	v := m.myMap.Find(k)
-	if v == nil {
-		return MapEntry{nil, nil}
+// TODO return Maybe instead of interface{}
+func (m OrderedMap) Get(k hamt.Entry) interface{} {
+	for _, e := range m.entries {
+		if e.K.Equal(k) {
+			return e.V
+		}
 	}
 
-	return MapEntry{K: k, V: v}
+	return notFound{}
 }
-
-// FindKey finds a value corresponding to a given key from a map.
-// It returns nil if no value is found.
-func (m OrderedMap) FindKey(k hamt.Entry) interface{} {
-	return m.myMap.Find(k)
-}
-
-// FindValue finds a value corresponding to a given key from a map.
-// It returns nil if no value is found.
-// func (m OrderedMap) FindValue(k hamt.Entry) interface{} {
-// TODO implement.
-// NOTE this would have to return a Set of values, but Set only
-// accepts Entry so the values will have to be wrapped
-// }
 
 // Has returns true if a key-value pair corresponding with a given key is
 // included in a map, or false otherwise.
 func (m OrderedMap) Has(k hamt.Entry, v interface{}) bool {
-	value := m.FindKey(k)
-	if value != nil && value == v {
-		return true
+	value := m.Get(k)
+
+	if value == (notFound{}) {
+		return false
 	}
-	return false
+	return value == v
 }
 
 // HasKey returns true if a given key exists
 // in a map, or false otherwise.
 func (m OrderedMap) HasKey(k hamt.Entry) bool {
-	return m.myMap.Include(k)
+	return m.Get(k) != (notFound{})
 }
 
 // HasValue returns true if a given value exists
 // in a map, or false otherwise.
 func (m OrderedMap) HasValue(v interface{}) bool {
-	subMap := m.myMap
-
-	for subMap.Size() != 0 {
-		var v2 interface{}
-		_, v2, subMap = subMap.FirstRest()
-		if v2 == v {
+	for _, e := range m.entries {
+		if e.V == v {
 			return true
 		}
 	}
-
 	return false
 }

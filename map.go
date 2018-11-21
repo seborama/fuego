@@ -14,9 +14,7 @@ type Map interface {
 	Size() int
 	FirstRest() (hamt.Entry, interface{}, Map)
 	Merge(n Map) Map
-	Find(k hamt.Entry) MapEntry
-	FindKey(k hamt.Entry) interface{}
-	// func (m HamtMap) FindValue(k hamt.Entry) interface{}
+	Get(k hamt.Entry) interface{} // TODO return Maybe instead of interface{}
 	Has(k hamt.Entry, v interface{}) bool
 	HasKey(k hamt.Entry) bool
 	HasValue(v interface{}) bool

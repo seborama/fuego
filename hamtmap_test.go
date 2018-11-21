@@ -161,56 +161,6 @@ func TestMap_Find(t *testing.T) {
 		name   string
 		fields fields
 		args   args
-		want   MapEntry
-	}{
-		{
-			name: "Should not find missing item",
-			fields: fields{
-				myMap: NewHamtMap().
-					Insert(EntryInt(3), "three").
-					Insert(EntryInt(1), "one"),
-			},
-			args: args{
-				EntryInt(999),
-			},
-			want: MapEntry{},
-		},
-		{
-			name: "Should find existing item",
-			fields: fields{
-				myMap: NewHamtMap().
-					Insert(EntryInt(3), "three").
-					Insert(EntryInt(1), "one"),
-			},
-			args: args{
-				EntryInt(3),
-			},
-			want: MapEntry{
-				K: EntryInt(3),
-				V: "three",
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.fields.myMap.Find(tt.args.k); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Map.Find() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestMap_FindKey(t *testing.T) {
-	type fields struct {
-		myMap Map
-	}
-	type args struct {
-		k hamt.Entry
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
 		want   interface{}
 	}{
 		{
@@ -240,12 +190,13 @@ func TestMap_FindKey(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.fields.myMap.FindKey(tt.args.k); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Map.FindKey() = %v, want %v", got, tt.want)
+			if got := tt.fields.myMap.Get(tt.args.k); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Map.Find() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
+
 func TestMap_Has(t *testing.T) {
 	type fields struct {
 		myMap Map

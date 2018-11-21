@@ -26,7 +26,11 @@ func (s OrderedSet) Stream() Stream {
 func (s OrderedSet) Insert(e hamt.Entry) Set {
 	for _, entry := range s.slice {
 		if e.Equal(entry) {
-			return s
+			sCopy := make([]hamt.Entry, len(s.slice))
+			copy(sCopy, s.slice)
+			return OrderedSet{
+				slice: sCopy,
+			}
 		}
 	}
 	return OrderedSet{
@@ -38,21 +42,28 @@ func (s OrderedSet) Insert(e hamt.Entry) Set {
 func (s OrderedSet) Delete(e hamt.Entry) Set {
 	for idx, val := range s.slice {
 		if val.Equal(e) {
-			var slice []hamt.Entry
+			var sCopy []hamt.Entry
 			if idx == 0 {
-				slice = s.slice[1:]
+				sCopy = make([]hamt.Entry, len(s.slice)-1)
+				copy(sCopy, s.slice[1:])
 			} else if idx == s.Size()-1 {
-				slice = s.slice[:idx]
+				sCopy = make([]hamt.Entry, len(s.slice)-1)
+				copy(sCopy, s.slice[:idx])
 			} else {
-				slice = append(s.slice[:idx], s.slice[idx+1:]...)
+				sCopy = append(s.slice[:idx], s.slice[idx+1:]...)
 			}
 			return OrderedSet{
-				slice: slice,
+				slice: sCopy,
 			}
 		}
 	}
+
 	// 'e' not found (includes the case where s.slice is empty)
-	return s
+	sCopy := make([]hamt.Entry, len(s.slice))
+	copy(sCopy, s.slice)
+	return OrderedSet{
+		slice: sCopy,
+	}
 }
 
 // Size of the OrderedSet.
@@ -63,16 +74,20 @@ func (s OrderedSet) Size() int {
 // FirstRest returns a value in a set and a rest of the set.
 // This method is useful for iteration.
 func (s OrderedSet) FirstRest() (hamt.Entry, Set) {
-	return s.slice[0], OrderedSet{slice: s.slice[1:]}
+	sCopy := make([]hamt.Entry, len(s.slice)-1)
+	copy(sCopy, s.slice[1:])
+	return s.slice[0], OrderedSet{slice: sCopy}
 }
 
-// Merge merges 2 sets into one.
+// Merge 2 sets into one.
 func (s OrderedSet) Merge(t Set) Set {
-	merge := s
+	merge := make([]hamt.Entry, len(s.slice))
+	copy(merge, s.slice)
+
 	for _, entry := range t.(OrderedSet).slice {
-		merge = merge.Insert(entry).(OrderedSet)
+		merge = append(merge, entry)
 	}
 	return OrderedSet{
-		slice: merge.slice,
+		slice: merge,
 	}
 }

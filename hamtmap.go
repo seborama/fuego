@@ -82,45 +82,35 @@ func (m HamtMap) FirstRest() (hamt.Entry, interface{}, Map) {
 	return k, v, HamtMap{myMap: m2}
 }
 
-// Merge merges 2 maps into one.
+// Merge this map and given map.
 func (m HamtMap) Merge(n Map) Map {
 	return HamtMap{
 		myMap: m.myMap.Merge(n.(HamtMap).myMap),
 	}
 }
 
-// Find finds a value corresponding to a given key from a map.
+// Get a value in this map corresponding to a given key.
 // It returns nil if no value is found.
-func (m HamtMap) Find(k hamt.Entry) MapEntry {
-	v := m.myMap.Find(k)
-	if v == nil {
-		return MapEntry{nil, nil}
-	}
-
-	return MapEntry{K: k, V: v}
-}
-
-// FindKey finds a value corresponding to a given key from a map.
-// It returns nil if no value is found.
-func (m HamtMap) FindKey(k hamt.Entry) interface{} {
+// TODO return Maybe instead of interface{}
+func (m HamtMap) Get(k hamt.Entry) interface{} {
+	// TODO issue: cannot distinguish between "not found" and value is genuinely == nil
 	return m.myMap.Find(k)
 }
-
-// FindValue finds a value corresponding to a given key from a map.
-// It returns nil if no value is found.
-// func (m HamtMap) FindValue(k hamt.Entry) interface{} {
-// TODO implement.
-// NOTE this would have to return a Set of values, but Set only
-// accepts Entry so the values will have to be wrapped
-// }
 
 // Has returns true if a key-value pair corresponding with a given key is
 // included in a map, or false otherwise.
 func (m HamtMap) Has(k hamt.Entry, v interface{}) bool {
-	value := m.FindKey(k)
-	if value != nil && value == v {
-		return true
+	subMap := m.myMap
+
+	for subMap.Size() != 0 {
+		var k2 hamt.Entry
+		var v2 interface{}
+		k2, v2, subMap = subMap.FirstRest()
+		if k2.Equal(k) && v2 == v {
+			return true
+		}
 	}
+
 	return false
 }
 
