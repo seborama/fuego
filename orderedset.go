@@ -84,9 +84,17 @@ func (s OrderedSet) Merge(t Set) Set {
 	merge := make([]hamt.Entry, len(s.slice))
 	copy(merge, s.slice)
 
-	for _, entry := range t.(OrderedSet).slice {
-		merge = append(merge, entry)
+	sliceIndex := make(map[hamt.Entry]bool, len(s.slice))
+	for _, v := range s.slice {
+		sliceIndex[v] = true
 	}
+
+	for _, entry := range t.(OrderedSet).slice {
+		if !sliceIndex[entry] {
+			merge = append(merge, entry)
+		}
+	}
+
 	return OrderedSet{
 		slice: merge,
 	}
