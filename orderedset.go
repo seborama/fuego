@@ -22,7 +22,7 @@ func (s OrderedSet) Stream() Stream {
 		NewEntrySliceIterator(s.slice))
 }
 
-// Insert a value into a set.
+// Insert a value into this set.
 func (s OrderedSet) Insert(e hamt.Entry) Set {
 	for _, entry := range s.slice {
 		if e.Equal(entry) {
@@ -34,7 +34,7 @@ func (s OrderedSet) Insert(e hamt.Entry) Set {
 	}
 }
 
-// Delete a value from a set.
+// Delete a value from this set.
 func (s OrderedSet) Delete(e hamt.Entry) Set {
 	for idx, val := range s.slice {
 		if val.Equal(e) {
