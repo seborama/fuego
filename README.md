@@ -38,15 +38,17 @@ The tests form the best source of documentation. Fuego comes with a good collect
 
 Have fun!!
 
+### Entry
+
+`Entry` is based on `hamt.Entry`. This is an elegant solution from [Yota Toyama](https://github.com/raviqqe): the type can be anything so long as it respects the simple behaviour of `hamt.Entry`. This provides an abstraction of types yet with known behaviour.
+
 ### HamtSet
 
-`HamtSet` is based on hamt.Set and entries must implement interface `hamt.Entry`.
+`HamtSet` is based on hamt.Set and entries must implement interface `Entry`.
 
 It is an unordered collection, yet unnaturally sorted (i.e. sorting is based on the hash of the `hamt.Entry`).
 
-This is an elegant solution from [Yota Toyama](https://github.com/raviqqe): the type can be anything so long as it respects the simple behaviour of `hamt.Entry`.
-
-An example `hamt.Entry` implementation called `EntryInt` is provided in [entry_test.go](entry_test.go).
+An example `Entry` implementation called `EntryInt` is provided in [entry_test.go](entry_test.go).
 
 ```go
 // See entry_test.go for "EntryInt"
@@ -66,11 +68,15 @@ This is an **ordered** implementation of a `Set`.
 
 ### HamtMap
 
-As with `HamtSet`, `HamtMap` is based on hamt.Map and entries must implement interface `hamt.Entry` for its keys but values can be anything (`interface{}`).
+As with `HamtSet`, `HamtMap` is based on hamt.Map and entries must implement interface `Entry` for its keys but values can be anything (`interface{}`).
 
 It is an unordered collection, yet unnaturally sorted (i.e. sorting is based on the hash of the `hamt.Entry` keys).
 
 See [example_map_test.go](example_map_test.go) for more details of an example of `HamtMap` with Stream and Filter combined together to extract entries which keys are an even number.
+
+### OrderedMap
+
+This is an **ordered** implementation of a `Map`.
 
 ### Tuple
 
@@ -79,7 +85,7 @@ fuego provides these `Tuple`'s:
 - Tuple1
 - Tuple2
 
-The values of fuego `Tuples` is of type `hamt.Entry` but can represent any type (see EntryInt and EntryString examples).
+The values of fuego `Tuples` is of type `Entry` but can represent any type (see EntryInt and EntryString examples).
 
 ### Functions
 
@@ -89,7 +95,7 @@ See [example_function_test.go](example_function_test.go) for basic example uses 
 A `Function` is a normal Go function which signature is
 
 ```go
-func(i interface{}) interface{}
+func(i Entry) Entry
 ```
 
 #### BiFunction
@@ -97,7 +103,7 @@ func(i interface{}) interface{}
 A `BiFunction` is a normal Go function which signature is
 
 ```go
-func(i,j interface{}) interface{}
+func(i,j Entry) Entry
 ```
 
 `BiFunction`'s are used with Stream.Reduce() for instance, as seen in [stream_test.go](stream_test.go).
@@ -118,7 +124,7 @@ Iterator supports:
 - Size
 
 ```go
-NewSliceIterator([]interface{}{2, 3}) // returns an Iterator over []interface{2, 3}
+NewSliceIterator([]Entry{EntryInt(2), EntryInt(3)}) // returns an Iterator over []interface{2, 3}
 
 NewHamtSetIterator(NewHamtSet().
     Insert(EntryInt(2))), // returns an Iterator over a HamtSet that contains a single EntryInt(2)
@@ -213,6 +219,10 @@ NewOrderedSet().
     Intersperse(EntryString(" - "))
 // "three - two - four"
 ```
+
+#### GroupBy
+
+xxx
 
 ### Predicates
 

@@ -358,7 +358,18 @@ func TestReferenceStream_GroupBy(t *testing.T) {
 		want   Map
 	}{
 		{
-			// List.of(1, 2, 3, 4).groupBy(i -> i % 2);
+			name: "Should return empty map",
+			fields: fields{
+				iterator: NewSetIterator(NewOrderedSet()),
+			},
+			args: args{
+				classifier: func(i Entry) Entry {
+					return i.(EntryInt) % 2
+				},
+			},
+			want: NewOrderedMap(),
+		},
+		{
 			name: "Should group by odd / even numbers",
 			fields: fields{
 				iterator: NewSetIterator(NewOrderedSet().
