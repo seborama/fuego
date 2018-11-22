@@ -5,16 +5,18 @@ import (
 	"testing"
 )
 
+// intGreaterThanPredicate is a Predicate for numbers greater
+// than 'rhs'.
 func intGreaterThanPredicate(rhs int) Predicate {
-	return func(lhs interface{}) bool {
-		return lhs.(int) > rhs
+	return func(lhs Entry) bool {
+		return int(lhs.(EntryInt)) > rhs
 	}
 }
 
 func TestNotPredicate(t *testing.T) {
 	type args struct {
 		p Predicate
-		t int
+		t Entry
 	}
 	tests := []struct {
 		name string
@@ -25,7 +27,7 @@ func TestNotPredicate(t *testing.T) {
 			name: "Should negate the predicate",
 			args: args{
 				p: intGreaterThanPredicate(5),
-				t: 7,
+				t: EntryInt(7),
 			},
 			want: false,
 		},
@@ -33,7 +35,7 @@ func TestNotPredicate(t *testing.T) {
 			name: "Should negate the predicate",
 			args: args{
 				p: intGreaterThanPredicate(5),
-				t: 2,
+				t: EntryInt(2),
 			},
 			want: true,
 		},
@@ -41,7 +43,7 @@ func TestNotPredicate(t *testing.T) {
 			name: "Should return true when nil predicate",
 			args: args{
 				p: nil,
-				t: 2,
+				t: EntryInt(2),
 			},
 			want: true,
 		},
@@ -57,7 +59,7 @@ func TestNotPredicate(t *testing.T) {
 
 func TestFalsePredicate(t *testing.T) {
 	type args struct {
-		t interface{}
+		t Entry
 	}
 	tests := []struct {
 		name string
@@ -67,42 +69,28 @@ func TestFalsePredicate(t *testing.T) {
 		{
 			name: "Should return false when '123'",
 			args: args{
-				t: 123,
+				t: EntryInt(123),
 			},
 			want: false,
 		},
 		{
 			name: "Should return false when 'Hello World'",
 			args: args{
-				t: "Hello World",
+				t: EntryString("Hello World"),
 			},
 			want: false,
 		},
 		{
 			name: "Should return false when 'true'",
 			args: args{
-				t: true,
+				t: EntryBool(true),
 			},
 			want: false,
 		},
 		{
 			name: "Should return false when 'false'",
 			args: args{
-				t: false,
-			},
-			want: false,
-		},
-		{
-			name: "Should return false when '[]int{1,2,3}'",
-			args: args{
-				t: []int{1, 2, 3},
-			},
-			want: false,
-		},
-		{
-			name: "Should return false when 'struct {}'",
-			args: args{
-				t: struct{}{},
+				t: EntryBool(false),
 			},
 			want: false,
 		},
@@ -125,7 +113,7 @@ func TestFalsePredicate(t *testing.T) {
 
 func TestTruePredicate(t *testing.T) {
 	type args struct {
-		t interface{}
+		t Entry
 	}
 	tests := []struct {
 		name string
@@ -135,42 +123,28 @@ func TestTruePredicate(t *testing.T) {
 		{
 			name: "Should return true when '123'",
 			args: args{
-				t: 123,
+				t: EntryInt(123),
 			},
 			want: true,
 		},
 		{
 			name: "Should return true when 'Hello World'",
 			args: args{
-				t: "Hello World",
+				t: EntryString("Hello World"),
 			},
 			want: true,
 		},
 		{
 			name: "Should return true when 'true'",
 			args: args{
-				t: true,
+				t: EntryBool(true),
 			},
 			want: true,
 		},
 		{
 			name: "Should return true when 'false'",
 			args: args{
-				t: false,
-			},
-			want: true,
-		},
-		{
-			name: "Should return true when '[]int{1,2,3}'",
-			args: args{
-				t: []int{1, 2, 3},
-			},
-			want: true,
-		},
-		{
-			name: "Should return true when 'struct {}'",
-			args: args{
-				t: struct{}{},
+				t: EntryBool(false),
 			},
 			want: true,
 		},
@@ -195,7 +169,7 @@ func TestAndPredicate(t *testing.T) {
 	type args struct {
 		p1 Predicate
 		p2 Predicate
-		t  int
+		t  Entry
 	}
 	tests := []struct {
 		name string
@@ -207,7 +181,7 @@ func TestAndPredicate(t *testing.T) {
 			args: args{
 				p1: True,
 				p2: True,
-				t:  1,
+				t:  EntryInt(1),
 			},
 			want: true,
 		},
@@ -216,7 +190,7 @@ func TestAndPredicate(t *testing.T) {
 			args: args{
 				p1: True,
 				p2: False,
-				t:  1,
+				t:  EntryInt(1),
 			},
 			want: false,
 		},
@@ -225,7 +199,7 @@ func TestAndPredicate(t *testing.T) {
 			args: args{
 				p1: False,
 				p2: True,
-				t:  1,
+				t:  EntryInt(1),
 			},
 			want: false,
 		},
@@ -234,7 +208,7 @@ func TestAndPredicate(t *testing.T) {
 			args: args{
 				p1: False,
 				p2: False,
-				t:  1,
+				t:  EntryInt(1),
 			},
 			want: false,
 		},
@@ -243,7 +217,7 @@ func TestAndPredicate(t *testing.T) {
 			args: args{
 				p1: nil,
 				p2: True,
-				t:  1,
+				t:  EntryInt(1),
 			},
 			want: false,
 		},
@@ -252,7 +226,7 @@ func TestAndPredicate(t *testing.T) {
 			args: args{
 				p1: True,
 				p2: nil,
-				t:  1,
+				t:  EntryInt(1),
 			},
 			want: false,
 		},
@@ -261,7 +235,7 @@ func TestAndPredicate(t *testing.T) {
 			args: args{
 				p1: nil,
 				p2: False,
-				t:  1,
+				t:  EntryInt(1),
 			},
 			want: false,
 		},
@@ -270,7 +244,7 @@ func TestAndPredicate(t *testing.T) {
 			args: args{
 				p1: False,
 				p2: nil,
-				t:  1,
+				t:  EntryInt(1),
 			},
 			want: false,
 		},
@@ -279,7 +253,7 @@ func TestAndPredicate(t *testing.T) {
 			args: args{
 				p1: nil,
 				p2: nil,
-				t:  1,
+				t:  EntryInt(1),
 			},
 			want: false,
 		},
@@ -297,7 +271,7 @@ func TestOrPredicate(t *testing.T) {
 	type args struct {
 		p1 Predicate
 		p2 Predicate
-		t  int
+		t  Entry
 	}
 	tests := []struct {
 		name string
@@ -309,7 +283,7 @@ func TestOrPredicate(t *testing.T) {
 			args: args{
 				p1: True,
 				p2: True,
-				t:  1,
+				t:  EntryInt(1),
 			},
 			want: true,
 		},
@@ -318,7 +292,7 @@ func TestOrPredicate(t *testing.T) {
 			args: args{
 				p1: True,
 				p2: False,
-				t:  1,
+				t:  EntryInt(1),
 			},
 			want: true,
 		},
@@ -327,7 +301,7 @@ func TestOrPredicate(t *testing.T) {
 			args: args{
 				p1: False,
 				p2: True,
-				t:  1,
+				t:  EntryInt(1),
 			},
 			want: true,
 		},
@@ -336,7 +310,7 @@ func TestOrPredicate(t *testing.T) {
 			args: args{
 				p1: False,
 				p2: False,
-				t:  1,
+				t:  EntryInt(1),
 			},
 			want: false,
 		},
@@ -345,7 +319,7 @@ func TestOrPredicate(t *testing.T) {
 			args: args{
 				p1: nil,
 				p2: True,
-				t:  1,
+				t:  EntryInt(1),
 			},
 			want: true,
 		},
@@ -354,7 +328,7 @@ func TestOrPredicate(t *testing.T) {
 			args: args{
 				p1: True,
 				p2: nil,
-				t:  1,
+				t:  EntryInt(1),
 			},
 			want: true,
 		},
@@ -363,7 +337,7 @@ func TestOrPredicate(t *testing.T) {
 			args: args{
 				p1: nil,
 				p2: False,
-				t:  1,
+				t:  EntryInt(1),
 			},
 			want: false,
 		},
@@ -372,7 +346,7 @@ func TestOrPredicate(t *testing.T) {
 			args: args{
 				p1: False,
 				p2: nil,
-				t:  1,
+				t:  EntryInt(1),
 			},
 			want: false,
 		},
@@ -381,7 +355,7 @@ func TestOrPredicate(t *testing.T) {
 			args: args{
 				p1: nil,
 				p2: nil,
-				t:  1,
+				t:  EntryInt(1),
 			},
 			want: false,
 		},

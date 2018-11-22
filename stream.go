@@ -1,9 +1,5 @@
 package fuego
 
-import (
-	"github.com/raviqqe/hamt"
-)
-
 // Stream is a sequence of elements supporting sequential and parallel aggregate
 // operations (TODO: not yet supported).
 type Stream interface {
@@ -19,7 +15,7 @@ type Stream interface {
 	Reduce(f2 BiFunction) interface{}
 	LeftReduce(f2 BiFunction) interface{}
 	RightReduce(f2 BiFunction) interface{}
-	Intersperse(e hamt.Entry) Stream
+	Intersperse(e Entry) Stream
 	GroupBy(classifier Function) Map
 }
 
@@ -39,25 +35,25 @@ func NewStream(it Iterator) Stream {
 // Map returns a stream consisting of the results of applying the given
 // function to the elements of this stream.
 func (rp ReferenceStream) Map(mapper Function) Stream {
-	s := []hamt.Entry{}
+	s := []Entry{}
 	for it := rp.iterator; it != nil; it = it.Forward() {
-		s = append(s, mapper(it.Value()).(hamt.Entry))
+		s = append(s, mapper(it.Value()).(Entry))
 	}
 
-	return NewStream(NewEntrySliceIterator(s))
+	return NewStream(NewSliceIterator(s))
 }
 
 // Filter returns a stream consisting of the elements of this stream that match
 // the given predicate.
 func (rp ReferenceStream) Filter(predicate Predicate) Stream {
-	s := []hamt.Entry{}
+	s := []Entry{}
 	for it := rp.iterator; it != nil; it = it.Forward() {
 		if predicate(it.Value()) {
-			s = append(s, it.Value().(hamt.Entry))
+			s = append(s, it.Value().(Entry))
 		}
 	}
 
-	return NewStream(NewEntrySliceIterator(s)) // TODO remove SliceIterator??
+	return NewStream(NewSliceIterator(s)) // TODO remove SliceIterator??
 }
 
 // ForEach executes the given function for each entry in this stream.
@@ -70,7 +66,7 @@ func (rp ReferenceStream) ForEach(consumer Consumer) {
 // LeftReduce accumulates the elements of this Set by
 // applying the given function.
 func (rp ReferenceStream) LeftReduce(f2 BiFunction) interface{} {
-	if rp.iterator.Size() == 0 {
+	if rp.iterator == nil || rp.iterator.Size() == 0 {
 		return nil
 	}
 	it := rp.iterator
@@ -94,25 +90,44 @@ func (rp ReferenceStream) RightReduce(f2 BiFunction) interface{} {
 }
 
 // Intersperse inserts an element between all elements of this Stream.
-func (rp ReferenceStream) Intersperse(e hamt.Entry) Stream {
+func (rp ReferenceStream) Intersperse(e Entry) Stream {
 	if rp.iterator == nil || rp.iterator.Size() == 0 {
-		return NewStream(NewEntrySliceIterator([]hamt.Entry{}))
+		return NewStream(NewSliceIterator([]Entry{}))
 	}
 
-	s := make([]hamt.Entry, rp.iterator.Size()*2-1)
+	s := make([]Entry, rp.iterator.Size()*2-1)
 
 	for it, idx := rp.iterator, 0; it != nil; it, idx = it.Forward(), idx+1 {
-		s[2*idx] = it.Value().(hamt.Entry)
+		s[2*idx] = it.Value().(Entry)
 		if idx > 0 {
 			s[2*idx-1] = e
 		}
 	}
 
-	return NewStream(NewEntrySliceIterator(s))
+	return NewStream(NewSliceIterator(s))
 }
 
 // GroupBy groups the elements of this Stream by classifying them.
 func (rp ReferenceStream) GroupBy(classifier Function) Map {
-	// Need to implement OrderedMap (if this useful??)
-	return OrderedMap{}
+	if rp.iterator == nil || rp.iterator.Size() == 0 {
+		return NewOrderedMap()
+	}
+
+	it := rp.iterator // TODO add test to confirm the iterator resets at every call to GroupBy - Also check also other funcs in this object and all other objects that use iterator!
+	groups := map[Entry]OrderedSet{}
+	for ; it != nil; it = it.Forward() {
+		k := classifier(it.Value())
+		v := it.Value()
+		if _, ok := groups[k]; !ok {
+			groups[k] = OrderedSet{}
+		}
+		groups[k] = groups[k].Insert(v).(OrderedSet)
+	}
+
+	newMap := NewOrderedMap()
+	for k, v := range groups {
+		newMap = newMap.Insert(k, v).(OrderedMap)
+	}
+
+	return newMap
 }

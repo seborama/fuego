@@ -1,17 +1,17 @@
 package fuego
 
-import (
-	"github.com/raviqqe/hamt"
-)
+import "github.com/raviqqe/hamt"
+
+// TODO: deprecate and use Tuple2 instead??
 
 // MapEntry holds a hamt.Entry key and a value that form an entry in a Map.
 type MapEntry struct {
-	K hamt.Entry
+	K Entry
 	V interface{}
 }
 
 // NewMapEntry creates a new MapEntry.
-func NewMapEntry(k hamt.Entry, v interface{}) MapEntry {
+func NewMapEntry(k Entry, v interface{}) MapEntry {
 	return MapEntry{
 		K: k,
 		V: v,

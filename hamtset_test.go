@@ -3,8 +3,6 @@ package fuego
 import (
 	"reflect"
 	"testing"
-
-	"github.com/raviqqe/hamt"
 )
 
 func TestHamtSet_Stream(t *testing.T) {
@@ -118,7 +116,7 @@ func TestHamtSet_FirstRest(t *testing.T) {
 	tests := []struct {
 		name   string
 		fields fields
-		want   hamt.Entry
+		want   Entry
 		want1  HamtSet
 	}{
 		{

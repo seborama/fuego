@@ -3,14 +3,14 @@ package fuego_test
 import (
 	"fmt"
 
-	"github.com/seborama/fuego"
+	ƒ "github.com/seborama/fuego"
 )
 
 // ExampleMap_EntrySet_Stream shows how to create a Map, add entries
 // to it and stream filter the even-numbered keys out of it
 // using a Predicate.
 func ExampleMap_EntrySet_stream() {
-	m := fuego.NewHamtMap().
+	m := ƒ.NewHamtMap().
 		Insert(EntryInt(1), "one").
 		Insert(EntryInt(2), "two").
 		Insert(EntryInt(3), "three").
@@ -34,7 +34,7 @@ func ExampleMap_EntrySet_stream() {
 // add entries to it and stream filter the
 // even-numbered keys out of it using a Predicate.
 func ExampleMap_KeySet_stream() {
-	m := fuego.NewHamtMap().
+	m := ƒ.NewHamtMap().
 		Insert(EntryInt(1), "one").
 		Insert(EntryInt(2), "two").
 		Insert(EntryInt(3), "three").
@@ -45,8 +45,8 @@ func ExampleMap_KeySet_stream() {
 		Insert(EntryInt(8), "eight").
 		Insert(EntryInt(9), "nine")
 
-	printEntry := func(value interface{}) {
-		fmt.Printf("Number: %d\n", value.(EntryInt).Value())
+	printEntry := func(value ƒ.Entry) {
+		fmt.Printf("Number: %d\n", value)
 	}
 
 	m.KeySet().Stream().

@@ -11,7 +11,7 @@ import (
 // Search for `Function` or the Function signature.
 func ExampleFunction() {
 	timesTwoFunction := timesTwo()
-	res := timesTwoFunction(7)
+	res := timesTwoFunction(EntryInt(7))
 	fmt.Printf("res = %+v\n", res)
 
 	// Output:

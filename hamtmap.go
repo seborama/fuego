@@ -33,7 +33,7 @@ func (m HamtMap) EntrySet() Set {
 		var k2 hamt.Entry
 		var v2 interface{}
 		k2, v2, subMap = subMap.FirstRest()
-		s = s.Insert(MapEntry{k2, v2}).(HamtSet)
+		s = s.Insert(MapEntry{k2.(Entry), v2}).(HamtSet)
 	}
 	return s
 }
@@ -50,22 +50,22 @@ func (m HamtMap) KeySet() Set {
 	for subMap.Size() != 0 {
 		var k2 hamt.Entry
 		k2, _, subMap = subMap.FirstRest()
-		s = s.Insert(k2).(HamtSet)
+		s = s.Insert(k2.(Entry)).(HamtSet)
 	}
 	return s
 }
 
 // Insert inserts a value into a set.
-func (m HamtMap) Insert(k hamt.Entry, v interface{}) Map {
+func (m HamtMap) Insert(k Entry, v interface{}) Map {
 	return HamtMap{
-		myMap: m.myMap.Insert(k, v),
+		myMap: m.myMap.Insert(k.(hamt.Entry), v),
 	}
 }
 
 // Delete deletes a value from a set.
-func (m HamtMap) Delete(k hamt.Entry) Map {
+func (m HamtMap) Delete(k Entry) Map {
 	return HamtMap{
-		myMap: m.myMap.Delete(k),
+		myMap: m.myMap.Delete(k.(hamt.Entry)),
 	}
 }
 
@@ -77,9 +77,9 @@ func (m HamtMap) Size() int {
 // FirstRest returns a key-value pair in a map and a rest of the map.
 // This method is useful for iteration.
 // The key and value would be nil if the map is empty.
-func (m HamtMap) FirstRest() (hamt.Entry, interface{}, Map) {
+func (m HamtMap) FirstRest() (Entry, interface{}, Map) {
 	k, v, m2 := m.myMap.FirstRest()
-	return k, v, HamtMap{myMap: m2}
+	return k.(Entry), v, HamtMap{myMap: m2}
 }
 
 // Merge this map and given map.
@@ -92,21 +92,21 @@ func (m HamtMap) Merge(n Map) Map {
 // Get a value in this map corresponding to a given key.
 // It returns nil if no value is found.
 // TODO return Maybe instead of interface{}
-func (m HamtMap) Get(k hamt.Entry) interface{} {
+func (m HamtMap) Get(k Entry) interface{} {
 	// TODO issue: cannot distinguish between "not found" and value is genuinely == nil
-	return m.myMap.Find(k)
+	return m.myMap.Find(k.(hamt.Entry))
 }
 
 // Has returns true if a key-value pair corresponding with a given key is
 // included in a map, or false otherwise.
-func (m HamtMap) Has(k hamt.Entry, v interface{}) bool {
+func (m HamtMap) Has(k Entry, v interface{}) bool {
 	subMap := m.myMap
 
 	for subMap.Size() != 0 {
 		var k2 hamt.Entry
 		var v2 interface{}
 		k2, v2, subMap = subMap.FirstRest()
-		if k2.Equal(k) && v2 == v {
+		if k2.Equal(k.(hamt.Entry)) && v2 == v {
 			return true
 		}
 	}
@@ -116,8 +116,8 @@ func (m HamtMap) Has(k hamt.Entry, v interface{}) bool {
 
 // HasKey returns true if a given key exists
 // in a map, or false otherwise.
-func (m HamtMap) HasKey(k hamt.Entry) bool {
-	return m.myMap.Include(k)
+func (m HamtMap) HasKey(k Entry) bool {
+	return m.myMap.Include(k.(hamt.Entry))
 }
 
 // HasValue returns true if a given value exists

@@ -8,23 +8,23 @@ import (
 
 // ExamplePredicate shows how to use and combine Predicates.
 func ExamplePredicate() {
-	res := ƒ.Predicate(ƒ.False).Not()(1)
+	res := ƒ.Predicate(ƒ.False).Not()(EntryInt(1))
 	fmt.Printf("Not False == %+v\n", res)
 
-	res = ƒ.Predicate(ƒ.True).And(ƒ.False)(1)
+	res = ƒ.Predicate(ƒ.True).And(ƒ.False)(EntryInt(1))
 	fmt.Printf("True and False == %+v\n", res)
 
-	res = ƒ.Predicate(ƒ.True).Or(ƒ.False)(1)
+	res = ƒ.Predicate(ƒ.True).Or(ƒ.False)(EntryInt(1))
 	fmt.Printf("True or False == %+v\n", res)
 
 	// You can use associativity too - part 1 of 2:
 	// False And False Or True == true
-	res = ƒ.Predicate(ƒ.False).And(ƒ.False).Or(ƒ.True)(1)
+	res = ƒ.Predicate(ƒ.False).And(ƒ.False).Or(ƒ.True)(EntryInt(1))
 	fmt.Printf("False And False Or True == %+v\n", res)
 
 	// You can use associativity too - part 2 of 2:
 	// False And (False Or True) == false
-	res = ƒ.Predicate(ƒ.False).And(ƒ.Predicate(ƒ.False).Or(ƒ.True))(1)
+	res = ƒ.Predicate(ƒ.False).And(ƒ.Predicate(ƒ.False).Or(ƒ.True))(EntryInt(1))
 	fmt.Printf("False And (False Or True) == %+v\n", res)
 
 	// Output:
@@ -40,7 +40,7 @@ func ExamplePredicate() {
 func ExamplePredicate_functionPredicate() {
 	isEvenNumberPredicate := ƒ.FunctionPredicate(isEvenNumberFunction)
 
-	res := ƒ.Predicate(isEvenNumberPredicate).And(ƒ.True)(23)
+	res := ƒ.Predicate(isEvenNumberPredicate).And(ƒ.True)(EntryInt(23))
 	fmt.Printf("res = %v", res)
 
 	// Output:
@@ -51,7 +51,7 @@ func ExamplePredicate_functionPredicate() {
 // scratch.
 // Notice how we get all Predicate helpers (And, Or, Not, etc) for "free".
 func ExamplePredicate_predicate() {
-	res := ƒ.Predicate(intGreaterThanPredicate(50)).And(ƒ.True).Not()(23)
+	res := ƒ.Predicate(intGreaterThanPredicate(50)).And(ƒ.True).Not()(EntryInt(23))
 	fmt.Printf("res = %v", res)
 
 	// Output:

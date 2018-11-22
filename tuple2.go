@@ -1,10 +1,8 @@
 package fuego
 
-import "github.com/raviqqe/hamt"
-
 type Tuple2 struct {
-	E1 hamt.Entry
-	E2 hamt.Entry
+	E1 Entry
+	E2 Entry
 }
 
 func (t Tuple2) Hash() uint32 {

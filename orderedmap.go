@@ -1,9 +1,5 @@
 package fuego
 
-import (
-	"github.com/raviqqe/hamt"
-)
-
 // A OrderedMap is an ordered map
 type OrderedMap struct {
 	entries []MapEntry
@@ -47,7 +43,7 @@ func (m OrderedMap) KeySet() Set {
 }
 
 // Insert a value into this map.
-func (m OrderedMap) Insert(k hamt.Entry, v interface{}) Map {
+func (m OrderedMap) Insert(k Entry, v interface{}) Map {
 	newMap := make([]MapEntry, len(m.entries)+1) // keep room for the '(k,v)' if not already present
 	copy(newMap, m.entries)
 
@@ -69,7 +65,7 @@ func (m OrderedMap) Insert(k hamt.Entry, v interface{}) Map {
 }
 
 // Delete a value from this map.
-func (m OrderedMap) Delete(k hamt.Entry) Map {
+func (m OrderedMap) Delete(k Entry) Map {
 	for idx, e := range m.entries {
 		if e.K.Equal(k) {
 			var sCopy []MapEntry
@@ -104,7 +100,7 @@ func (m OrderedMap) Size() int {
 // FirstRest returns a key-value pair in a map and a rest of the map.
 // This method is useful for iteration.
 // The key and value would be nil if the map is empty.
-func (m OrderedMap) FirstRest() (hamt.Entry, interface{}, Map) {
+func (m OrderedMap) FirstRest() (Entry, interface{}, Map) {
 	sCopy := make([]MapEntry, len(m.entries)-1)
 	copy(sCopy, m.entries[1:])
 	return m.entries[0].K, m.entries[0].V, OrderedMap{entries: sCopy}
@@ -128,7 +124,7 @@ type notFound struct{}
 // Get a value in this map corresponding to a given key.
 // It returns nil if no value is found.
 // TODO return Maybe instead of interface{}
-func (m OrderedMap) Get(k hamt.Entry) interface{} {
+func (m OrderedMap) Get(k Entry) interface{} {
 	for _, e := range m.entries {
 		if e.K.Equal(k) {
 			return e.V
@@ -140,7 +136,7 @@ func (m OrderedMap) Get(k hamt.Entry) interface{} {
 
 // Has returns true if a key-value pair corresponding with a given key is
 // included in a map, or false otherwise.
-func (m OrderedMap) Has(k hamt.Entry, v interface{}) bool {
+func (m OrderedMap) Has(k Entry, v interface{}) bool {
 	value := m.Get(k)
 
 	if value == (notFound{}) {
@@ -151,7 +147,7 @@ func (m OrderedMap) Has(k hamt.Entry, v interface{}) bool {
 
 // HasKey returns true if a given key exists
 // in a map, or false otherwise.
-func (m OrderedMap) HasKey(k hamt.Entry) bool {
+func (m OrderedMap) HasKey(k Entry) bool {
 	return m.Get(k) != (notFound{})
 }
 

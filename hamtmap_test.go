@@ -4,7 +4,6 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/raviqqe/hamt"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -13,7 +12,7 @@ func TestMap_Insert(t *testing.T) {
 		myMap Map
 	}
 	type args struct {
-		k hamt.Entry
+		k Entry
 		v interface{}
 	}
 	tests := []struct {
@@ -51,7 +50,7 @@ func TestMap_Delete(t *testing.T) {
 		myMap Map
 	}
 	type args struct {
-		k hamt.Entry
+		k Entry
 	}
 	tests := []struct {
 		name   string
@@ -155,7 +154,7 @@ func TestMap_Find(t *testing.T) {
 		myMap Map
 	}
 	type args struct {
-		k hamt.Entry
+		k Entry
 	}
 	tests := []struct {
 		name   string
@@ -202,7 +201,7 @@ func TestMap_Has(t *testing.T) {
 		myMap Map
 	}
 	type args struct {
-		k hamt.Entry
+		k Entry
 		v interface{}
 	}
 	tests := []struct {
@@ -252,7 +251,7 @@ func TestMap_HasKey(t *testing.T) {
 		myMap Map
 	}
 	type args struct {
-		k hamt.Entry
+		k Entry
 	}
 	tests := []struct {
 		name   string
@@ -348,7 +347,7 @@ func TestMap_FirstRest(t *testing.T) {
 	tests := []struct {
 		name   string
 		fields fields
-		want   hamt.Entry
+		want   Entry
 		want1  interface{}
 		want2  Map
 	}{

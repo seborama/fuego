@@ -3,13 +3,11 @@ package fuego
 import (
 	"reflect"
 	"testing"
-
-	"github.com/raviqqe/hamt"
 )
 
 func TestTuple1_Hash(t *testing.T) {
 	type fields struct {
-		E1 hamt.Entry
+		E1 Entry
 	}
 	tests := []struct {
 		name   string
@@ -41,7 +39,7 @@ func TestTuple1_Hash(t *testing.T) {
 
 func TestTuple1_Equal(t *testing.T) {
 	type fields struct {
-		E1 hamt.Entry
+		E1 Entry
 	}
 	type args struct {
 		o Tuple
@@ -110,7 +108,7 @@ func TestTuple1_Equal(t *testing.T) {
 
 func TestTuple1_Arity(t *testing.T) {
 	type fields struct {
-		E1 hamt.Entry
+		E1 Entry
 	}
 	tests := []struct {
 		name   string
@@ -137,7 +135,7 @@ func TestTuple1_Arity(t *testing.T) {
 
 func TestTuple1_ToSet(t *testing.T) {
 	type fields struct {
-		E1 hamt.Entry
+		E1 Entry
 	}
 	tests := []struct {
 		name   string

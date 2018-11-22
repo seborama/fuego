@@ -2,13 +2,11 @@ package fuego
 
 import (
 	"testing"
-
-	"github.com/raviqqe/hamt"
 )
 
 func TestMapEntry_Hash(t *testing.T) {
 	type fields struct {
-		k hamt.Entry
+		k Entry
 		v interface{}
 	}
 	tests := []struct {
@@ -40,11 +38,11 @@ func TestMapEntry_Hash(t *testing.T) {
 
 func TestMapEntry_Equal(t *testing.T) {
 	type fields struct {
-		k hamt.Entry
+		k Entry
 		v interface{}
 	}
 	type args struct {
-		e hamt.Entry
+		e Entry
 	}
 	tests := []struct {
 		name   string
@@ -90,7 +88,7 @@ func TestMapEntry_Equal(t *testing.T) {
 
 func TestMapEntry_DeepEqual(t *testing.T) {
 	type fields struct {
-		k hamt.Entry
+		k Entry
 		v interface{}
 	}
 	type args struct {

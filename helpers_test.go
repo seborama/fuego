@@ -9,18 +9,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// EntryString is a hamt.Entry for 'int'.
+// EntryString is a ƒ.Entry for 'int'.
 type EntryInt int
 
 // Hash returns a hash for 'i'.
 func (i EntryInt) Hash() uint32 {
 	return uint32(i)
-}
-
-// Value returns the inner value of this EntryInt.
-// TODO Call this FlatMap instead?
-func (i EntryInt) Value() EntryInt {
-	return i
 }
 
 // Equal returns true if 'e' and 'i' are equal.
@@ -42,18 +36,12 @@ func TestEntryIntKey(t *testing.T) {
 	assert.Equal(t, uint32(42), EntryInt(42).Hash())
 }
 
-// EntryString is a hamt.Entry for 'string'.
+// EntryString is a ƒ.Entry for 'string'.
 type EntryString string
 
 // Hash returns a hash for 'i'.
 func (i EntryString) Hash() uint32 {
 	return crc32.ChecksumIEEE([]byte(i))
-}
-
-// Value returns the inner value of this EntryInt.
-// TODO Call this FlatMap instead?
-func (i EntryString) Value() EntryString {
-	return i
 }
 
 // Equal returns true if 'e' and 'i' are equal.
@@ -76,20 +64,20 @@ func TestEntryStringKey(t *testing.T) {
 }
 
 // isEvenNumber is a Predicate for even numbers.
-func isEvenNumber(t interface{}) bool {
-	k := (t.(ƒ.MapEntry)).K.(EntryInt)
-	return k.Value()&1 == 0
+func isEvenNumber(t ƒ.Entry) bool {
+	k := (t.(ƒ.MapEntry)).K
+	return int(k.(EntryInt))&1 == 0
 }
 
 // isOddNumber is a Predicate for odd numbers.
-func isOddNumber(t interface{}) bool {
+func isOddNumber(t ƒ.Entry) bool {
 	v := t.(EntryInt)
 	return v&1 == 0
 }
 
 // concatenateStringsBiFunc returns a fuego.BiFunction that
 // joins 'i' and 'j' together with a '-' in between.
-func concatenateStringsBiFunc(i, j interface{}) interface{} {
+func concatenateStringsBiFunc(i, j ƒ.Entry) ƒ.Entry {
 	iStr := i.(EntryString)
 	jStr := j.(EntryString)
 	return EntryString(iStr + "-" + jStr)
@@ -97,21 +85,21 @@ func concatenateStringsBiFunc(i, j interface{}) interface{} {
 
 // timesTwo returns a fuego.Function than multiplies 'i' by 2.
 func timesTwo() ƒ.Function {
-	return func(i interface{}) interface{} {
-		return (EntryInt(2 * i.(int)))
+	return func(i ƒ.Entry) ƒ.Entry {
+		return EntryInt(2 * i.(EntryInt))
 	}
 }
 
 // isEvenNumberFunction is a Function that returns true when 'i' is
 // an even number.
-func isEvenNumberFunction(i interface{}) interface{} {
-	return i.(int)&1 == 0
+func isEvenNumberFunction(i ƒ.Entry) ƒ.Entry {
+	return ƒ.EntryBool(i.(EntryInt)&1 == 0)
 }
 
-// intGreaterThanPredicate is a Predicate for numbers greater than
-// 'rhs'.
+// intGreaterThanPredicate is a Predicate for numbers greater
+// than 'rhs'.
 func intGreaterThanPredicate(rhs int) ƒ.Predicate {
-	return func(lhs interface{}) bool {
-		return lhs.(int) > rhs
+	return func(lhs ƒ.Entry) bool {
+		return int(lhs.(EntryInt)) > rhs
 	}
 }

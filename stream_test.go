@@ -4,14 +4,13 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/raviqqe/hamt"
 	"github.com/stretchr/testify/assert"
 )
 
 func functionTimesTwo() Function {
-	return func(i interface{}) interface{} {
-		num := i.(EntryInt).Value()
-		return interface{}(2 * num)
+	return func(i Entry) Entry {
+		num := int(i.(EntryInt))
+		return EntryInt(2 * num)
 	}
 }
 
@@ -35,7 +34,7 @@ func TestReferenceStream_Map(t *testing.T) {
 				mapper: functionTimesTwo(),
 			},
 			want: NewStream(
-				NewEntrySliceIterator([]hamt.Entry{})),
+				NewSliceIterator([]Entry{})),
 		},
 		{
 			name: "Should return a Stream of one double",
@@ -46,7 +45,7 @@ func TestReferenceStream_Map(t *testing.T) {
 				mapper: functionTimesTwo(),
 			},
 			want: NewStream(
-				NewEntrySliceIterator([]hamt.Entry{EntryInt(8)})),
+				NewSliceIterator([]Entry{EntryInt(8)})),
 		},
 		{
 			name: "Should return a Stream of 3 doubles",
@@ -59,7 +58,7 @@ func TestReferenceStream_Map(t *testing.T) {
 				mapper: functionTimesTwo(),
 			},
 			want: NewStream(
-				NewEntrySliceIterator([]hamt.Entry{
+				NewSliceIterator([]Entry{
 					EntryInt(2),
 					EntryInt(4),
 					EntryInt(6)})),
@@ -79,13 +78,13 @@ func TestReferenceStream_Map(t *testing.T) {
 }
 
 func entryIntEqualsTo(number EntryInt) Function {
-	return func(subject interface{}) interface{} {
+	return func(subject Entry) Entry {
 		subjectEntryInt, ok := subject.(EntryInt)
 		if !ok {
-			return false
+			return EntryBool(false)
 		}
 
-		return number.Equal(subjectEntryInt)
+		return EntryBool(number.Equal(subjectEntryInt))
 	}
 }
 
@@ -114,7 +113,7 @@ func TestReferenceStream_Filter(t *testing.T) {
 					Or(FunctionPredicate(entryIntEqualsTo(EntryInt(3)))),
 			},
 			want: NewStream(
-				NewEntrySliceIterator([]hamt.Entry{
+				NewSliceIterator([]Entry{
 					EntryInt(3),
 					EntryInt(17)})),
 		},
@@ -133,8 +132,8 @@ func TestReferenceStream_Filter(t *testing.T) {
 
 func TestReferenceStream_ForEach(t *testing.T) {
 	total := 0
-	computeSumTotal := func(value interface{}) {
-		total += int(value.(EntryInt).Value())
+	computeSumTotal := func(value Entry) {
+		total += int(value.(EntryInt))
 	}
 
 	iterator := NewSetIterator(NewHamtSet().
@@ -147,7 +146,7 @@ func TestReferenceStream_ForEach(t *testing.T) {
 }
 
 func TestReferenceStream_LeftReduce(t *testing.T) {
-	concatenateStringsBiFunc := func(i, j interface{}) interface{} {
+	concatenateStringsBiFunc := func(i, j Entry) Entry {
 		iStr := i.(EntryString)
 		jStr := j.(EntryString)
 		return EntryString(iStr + "-" + jStr)
@@ -213,7 +212,7 @@ func TestReferenceStream_LeftReduce(t *testing.T) {
 }
 
 func TestReferenceStream_RightReduce(t *testing.T) {
-	concatenateStringsBiFunc := func(i, j interface{}) interface{} {
+	concatenateStringsBiFunc := func(i, j Entry) Entry {
 		iStr := i.(EntryString)
 		jStr := j.(EntryString)
 		return EntryString(iStr + "-" + jStr)
@@ -278,7 +277,7 @@ func TestReferenceStream_Intersperse(t *testing.T) {
 		iterator Iterator
 	}
 	type args struct {
-		e hamt.Entry
+		e Entry
 	}
 	tests := []struct {
 		name   string
@@ -293,7 +292,7 @@ func TestReferenceStream_Intersperse(t *testing.T) {
 				e: EntryString(" - "),
 			},
 			want: NewStream(
-				NewEntrySliceIterator([]hamt.Entry{})),
+				NewSliceIterator([]Entry{})),
 		},
 		{
 			name: "Should return the original Set when it has a single value",
@@ -304,7 +303,7 @@ func TestReferenceStream_Intersperse(t *testing.T) {
 				e: EntryString(" - "),
 			},
 			want: NewStream(
-				NewEntrySliceIterator([]hamt.Entry{
+				NewSliceIterator([]Entry{
 					EntryString("four")})),
 		},
 		{
@@ -321,7 +320,7 @@ func TestReferenceStream_Intersperse(t *testing.T) {
 				e: EntryString(" - "),
 			},
 			want: NewStream(
-				NewEntrySliceIterator([]hamt.Entry{
+				NewSliceIterator([]Entry{
 					EntryString("four"),
 					EntryString(" - "),
 					EntryString("twelve"),
@@ -369,15 +368,20 @@ func TestReferenceStream_GroupBy(t *testing.T) {
 					Insert(EntryInt(4))),
 			},
 			args: args{
-				classifier: func(i interface{}) interface{} {
-					return i.(EntryInt).Value() % 2
+				classifier: func(i Entry) Entry {
+					return i.(EntryInt) % 2
 				},
 			},
-			want: NewHamtMap().
-				Insert(EntryInt(0), EntryInt(2)).
-				Insert(EntryInt(0), EntryInt(4)).
-				Insert(EntryInt(1), EntryInt(1)).
-				Insert(EntryInt(1), EntryInt(3)),
+			// TODO warning, weak test - GroupBy uses a Golang map which order
+			// is not guaranteed and hence the order of output of GroupBy() isn't
+			// either!
+			want: NewOrderedMap().
+				Insert(EntryInt(1), NewOrderedSet().
+					Insert(EntryInt(1)).
+					Insert(EntryInt(3))).
+				Insert(EntryInt(0), NewOrderedSet().
+					Insert(EntryInt(2)).
+					Insert(EntryInt(4))),
 		},
 	}
 	for _, tt := range tests {
