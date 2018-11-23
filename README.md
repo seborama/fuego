@@ -42,6 +42,14 @@ Have fun!!
 
 `Entry` is based on `hamt.Entry`. This is an elegant solution from [Yota Toyama](https://github.com/raviqqe): the type can be anything so long as it respects the simple behaviour of `hamt.Entry`. This provides an abstraction of types yet with known behaviour.
 
+### Maybe
+
+A `Maybe` represents an optional value.
+
+When the value is `nil`, `Maybe` is considered empty unless it was created with `Maybe_Some()` in which case it is considered to hold the `nil` value.
+
+`Maybe_None()` always produces an empty optional.
+
 ### HamtSet
 
 `HamtSet` is based on hamt.Set and entries must implement interface `Entry`.
