@@ -13,7 +13,7 @@ func NewOrderedMap() OrderedMap {
 }
 
 // BiStream returns a sequential stream with this collection as its source.
-// TODO: implement this - it will iterator through the (k,v) pairs of the Map.
+// TODO: implement this - it will iterate through the (k,v) pairs of the Map.
 // func (m OrderedMap) BiStream() BiStream {
 // 	return NewStream(NewMapIterator(m))
 // }

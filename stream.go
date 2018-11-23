@@ -6,7 +6,8 @@ type Stream interface {
 	Map(mapper Function) Stream
 	Filter(predicate Predicate) Stream
 	// FlatMap(mapper Function) []interface{}
-	// None(predicate Predicate) Stream // TODO: a special case of Filter
+	// None(predicate Predicate) bool // i.e. NoneMatch
+	// All(predicate Predicate) bool // i.e. AllMatch
 	// FindFirst() Maybe
 	// FindAny() Maybe
 	// OfOne(i interface{}) Stream
@@ -25,7 +26,6 @@ type ReferenceStream struct {
 }
 
 // NewStream creates a new Stream.
-// TODO eventually change to Spliterable?
 func NewStream(it Iterator) Stream {
 	return ReferenceStream{
 		iterator: it,
@@ -53,7 +53,7 @@ func (rp ReferenceStream) Filter(predicate Predicate) Stream {
 		}
 	}
 
-	return NewStream(NewSliceIterator(s)) // TODO remove SliceIterator??
+	return NewStream(NewSliceIterator(s))
 }
 
 // ForEach executes the given function for each entry in this stream.
