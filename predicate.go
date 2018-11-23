@@ -1,7 +1,5 @@
 package fuego
 
-import "github.com/raviqqe/hamt"
-
 // Predicate represents a predicate (boolean-valued function) of one argument.
 type Predicate func(t Entry) bool // TODO return EntryBool instead of bool??
 
@@ -35,28 +33,6 @@ func (p Predicate) Not() Predicate {
 	return func(t Entry) bool {
 		return p == nil || !p(t)
 	}
-}
-
-// EntryBool is an Entry for 'bool'.
-type EntryBool bool
-
-// Hash returns a hash for 'i'.
-func (i EntryBool) Hash() uint32 {
-	if bool(i) {
-		return 1
-	}
-	return 0
-}
-
-// Equal returns true if 'e' and 'i' are equal.
-func (i EntryBool) Equal(e hamt.Entry) bool {
-	j, ok := e.(EntryBool)
-
-	if !ok {
-		return false
-	}
-
-	return i == j
 }
 
 // FunctionPredicate creates a Predicate from a Function.

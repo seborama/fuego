@@ -169,3 +169,87 @@ func TestMapEntry_DeepEqual(t *testing.T) {
 		})
 	}
 }
+
+func TestMapEntry_EqualMapEntry(t *testing.T) {
+	type fields struct {
+		K Entry
+		V interface{}
+	}
+	type args struct {
+		ome MapEntry
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   bool
+	}{
+		{
+			name: "Should be equal",
+			fields: fields{
+				K: EntryString("Hello"),
+				V: 1234,
+			},
+			args: args{
+				ome: MapEntry{
+					K: EntryString("Hello"),
+					V: 1234,
+				},
+			},
+			want: true,
+		},
+		{
+			name: "Should differ by key",
+			fields: fields{
+				K: EntryString("World"),
+				V: 1234,
+			},
+			args: args{
+				ome: MapEntry{
+					K: EntryString("Hello"),
+					V: 1234,
+				},
+			},
+			want: false,
+		},
+		{
+			name: "Should equal when differing values but same keys",
+			fields: fields{
+				K: EntryString("Hello"),
+				V: 9876,
+			},
+			args: args{
+				ome: MapEntry{
+					K: EntryString("Hello"),
+					V: 1234,
+				},
+			},
+			want: true,
+		},
+		{
+			name: "Should differ by key and value",
+			fields: fields{
+				K: EntryString("World"),
+				V: 9876,
+			},
+			args: args{
+				ome: MapEntry{
+					K: EntryString("Hello"),
+					V: 1234,
+				},
+			},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			me := MapEntry{
+				K: tt.fields.K,
+				V: tt.fields.V,
+			}
+			if got := me.EqualMapEntry(tt.args.ome); got != tt.want {
+				t.Errorf("MapEntry.EqualMapEntry() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

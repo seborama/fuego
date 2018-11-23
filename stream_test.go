@@ -406,3 +406,31 @@ func TestReferenceStream_GroupBy(t *testing.T) {
 		})
 	}
 }
+
+func TestStream_GroupBy_IteratorResets(t *testing.T) {
+	it := NewSetIterator(NewOrderedSet().
+		Insert(EntryInt(1)).
+		Insert(EntryInt(2)).
+		Insert(EntryInt(3)).
+		Insert(EntryInt(4)))
+
+	rp := ReferenceStream{iterator: it}
+
+	expected := NewOrderedMap().
+		Insert(EntryInt(1), NewOrderedSet().
+			Insert(EntryInt(1)).
+			Insert(EntryInt(3))).
+		Insert(EntryInt(0), NewOrderedSet().
+			Insert(EntryInt(2)).
+			Insert(EntryInt(4)))
+
+	res1 := rp.GroupBy(func(i Entry) Entry {
+		return i.(EntryInt) % 2
+	})
+	assert.EqualValues(t, expected, res1, "First iteration")
+
+	res2 := rp.GroupBy(func(i Entry) Entry {
+		return i.(EntryInt) % 2
+	})
+	assert.EqualValues(t, expected, res2, "Second iteration")
+}

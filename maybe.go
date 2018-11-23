@@ -1,11 +1,12 @@
 package fuego
 
-// A Maybe is a maybe monad
+// A Maybe is a maybe monad.
 type Maybe struct {
 	value   Entry
 	isEmpty bool
 }
 
+// A Maybe_None is a Maybe that does not have a value.
 func Maybe_None() Maybe {
 	return Maybe{
 		value:   nil,
@@ -39,6 +40,7 @@ func (m Maybe) IsEmpty() bool { return m.isEmpty }
 // FlatMap   /
 // Iterator or Stream?
 
+// Get the value of this Maybe or panic if none exists.
 func (m Maybe) Get() Entry {
 	if m.IsEmpty() {
 		panic(PanicNoSuchElement)
@@ -46,6 +48,7 @@ func (m Maybe) Get() Entry {
 	return m.value
 }
 
+// GetOrElse gets the value of this Maybe or the given Entry if none exists.
 func (m Maybe) GetOrElse(e Entry) Entry {
 	if m.IsEmpty() {
 		return e
@@ -53,6 +56,7 @@ func (m Maybe) GetOrElse(e Entry) Entry {
 	return m.value
 }
 
+// GetOrElse returns this Maybe or the given Maybe if this Maybe is empty.
 func (m Maybe) OrElse(other Maybe) Maybe {
 	if m.IsEmpty() {
 		return other

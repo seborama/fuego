@@ -113,7 +113,7 @@ func (rp ReferenceStream) GroupBy(classifier Function) Map {
 		return NewOrderedMap()
 	}
 
-	it := rp.iterator // TODO add test to confirm the iterator resets at every call to GroupBy - Also check also other funcs in this object and all other objects that use iterator!
+	it := rp.iterator
 	groups := map[Entry]OrderedSet{}
 	for ; it != nil; it = it.Forward() {
 		k := classifier(it.Value())

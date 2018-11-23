@@ -94,7 +94,11 @@ func (m HamtMap) Merge(n Map) Map {
 // TODO return Maybe instead of interface{}
 func (m HamtMap) Get(k Entry) interface{} {
 	// TODO issue: cannot distinguish between "not found" and value is genuinely == nil
-	return m.myMap.Find(k.(hamt.Entry))
+	res := m.myMap.Find(k.(hamt.Entry))
+	if res == nil {
+		return notFound{}
+	}
+	return res
 }
 
 // Has returns true if a key-value pair corresponding with a given key is

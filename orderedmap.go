@@ -44,14 +44,16 @@ func (m OrderedMap) KeySet() Set {
 
 // Insert a value into this map.
 func (m OrderedMap) Insert(k Entry, v interface{}) Map {
-	newMap := make([]MapEntry, len(m.entries)+1) // keep room for the '(k,v)' if not already present
+	// len+1 to keep room for the '(k,v)' if not already present
+	newMap := make([]MapEntry, len(m.entries)+1)
 	copy(newMap, m.entries)
 
 	foundExisting := false
-	for _, e := range m.entries {
+	for idx, e := range m.entries {
 		if e.Equal(k) {
 			foundExisting = true
-			newMap = append(newMap, MapEntry{K: k, V: v})
+			newMap[idx] = MapEntry{K: k, V: v}
+			newMap = newMap[:len(newMap)-1] // remove unneeded extra room
 			break
 		}
 	}
@@ -111,15 +113,22 @@ func (m OrderedMap) Merge(n Map) Map {
 	merge := make([]MapEntry, len(m.entries))
 	copy(merge, m.entries)
 
+	sliceIndex := make(map[Entry]bool, len(m.entries))
+	for _, v := range m.entries {
+		sliceIndex[v.K] = true
+	}
+
 	for _, entry := range n.(OrderedMap).entries {
-		merge = append(merge, entry)
+		if !sliceIndex[entry.K] {
+			merge = append(merge, entry)
+		}
 	}
 	return OrderedMap{
 		entries: merge,
 	}
 }
 
-type notFound struct{}
+type notFound struct{} // TODO: confirm this pattern
 
 // Get a value in this map corresponding to a given key.
 // It returns nil if no value is found.
