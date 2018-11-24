@@ -149,7 +149,7 @@ func TestReferenceStream_LeftReduce(t *testing.T) {
 	concatenateStringsBiFunc := func(i, j Entry) Entry {
 		iStr := i.(EntryString)
 		jStr := j.(EntryString)
-		return EntryString(iStr + "-" + jStr)
+		return iStr + "-" + jStr
 	}
 
 	type fields struct {
@@ -200,11 +200,11 @@ func TestReferenceStream_LeftReduce(t *testing.T) {
 			rp := ReferenceStream{
 				iterator: tt.fields.iterator,
 			}
-			if gotReduce := rp.Reduce(tt.args.f2); !assert.Equal(t, tt.want, gotReduce) {
+			if gotReduce := rp.Reduce(tt.args.f2); !assert.Exactly(t, tt.want, gotReduce) {
 				return
 			}
 
-			if gotLeftReduce := rp.LeftReduce(tt.args.f2); !assert.Equal(t, tt.want, gotLeftReduce) {
+			if gotLeftReduce := rp.LeftReduce(tt.args.f2); !assert.Exactly(t, tt.want, gotLeftReduce) {
 				return
 			}
 		})
@@ -215,7 +215,7 @@ func TestReferenceStream_RightReduce(t *testing.T) {
 	concatenateStringsBiFunc := func(i, j Entry) Entry {
 		iStr := i.(EntryString)
 		jStr := j.(EntryString)
-		return EntryString(iStr + "-" + jStr)
+		return iStr + "-" + jStr
 	}
 
 	type fields struct {
@@ -267,7 +267,7 @@ func TestReferenceStream_RightReduce(t *testing.T) {
 				iterator: tt.fields.iterator,
 			}
 			got := rp.RightReduce(tt.args.f2)
-			assert.Equal(t, tt.want, got)
+			assert.Exactly(t, tt.want, got)
 		})
 	}
 }
@@ -383,16 +383,13 @@ func TestReferenceStream_GroupBy(t *testing.T) {
 					return i.(EntryInt) % 2
 				},
 			},
-			// TODO warning, weak test - GroupBy uses a Golang map which order
-			// is not guaranteed and hence the order of output of GroupBy() isn't
-			// either!
 			want: NewOrderedMap().
-				Insert(EntryInt(1), NewOrderedSet().
-					Insert(EntryInt(1)).
-					Insert(EntryInt(3))).
 				Insert(EntryInt(0), NewOrderedSet().
 					Insert(EntryInt(2)).
-					Insert(EntryInt(4))),
+					Insert(EntryInt(4))).
+				Insert(EntryInt(1), NewOrderedSet().
+					Insert(EntryInt(1)).
+					Insert(EntryInt(3))),
 		},
 	}
 	for _, tt := range tests {
@@ -400,11 +397,27 @@ func TestReferenceStream_GroupBy(t *testing.T) {
 			rp := ReferenceStream{
 				iterator: tt.fields.iterator,
 			}
-			if got := rp.GroupBy(tt.args.classifier); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("ReferenceStream.GroupBy() = %v, want %v", got, tt.want)
-			}
+			got := rp.GroupBy(tt.args.classifier)
+			elementsMatch(t, tt.want, got)
 		})
 	}
+}
+
+func elementsMatch(t *testing.T, mapA, mapB Map) {
+	keysA, valuesA := splitKeysValues(mapA)
+	keysB, valuesB := splitKeysValues(mapB)
+	assert.ElementsMatch(t, keysA, keysB, "keys differ")
+	assert.ElementsMatch(t, valuesA, valuesB, "values differ")
+}
+
+func splitKeysValues(m Map) (keys, values []Entry) {
+	m.EntrySet().Stream().ForEach(func(e Entry) {
+		keys = append(keys, e.(MapEntry).K)
+		e.(MapEntry).V.(OrderedSet).Stream().ForEach(func(e Entry) {
+			values = append(values, e)
+		})
+	})
+	return keys, values
 }
 
 func TestStream_GroupBy_IteratorResets(t *testing.T) {
@@ -427,10 +440,10 @@ func TestStream_GroupBy_IteratorResets(t *testing.T) {
 	res1 := rp.GroupBy(func(i Entry) Entry {
 		return i.(EntryInt) % 2
 	})
-	assert.EqualValues(t, expected, res1, "First iteration")
+	elementsMatch(t, res1, expected)
 
 	res2 := rp.GroupBy(func(i Entry) Entry {
 		return i.(EntryInt) % 2
 	})
-	assert.EqualValues(t, expected, res2, "Second iteration")
+	elementsMatch(t, res2, expected)
 }

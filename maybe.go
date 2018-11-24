@@ -6,31 +6,31 @@ type Maybe struct {
 	isEmpty bool
 }
 
-// A Maybe_None is a Maybe that does not have a value.
-func Maybe_None() Maybe {
+// A MaybeNone is a Maybe that does not have a value.
+func MaybeNone() Maybe {
 	return Maybe{
 		value:   nil,
 		isEmpty: true,
 	}
 }
 
-// Maybe_Some creates a new Maybe with the given value.
-// Note: Maybe_Of(nil) == None() whereas Maybe_Some(nil) == Maybe_Some(nil).
-func Maybe_Some(i Entry) Maybe {
+// MaybeSome creates a new Maybe with the given value.
+// Note: MaybeOf(nil) == None() whereas MaybeSome(nil) == MaybeSome(nil).
+func MaybeSome(i Entry) Maybe {
 	return Maybe{
 		value:   i,
 		isEmpty: false,
 	}
 }
 
-// Maybe_Of creates a new Maybe with the given value.
+// MaybeOf creates a new Maybe with the given value.
 // If the value is nil then return None otherwise Some(value).
-// Note: Maybe_Of(nil) == None() whereas Maybe_Some(nil) == Maybe_Some(nil).
-func Maybe_Of(i Entry) Maybe {
+// Note: MaybeOf(nil) == None() whereas MaybeSome(nil) == MaybeSome(nil).
+func MaybeOf(i Entry) Maybe {
 	if i == nil || i.Equal(nil) {
-		return Maybe_None()
+		return MaybeNone()
 	}
-	return Maybe_Some(i)
+	return MaybeSome(i)
 }
 
 func (m Maybe) IsEmpty() bool { return m.isEmpty }

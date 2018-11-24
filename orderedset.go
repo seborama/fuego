@@ -39,13 +39,16 @@ func (s OrderedSet) Delete(e Entry) Set {
 	for idx, val := range s.slice {
 		if val.Equal(e) {
 			var sCopy []Entry
-			if idx == 0 {
+			switch idx {
+			case 0:
 				sCopy = make([]Entry, len(s.slice)-1)
 				copy(sCopy, s.slice[1:])
-			} else if idx == s.Size()-1 {
+
+			case s.Size() - 1:
 				sCopy = make([]Entry, len(s.slice)-1)
 				copy(sCopy, s.slice[:idx])
-			} else {
+
+			default:
 				sCopy = append(s.slice[:idx], s.slice[idx+1:]...)
 			}
 			return OrderedSet{

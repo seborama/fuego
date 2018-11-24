@@ -46,9 +46,9 @@ Have fun!!
 
 A `Maybe` represents an optional value.
 
-When the value is `nil`, `Maybe` is considered empty unless it was created with `Maybe_Some()` in which case it is considered to hold the `nil` value.
+When the value is `nil`, `Maybe` is considered empty unless it was created with `MaybeSome()` in which case it is considered to hold the `nil` value.
 
-`Maybe_None()` always produces an empty optional.
+`MaybeNone()` always produces an empty optional.
 
 ### HamtSet
 
@@ -230,7 +230,7 @@ NewOrderedSet().
 
 #### GroupBy
 
-xxx
+Please refer to [stream_test.go](stream_test.go) for an example that groups numbers by parity (odd / even).
 
 ### Predicates
 

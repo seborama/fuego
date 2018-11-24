@@ -2,7 +2,7 @@ package fuego
 
 // A OrderedMap is an ordered map
 type OrderedMap struct {
-	entries []MapEntry
+	entries []MapEntry // TODO use OrderedSet
 }
 
 // NewOrderedMap creates a new Map
@@ -71,13 +71,16 @@ func (m OrderedMap) Delete(k Entry) Map {
 	for idx, e := range m.entries {
 		if e.K.Equal(k) {
 			var sCopy []MapEntry
-			if idx == 0 {
+			switch idx {
+			case 0:
 				sCopy = make([]MapEntry, len(m.entries)-1)
 				copy(sCopy, m.entries[1:])
-			} else if idx == m.Size()-1 {
+
+			case m.Size() - 1:
 				sCopy = make([]MapEntry, len(m.entries)-1)
 				copy(sCopy, m.entries[:idx])
-			} else {
+
+			default:
 				sCopy = append(m.entries[:idx], m.entries[idx+1:]...)
 			}
 			return OrderedMap{

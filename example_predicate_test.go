@@ -40,7 +40,7 @@ func ExamplePredicate() {
 func ExamplePredicate_functionPredicate() {
 	isEvenNumberPredicate := ƒ.FunctionPredicate(isEvenNumberFunction)
 
-	res := ƒ.Predicate(isEvenNumberPredicate).And(ƒ.True)(EntryInt(23))
+	res := isEvenNumberPredicate.And(ƒ.True)(EntryInt(23))
 	fmt.Printf("res = %v", res)
 
 	// Output:
@@ -51,7 +51,7 @@ func ExamplePredicate_functionPredicate() {
 // scratch.
 // Notice how we get all Predicate helpers (And, Or, Not, etc) for "free".
 func ExamplePredicate_predicate() {
-	res := ƒ.Predicate(intGreaterThanPredicate(50)).And(ƒ.True).Not()(EntryInt(23))
+	res := intGreaterThanPredicate(50).And(ƒ.True).Not()(EntryInt(23))
 	fmt.Printf("res = %v", res)
 
 	// Output:

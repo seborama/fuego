@@ -80,13 +80,13 @@ func isOddNumber(t ƒ.Entry) bool {
 func concatenateStringsBiFunc(i, j ƒ.Entry) ƒ.Entry {
 	iStr := i.(EntryString)
 	jStr := j.(EntryString)
-	return EntryString(iStr + "-" + jStr)
+	return iStr + "-" + jStr
 }
 
 // timesTwo returns a fuego.Function than multiplies 'i' by 2.
 func timesTwo() ƒ.Function {
 	return func(i ƒ.Entry) ƒ.Entry {
-		return EntryInt(2 * i.(EntryInt))
+		return 2 * i.(EntryInt)
 	}
 }
 

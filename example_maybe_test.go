@@ -8,11 +8,11 @@ import (
 
 // ExampleMaybe shows ways to use a Maybe.
 func ExampleMaybe() {
-	m1 := ƒ.Maybe_Of(EntryString("Hello World"))
+	m1 := ƒ.MaybeOf(EntryString("Hello World"))
 	fmt.Printf("m1.Get=%v\n", m1.Get())
 	fmt.Printf("m1.GetOrElse=%v\n", m1.GetOrElse(EntryString("Bonjour le monde")))
 
-	m2 := ƒ.Maybe_Of(nil)
+	m2 := ƒ.MaybeOf(nil)
 	if assert.PanicsWithValue(nil, ƒ.PanicNoSuchElement, func() {
 		fmt.Printf("m2.Get=%v\n", m2.Get())
 	}) {
