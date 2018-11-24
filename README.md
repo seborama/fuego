@@ -122,8 +122,7 @@ You can create you own `Iterator`'s.
 
 See [iterator.go](iterator.go) for several convenience implementations of iterators:
 - NewSliceIterator
-- NewHamtSetIterator
-- NewOrderedSetIterator
+- NewSetIterator
 
 Iterator supports:
 - Forward
@@ -134,7 +133,7 @@ Iterator supports:
 ```go
 NewSliceIterator([]Entry{EntryInt(2), EntryInt(3)}) // returns an Iterator over []interface{2, 3}
 
-NewHamtSetIterator(NewHamtSet().
+NewSetIterator(NewHamtSet().
     Insert(EntryInt(2))), // returns an Iterator over a HamtSet that contains a single EntryInt(2)
 ```
 
