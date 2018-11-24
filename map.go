@@ -8,10 +8,10 @@ type Map interface {
 	Insert(k Entry, v interface{}) Map
 	Delete(k Entry) Map
 	Size() int
-	FirstRest() (Entry, interface{}, Map)
+	FirstRest() (k Entry, v interface{}, rest Map)
 	Merge(n Map) Map
-	Get(k Entry) interface{} // TODO return Maybe instead of interface{}
-	Has(k Entry, v interface{}) bool
-	HasKey(k Entry) bool
-	HasValue(v interface{}) bool
+	Get(k Entry) interface{}         // TODO return Maybe instead of Entry
+	Has(k Entry, v interface{}) bool // TODO return EntryBool????
+	HasKey(k Entry) bool             // TODO return EntryBool????
+	HasValue(v interface{}) bool     // TODO return EntryBool????
 }

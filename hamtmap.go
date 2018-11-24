@@ -33,7 +33,7 @@ func (m HamtMap) EntrySet() Set {
 		var k2 hamt.Entry
 		var v2 interface{}
 		k2, v2, subMap = subMap.FirstRest()
-		s = s.Insert(MapEntry{k2.(Entry), v2}).(HamtSet)
+		s = s.Insert(MapEntry{k2, v2}).(HamtSet)
 	}
 	return s
 }
@@ -50,7 +50,7 @@ func (m HamtMap) KeySet() Set {
 	for subMap.Size() != 0 {
 		var k2 hamt.Entry
 		k2, _, subMap = subMap.FirstRest()
-		s = s.Insert(k2.(Entry)).(HamtSet)
+		s = s.Insert(k2).(HamtSet)
 	}
 	return s
 }
@@ -79,7 +79,7 @@ func (m HamtMap) Size() int {
 // The key and value would be nil if the map is empty.
 func (m HamtMap) FirstRest() (Entry, interface{}, Map) {
 	k, v, m2 := m.myMap.FirstRest()
-	return k.(Entry), v, HamtMap{myMap: m2}
+	return k, v, HamtMap{myMap: m2}
 }
 
 // Merge this map and given map.
@@ -91,12 +91,11 @@ func (m HamtMap) Merge(n Map) Map {
 
 // Get a value in this map corresponding to a given key.
 // It returns nil if no value is found.
-// TODO return Maybe instead of interface{}
 func (m HamtMap) Get(k Entry) interface{} {
 	// TODO issue: cannot distinguish between "not found" and value is genuinely == nil
 	res := m.myMap.Find(k.(hamt.Entry))
 	if res == nil {
-		return notFound{}
+		return EntryNone{}
 	}
 	return res
 }

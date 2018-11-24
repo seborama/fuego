@@ -131,11 +131,8 @@ func (m OrderedMap) Merge(n Map) Map {
 	}
 }
 
-type notFound struct{} // TODO: confirm this pattern
-
 // Get a value in this map corresponding to a given key.
 // It returns nil if no value is found.
-// TODO return Maybe instead of interface{}
 func (m OrderedMap) Get(k Entry) interface{} {
 	for _, e := range m.entries {
 		if e.K.Equal(k) {
@@ -143,7 +140,7 @@ func (m OrderedMap) Get(k Entry) interface{} {
 		}
 	}
 
-	return notFound{}
+	return EntryNone{}
 }
 
 // Has returns true if a key-value pair corresponding with a given key is
@@ -151,7 +148,7 @@ func (m OrderedMap) Get(k Entry) interface{} {
 func (m OrderedMap) Has(k Entry, v interface{}) bool {
 	value := m.Get(k)
 
-	if value == (notFound{}) {
+	if _, ok := value.(EntryNone); ok {
 		return false
 	}
 	return value == v
@@ -160,7 +157,8 @@ func (m OrderedMap) Has(k Entry, v interface{}) bool {
 // HasKey returns true if a given key exists
 // in a map, or false otherwise.
 func (m OrderedMap) HasKey(k Entry) bool {
-	return m.Get(k) != (notFound{})
+	_, ok := m.Get(k).(EntryNone)
+	return !ok
 }
 
 // HasValue returns true if a given value exists

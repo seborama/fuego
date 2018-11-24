@@ -233,7 +233,7 @@ func TestOrderedMap_Get(t *testing.T) {
 			args: args{
 				EntryInt(999),
 			},
-			want: notFound{},
+			want: EntryNone{},
 		},
 		{
 			name: "Should find existing item",
