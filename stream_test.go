@@ -364,7 +364,7 @@ func TestReferenceStream_GroupBy(t *testing.T) {
 			},
 			args: args{
 				classifier: func(i Entry) Entry {
-					return i.(EntryInt) % 2
+					return i.(EntryInt) & 1
 				},
 			},
 			want: NewOrderedMap(),
@@ -380,7 +380,7 @@ func TestReferenceStream_GroupBy(t *testing.T) {
 			},
 			args: args{
 				classifier: func(i Entry) Entry {
-					return i.(EntryInt) % 2
+					return i.(EntryInt) & 1
 				},
 			},
 			want: NewOrderedMap().
@@ -438,12 +438,12 @@ func TestStream_GroupBy_IteratorResets(t *testing.T) {
 			Insert(EntryInt(4)))
 
 	res1 := rp.GroupBy(func(i Entry) Entry {
-		return i.(EntryInt) % 2
+		return i.(EntryInt) & 1
 	})
 	elementsMatch(t, res1, expected)
 
 	res2 := rp.GroupBy(func(i Entry) Entry {
-		return i.(EntryInt) % 2
+		return i.(EntryInt) & 1
 	})
 	elementsMatch(t, res2, expected)
 }
