@@ -34,21 +34,33 @@ For contributions, you must develop in TDD fashion and ideally provide Go testab
 
 The code documentation can be found on [godoc](http://godoc.org/github.com/seborama/fuego).
 
-The tests form the best source of documentation. Fuego comes with a good collection of unit tests and testable Go examples. Don't be shy, open them up and read them and tinker with them!
+**The tests form the best source of documentation. Fuego comes with a good collection of unit tests and testable Go examples. Don't be shy, open them up and read them and tinker with them!**
 
 Have fun!!
 
-### Set
+### Entry
 
-Set is based on hamt.Set and entries must implement interface `hamt.Entry`.
+`Entry` is based on `hamt.Entry`. This is an elegant solution from [Yota Toyama](https://github.com/raviqqe): the type can be anything so long as it respects the simple behaviour of `hamt.Entry`. This provides an abstraction of types yet with known behaviour.
 
-This is an elegant solution from [Yota Toyama](https://github.com/raviqqe): the type can be anything so long as it respects the simple behaviour of `hamt.Entry`.
+### Maybe
 
-An example `hamt.Entry` implementation called `EntryInt` is provided in [entry_test.go](entry_test.go).
+A `Maybe` represents an optional value.
+
+When the value is `nil`, `Maybe` is considered empty unless it was created with `MaybeSome()` in which case it is considered to hold the `nil` value.
+
+`MaybeNone()` always produces an empty optional.
+
+### HamtSet
+
+`HamtSet` is based on hamt.Set and entries must implement interface `Entry`.
+
+It is an unordered collection, yet unnaturally sorted (i.e. sorting is based on the hash of the `hamt.Entry`).
+
+An example `Entry` implementation called `EntryInt` is provided in [entry_test.go](entry_test.go).
 
 ```go
 // See entry_test.go for "EntryInt"
-NewOrderedSet().
+NewHamtSet().
     Insert(EntryInt(1)).
     Insert(EntryInt(2)).
     Delete(EntryInt(1)).
@@ -58,11 +70,30 @@ NewOrderedSet().
 
 Uses of streams with Sets are also available in [example_map_test.go](example_map_test.go).
 
-### Map
+### OrderedSet
 
-As with Set, Map is based on hamt.Map and entries must implement interface `hamt.Entry` for its keys but values can be anything (`interface{}`).
+This is an **ordered** implementation of a `Set`.
 
-See [example_map_test.go](example_map_test.go) for more details of an example of Map with Stream and Filter combined together to extract entries which keys are an even number.
+### HamtMap
+
+As with `HamtSet`, `HamtMap` is based on hamt.Map and entries must implement interface `Entry` for its keys but values can be anything (`interface{}`).
+
+It is an unordered collection, yet unnaturally sorted (i.e. sorting is based on the hash of the `hamt.Entry` keys).
+
+See [example_map_test.go](example_map_test.go) for more details of an example of `HamtMap` with Stream and Filter combined together to extract entries which keys are an even number.
+
+### OrderedMap
+
+This is an **ordered** implementation of a `Map`.
+
+### Tuple
+
+fuego provides these `Tuple`'s:
+- Tuple0
+- Tuple1
+- Tuple2
+
+The values of fuego `Tuples` is of type `Entry` but can represent any type (see EntryInt and EntryString examples).
 
 ### Functions
 
@@ -72,7 +103,7 @@ See [example_function_test.go](example_function_test.go) for basic example uses 
 A `Function` is a normal Go function which signature is
 
 ```go
-func(i interface{}) interface{}
+func(i Entry) Entry
 ```
 
 #### BiFunction
@@ -80,7 +111,7 @@ func(i interface{}) interface{}
 A `BiFunction` is a normal Go function which signature is
 
 ```go
-func(i,j interface{}) interface{}
+func(i,j Entry) Entry
 ```
 
 `BiFunction`'s are used with Stream.Reduce() for instance, as seen in [stream_test.go](stream_test.go).
@@ -101,7 +132,7 @@ Iterator supports:
 - Size
 
 ```go
-NewSliceIterator([]interface{}{2, 3}) // returns an Iterator over []interface{2, 3}
+NewSliceIterator([]Entry{EntryInt(2), EntryInt(3)}) // returns an Iterator over []interface{2, 3}
 
 NewHamtSetIterator(NewHamtSet().
     Insert(EntryInt(2))), // returns an Iterator over a HamtSet that contains a single EntryInt(2)
@@ -196,6 +227,10 @@ NewOrderedSet().
     Intersperse(EntryString(" - "))
 // "three - two - four"
 ```
+
+#### GroupBy
+
+Please refer to [stream_test.go](stream_test.go) for an example that groups numbers by parity (odd / even).
 
 ### Predicates
 

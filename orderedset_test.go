@@ -3,8 +3,6 @@ package fuego
 import (
 	"reflect"
 	"testing"
-
-	"github.com/raviqqe/hamt"
 )
 
 func TestOrderedSet_Stream(t *testing.T) {
@@ -17,16 +15,16 @@ func TestOrderedSet_Stream(t *testing.T) {
 			name: "Should return an empty stream when empty set",
 			set:  NewOrderedSet(),
 			want: NewStream(
-				NewEntrySliceIterator(
-					[]hamt.Entry{})),
+				NewSliceIterator(
+					[]Entry{})),
 		},
 		{
 			name: "Should return value when one value set",
 			set: NewOrderedSet().
 				Insert(EntryInt(1)).(OrderedSet),
 			want: NewStream(
-				NewEntrySliceIterator(
-					[]hamt.Entry{EntryInt(1)})),
+				NewSliceIterator(
+					[]Entry{EntryInt(1)})),
 		},
 		{
 			name: "Should return values present in the Set, and in order",
@@ -38,8 +36,8 @@ func TestOrderedSet_Stream(t *testing.T) {
 				Insert(EntryInt(1)).
 				Insert(EntryInt(2)).(OrderedSet),
 			want: NewStream(
-				NewEntrySliceIterator(
-					[]hamt.Entry{
+				NewSliceIterator(
+					[]Entry{
 						EntryInt(2),
 						EntryInt(3),
 						EntryInt(1)})),
@@ -118,7 +116,7 @@ func TestOrderedSet_FirstRest(t *testing.T) {
 	tests := []struct {
 		name   string
 		fields fields
-		want   hamt.Entry
+		want   Entry
 		want1  Set
 	}{
 		{
@@ -187,7 +185,7 @@ func TestOrderedSet_Size(t *testing.T) {
 
 func TestOrderedSet_Delete(t *testing.T) {
 	type args struct {
-		e hamt.Entry
+		e Entry
 	}
 	tests := []struct {
 		name string

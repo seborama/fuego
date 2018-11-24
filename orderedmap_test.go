@@ -4,16 +4,15 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/raviqqe/hamt"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestMap_Insert(t *testing.T) {
+func TestOrderedMap_Insert(t *testing.T) {
 	type fields struct {
 		myMap Map
 	}
 	type args struct {
-		k hamt.Entry
+		k Entry
 		v interface{}
 	}
 	tests := []struct {
@@ -23,18 +22,33 @@ func TestMap_Insert(t *testing.T) {
 		want   Map
 	}{
 		{
-			name: "Should Insert entries into Map",
+			name: "Should Insert entry into Map",
 			fields: fields{
-				myMap: NewMap().
+				myMap: NewOrderedMap().
 					Insert(EntryInt(1), "one"),
 			},
 			args: args{
 				k: EntryInt(5),
 				v: "five",
 			},
-			want: NewMap().
+			want: NewOrderedMap().
 				Insert(EntryInt(1), "one").
 				Insert(EntryInt(5), "five"),
+		},
+		{
+			name: "Should replace duplicate entry on Insert into Map",
+			fields: fields{
+				myMap: NewOrderedMap().
+					Insert(EntryInt(1), "one").
+					Insert(EntryInt(5), "five"),
+			},
+			args: args{
+				k: EntryInt(5),
+				v: "cinq",
+			},
+			want: NewOrderedMap().
+				Insert(EntryInt(1), "one").
+				Insert(EntryInt(5), "cinq"),
 		},
 	}
 	for _, tt := range tests {
@@ -46,12 +60,12 @@ func TestMap_Insert(t *testing.T) {
 	}
 }
 
-func TestMap_Delete(t *testing.T) {
+func TestOrderedMap_Delete(t *testing.T) {
 	type fields struct {
 		myMap Map
 	}
 	type args struct {
-		k hamt.Entry
+		k Entry
 	}
 	tests := []struct {
 		name   string
@@ -60,9 +74,9 @@ func TestMap_Delete(t *testing.T) {
 		want   Map
 	}{
 		{
-			name: "Should Insert entries into Map",
+			name: "Should Delete entry from Map",
 			fields: fields{
-				myMap: NewMap().
+				myMap: NewOrderedMap().
 					Insert(EntryInt(1), "one").
 					Insert(EntryInt(5), "five").
 					Insert(EntryInt(2), "two"),
@@ -70,9 +84,55 @@ func TestMap_Delete(t *testing.T) {
 			args: args{
 				k: EntryInt(5),
 			},
-			want: NewMap().
+			want: NewOrderedMap().
 				Insert(EntryInt(1), "one").
 				Insert(EntryInt(2), "two"),
+		},
+		{
+			name: "Should not Delete entry from Map",
+			fields: fields{
+				myMap: NewOrderedMap().
+					Insert(EntryInt(1), "one").
+					Insert(EntryInt(5), "five").
+					Insert(EntryInt(2), "two"),
+			},
+			args: args{
+				k: EntryInt(0101010),
+			},
+			want: NewOrderedMap().
+				Insert(EntryInt(1), "one").
+				Insert(EntryInt(5), "five").
+				Insert(EntryInt(2), "two"),
+		},
+		{
+			name: "Should remove first entry in Map",
+			fields: fields{
+				myMap: NewOrderedMap().
+					Insert(EntryInt(1), "one").
+					Insert(EntryInt(33), "thirty-three").
+					Insert(EntryInt(5), "five"),
+			},
+			args: args{
+				k: EntryInt(1),
+			},
+			want: NewOrderedMap().
+				Insert(EntryInt(33), "thirty-three").
+				Insert(EntryInt(5), "five"),
+		},
+		{
+			name: "Should remove last entry in Map",
+			fields: fields{
+				myMap: NewOrderedMap().
+					Insert(EntryInt(1), "one").
+					Insert(EntryInt(33), "thirty-three").
+					Insert(EntryInt(5), "five"),
+			},
+			args: args{
+				k: EntryInt(5),
+			},
+			want: NewOrderedMap().
+				Insert(EntryInt(1), "one").
+				Insert(EntryInt(33), "thirty-three"),
 		},
 	}
 	for _, tt := range tests {
@@ -84,8 +144,8 @@ func TestMap_Delete(t *testing.T) {
 	}
 }
 
-func TestMap_Size(t *testing.T) {
-	m := NewMap().
+func TestOrderedMap_Size(t *testing.T) {
+	m := NewOrderedMap().
 		Insert(EntryInt(1), "one").
 		Insert(EntryInt(5), "five").
 		Insert(EntryInt(2), "two")
@@ -93,7 +153,7 @@ func TestMap_Size(t *testing.T) {
 	assert.Equal(t, 3, m.Size())
 }
 
-func TestMap_Merge(t *testing.T) {
+func TestOrderedMap_Merge(t *testing.T) {
 	type fields struct {
 		myMap Map
 	}
@@ -109,16 +169,16 @@ func TestMap_Merge(t *testing.T) {
 		{
 			name: "Should merge two excluding maps",
 			fields: fields{
-				myMap: NewMap().
+				myMap: NewOrderedMap().
 					Insert(EntryInt(7), "seven").
 					Insert(EntryInt(2), "two"),
 			},
 			args: args{
-				t: NewMap().
+				t: NewOrderedMap().
 					Insert(EntryInt(3), "three").
 					Insert(EntryInt(9), "nine"),
 			},
-			want: NewMap().
+			want: NewOrderedMap().
 				Insert(EntryInt(7), "seven").
 				Insert(EntryInt(2), "two").
 				Insert(EntryInt(3), "three").
@@ -127,16 +187,16 @@ func TestMap_Merge(t *testing.T) {
 		{
 			name: "Should merge two overlapping sets",
 			fields: fields{
-				myMap: NewMap().
+				myMap: NewOrderedMap().
 					Insert(EntryInt(3), "three").
 					Insert(EntryInt(1), "one"),
 			},
 			args: args{
-				t: NewMap().
+				t: NewOrderedMap().
 					Insert(EntryInt(3), "three").
 					Insert(EntryInt(1), "one"),
 			},
-			want: NewMap().
+			want: NewOrderedMap().
 				Insert(EntryInt(3), "three").
 				Insert(EntryInt(1), "one"),
 		},
@@ -150,62 +210,12 @@ func TestMap_Merge(t *testing.T) {
 	}
 }
 
-func TestMap_Find(t *testing.T) {
+func TestOrderedMap_Get(t *testing.T) {
 	type fields struct {
 		myMap Map
 	}
 	type args struct {
-		k hamt.Entry
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   MapEntry
-	}{
-		{
-			name: "Should not find missing item",
-			fields: fields{
-				myMap: NewMap().
-					Insert(EntryInt(3), "three").
-					Insert(EntryInt(1), "one"),
-			},
-			args: args{
-				EntryInt(999),
-			},
-			want: MapEntry{},
-		},
-		{
-			name: "Should find existing item",
-			fields: fields{
-				myMap: NewMap().
-					Insert(EntryInt(3), "three").
-					Insert(EntryInt(1), "one"),
-			},
-			args: args{
-				EntryInt(3),
-			},
-			want: MapEntry{
-				K: EntryInt(3),
-				V: "three",
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.fields.myMap.Find(tt.args.k); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Map.Find() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestMap_FindKey(t *testing.T) {
-	type fields struct {
-		myMap Map
-	}
-	type args struct {
-		k hamt.Entry
+		k Entry
 	}
 	tests := []struct {
 		name   string
@@ -216,19 +226,19 @@ func TestMap_FindKey(t *testing.T) {
 		{
 			name: "Should not find missing item",
 			fields: fields{
-				myMap: NewMap().
+				myMap: NewOrderedMap().
 					Insert(EntryInt(3), "three").
 					Insert(EntryInt(1), "one"),
 			},
 			args: args{
 				EntryInt(999),
 			},
-			want: nil,
+			want: notFound{},
 		},
 		{
 			name: "Should find existing item",
 			fields: fields{
-				myMap: NewMap().
+				myMap: NewOrderedMap().
 					Insert(EntryInt(3), "three").
 					Insert(EntryInt(1), "one"),
 			},
@@ -240,18 +250,19 @@ func TestMap_FindKey(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.fields.myMap.FindKey(tt.args.k); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Map.FindKey() = %v, want %v", got, tt.want)
+			if got := tt.fields.myMap.Get(tt.args.k); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Map.Get() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
-func TestMap_Has(t *testing.T) {
+
+func TestOrderedMap_Has(t *testing.T) {
 	type fields struct {
 		myMap Map
 	}
 	type args struct {
-		k hamt.Entry
+		k Entry
 		v interface{}
 	}
 	tests := []struct {
@@ -263,7 +274,7 @@ func TestMap_Has(t *testing.T) {
 		{
 			name: "Should not have missing item",
 			fields: fields{
-				myMap: NewMap().
+				myMap: NewOrderedMap().
 					Insert(EntryInt(3), "three").
 					Insert(EntryInt(1), "one"),
 			},
@@ -276,7 +287,7 @@ func TestMap_Has(t *testing.T) {
 		{
 			name: "Should have existing item",
 			fields: fields{
-				myMap: NewMap().
+				myMap: NewOrderedMap().
 					Insert(EntryInt(3), "three").
 					Insert(EntryInt(1), "one"),
 			},
@@ -296,12 +307,12 @@ func TestMap_Has(t *testing.T) {
 	}
 }
 
-func TestMap_HasKey(t *testing.T) {
+func TestOrderedMap_HasKey(t *testing.T) {
 	type fields struct {
 		myMap Map
 	}
 	type args struct {
-		k hamt.Entry
+		k Entry
 	}
 	tests := []struct {
 		name   string
@@ -312,7 +323,7 @@ func TestMap_HasKey(t *testing.T) {
 		{
 			name: "Should not have missing item",
 			fields: fields{
-				myMap: NewMap().
+				myMap: NewOrderedMap().
 					Insert(EntryInt(3), "three").
 					Insert(EntryInt(1), "one"),
 			},
@@ -324,7 +335,7 @@ func TestMap_HasKey(t *testing.T) {
 		{
 			name: "Should have existing item",
 			fields: fields{
-				myMap: NewMap().
+				myMap: NewOrderedMap().
 					Insert(EntryInt(3), "three").
 					Insert(EntryInt(1), "one"),
 			},
@@ -343,7 +354,7 @@ func TestMap_HasKey(t *testing.T) {
 	}
 }
 
-func TestMap_HasValue(t *testing.T) {
+func TestOrderedMap_HasValue(t *testing.T) {
 	type fields struct {
 		myMap Map
 	}
@@ -359,7 +370,7 @@ func TestMap_HasValue(t *testing.T) {
 		{
 			name: "Should not have missing item",
 			fields: fields{
-				myMap: NewMap().
+				myMap: NewOrderedMap().
 					Insert(EntryInt(3), "three").
 					Insert(EntryInt(1), "one"),
 			},
@@ -371,7 +382,7 @@ func TestMap_HasValue(t *testing.T) {
 		{
 			name: "Should have existing item",
 			fields: fields{
-				myMap: NewMap().
+				myMap: NewOrderedMap().
 					Insert(EntryInt(3), "three").
 					Insert(EntryInt(1), "one"),
 			},
@@ -390,21 +401,21 @@ func TestMap_HasValue(t *testing.T) {
 	}
 }
 
-func TestMap_FirstRest(t *testing.T) {
+func TestOrderedMap_FirstRest(t *testing.T) {
 	type fields struct {
 		myMap Map
 	}
 	tests := []struct {
 		name   string
 		fields fields
-		want   hamt.Entry
+		want   Entry
 		want1  interface{}
 		want2  Map
 	}{
 		{
 			name: "Should have existing item",
 			fields: fields{
-				myMap: NewMap().
+				myMap: NewOrderedMap().
 					Insert(EntryInt(3), "three").
 					Insert(EntryInt(11), "eleven").
 					Insert(EntryInt(12), "twelve").
@@ -413,7 +424,7 @@ func TestMap_FirstRest(t *testing.T) {
 			},
 			want:  EntryInt(3),
 			want1: "three",
-			want2: NewMap().
+			want2: NewOrderedMap().
 				Insert(EntryInt(11), "eleven").
 				Insert(EntryInt(12), "twelve").
 				Insert(EntryInt(-23), "minus twenty three").
@@ -436,7 +447,7 @@ func TestMap_FirstRest(t *testing.T) {
 	}
 }
 
-func TestMap_EntrySet(t *testing.T) {
+func TestOrderedMap_EntrySet(t *testing.T) {
 	type fields struct {
 		myMap Map
 	}
@@ -448,14 +459,14 @@ func TestMap_EntrySet(t *testing.T) {
 		{
 			name: "Should return EntrySet",
 			fields: fields{
-				myMap: NewMap().
+				myMap: NewOrderedMap().
 					Insert(EntryInt(3), "three").
 					Insert(EntryInt(11), "eleven").
 					Insert(EntryInt(12), "twelve").
 					Insert(EntryInt(-23), "minus twenty three").
 					Insert(EntryInt(7), "seven"),
 			},
-			want: NewHamtSet().
+			want: NewOrderedSet().
 				Insert(NewMapEntry(EntryInt(3), "three")).
 				Insert(NewMapEntry(EntryInt(11), "eleven")).
 				Insert(NewMapEntry(EntryInt(12), "twelve")).
@@ -472,7 +483,7 @@ func TestMap_EntrySet(t *testing.T) {
 	}
 }
 
-func TestMap_KeySet(t *testing.T) {
+func TestOrderedMap_KeySet(t *testing.T) {
 	type fields struct {
 		myMap Map
 	}
@@ -482,21 +493,23 @@ func TestMap_KeySet(t *testing.T) {
 		want   Set
 	}{
 		{
-			name:   "Should return an empty key set",
-			fields: fields{},
-			want:   NewHamtSet(),
+			name: "Should return an empty key set",
+			fields: fields{
+				myMap: OrderedMap{},
+			},
+			want: NewOrderedSet(),
 		},
 		{
 			name: "Should return the key set",
 			fields: fields{
-				myMap: NewMap().
+				myMap: NewOrderedMap().
 					Insert(EntryInt(3), "three").
 					Insert(EntryInt(11), "eleven").
 					Insert(EntryInt(12), "twelve").
 					Insert(EntryInt(-23), "minus twenty three").
 					Insert(EntryInt(7), "seven"),
 			},
-			want: NewHamtSet().
+			want: NewOrderedSet().
 				Insert(EntryInt(3)).
 				Insert(EntryInt(11)).
 				Insert(EntryInt(12)).
@@ -506,6 +519,7 @@ func TestMap_KeySet(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			_ = tt.fields.myMap.KeySet()
 			if got := tt.fields.myMap.KeySet(); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Map.KeySet() = %v, want %v", got, tt.want)
 			}

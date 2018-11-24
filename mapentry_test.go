@@ -2,13 +2,11 @@ package fuego
 
 import (
 	"testing"
-
-	"github.com/raviqqe/hamt"
 )
 
 func TestMapEntry_Hash(t *testing.T) {
 	type fields struct {
-		k hamt.Entry
+		k Entry
 		v interface{}
 	}
 	tests := []struct {
@@ -40,11 +38,11 @@ func TestMapEntry_Hash(t *testing.T) {
 
 func TestMapEntry_Equal(t *testing.T) {
 	type fields struct {
-		k hamt.Entry
+		k Entry
 		v interface{}
 	}
 	type args struct {
-		e hamt.Entry
+		e Entry
 	}
 	tests := []struct {
 		name   string
@@ -90,7 +88,7 @@ func TestMapEntry_Equal(t *testing.T) {
 
 func TestMapEntry_DeepEqual(t *testing.T) {
 	type fields struct {
-		k hamt.Entry
+		k Entry
 		v interface{}
 	}
 	type args struct {
@@ -167,6 +165,90 @@ func TestMapEntry_DeepEqual(t *testing.T) {
 			}
 			if got := me.DeepEqual(tt.args.o); got != tt.want {
 				t.Errorf("MapEntry.DeepEqual() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestMapEntry_EqualMapEntry(t *testing.T) {
+	type fields struct {
+		K Entry
+		V interface{}
+	}
+	type args struct {
+		ome MapEntry
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   bool
+	}{
+		{
+			name: "Should be equal",
+			fields: fields{
+				K: EntryString("Hello"),
+				V: 1234,
+			},
+			args: args{
+				ome: MapEntry{
+					K: EntryString("Hello"),
+					V: 1234,
+				},
+			},
+			want: true,
+		},
+		{
+			name: "Should differ by key",
+			fields: fields{
+				K: EntryString("World"),
+				V: 1234,
+			},
+			args: args{
+				ome: MapEntry{
+					K: EntryString("Hello"),
+					V: 1234,
+				},
+			},
+			want: false,
+		},
+		{
+			name: "Should equal when differing values but same keys",
+			fields: fields{
+				K: EntryString("Hello"),
+				V: 9876,
+			},
+			args: args{
+				ome: MapEntry{
+					K: EntryString("Hello"),
+					V: 1234,
+				},
+			},
+			want: true,
+		},
+		{
+			name: "Should differ by key and value",
+			fields: fields{
+				K: EntryString("World"),
+				V: 9876,
+			},
+			args: args{
+				ome: MapEntry{
+					K: EntryString("Hello"),
+					V: 1234,
+				},
+			},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			me := MapEntry{
+				K: tt.fields.K,
+				V: tt.fields.V,
+			}
+			if got := me.EqualMapEntry(tt.args.ome); got != tt.want {
+				t.Errorf("MapEntry.EqualMapEntry() = %v, want %v", got, tt.want)
 			}
 		})
 	}

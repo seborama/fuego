@@ -9,7 +9,7 @@ import (
 
 func TestSliceIterator_Forward(t *testing.T) {
 	type fields struct {
-		slice []interface{}
+		slice []Entry
 	}
 	tests := []struct {
 		name   string
@@ -19,23 +19,23 @@ func TestSliceIterator_Forward(t *testing.T) {
 		{
 			name: "Should provide nil when no data exist",
 			fields: fields{
-				slice: []interface{}{},
+				slice: []Entry{},
 			},
 			want: nil,
 		},
 		{
 			name: "Should provide nil when no more data exists",
 			fields: fields{
-				slice: []interface{}{1},
+				slice: []Entry{EntryInt(1)},
 			},
 			want: nil,
 		},
 		{
 			name: "Should provide iterator when more data exists",
 			fields: fields{
-				slice: []interface{}{7, 6, 1, 2},
+				slice: []Entry{EntryInt(7), EntryInt(6), EntryInt(1), EntryInt(2)},
 			},
-			want: NewSliceIterator([]interface{}{6, 1, 2}),
+			want: NewSliceIterator([]Entry{EntryInt(6), EntryInt(1), EntryInt(2)}),
 		},
 	}
 	for _, tt := range tests {
@@ -52,27 +52,27 @@ func TestSliceIterator_Forward(t *testing.T) {
 
 func TestSliceIterator_Value(t *testing.T) {
 	type fields struct {
-		slice []interface{}
+		slice []Entry
 	}
 	tests := []struct {
 		name    string
 		fields  fields
-		want    interface{}
+		want    Entry
 		wantErr string
 	}{
 		{
 			name: "Should produce PanicNoSuchElement for empty slice",
 			fields: fields{
-				slice: []interface{}{},
+				slice: []Entry{},
 			},
 			wantErr: PanicNoSuchElement,
 		},
 		{
 			name: "Should return the current value",
 			fields: fields{
-				slice: []interface{}{7, 6, 1, 2},
+				slice: []Entry{EntryInt(7), EntryInt(6), EntryInt(1), EntryInt(2)},
 			},
-			want: 7,
+			want: EntryInt(7),
 		},
 	}
 	for _, tt := range tests {
@@ -94,7 +94,7 @@ func TestSliceIterator_Value(t *testing.T) {
 
 func TestSliceIterator_Size(t *testing.T) {
 	type fields struct {
-		slice []interface{}
+		slice []Entry
 	}
 	tests := []struct {
 		name   string
@@ -104,14 +104,14 @@ func TestSliceIterator_Size(t *testing.T) {
 		{
 			name: "Should return 0 for empty Set",
 			fields: fields{
-				slice: []interface{}{},
+				slice: []Entry{},
 			},
 			want: 0,
 		},
 		{
 			name: "Should return size",
 			fields: fields{
-				slice: []interface{}{7, 6, 1, 2},
+				slice: []Entry{EntryInt(7), EntryInt(6), EntryInt(1), EntryInt(2)},
 			},
 			want: 4,
 		},
@@ -130,7 +130,7 @@ func TestSliceIterator_Size(t *testing.T) {
 
 func TestSliceIterator_Reverse(t *testing.T) {
 	type fields struct {
-		slice []interface{}
+		slice []Entry
 	}
 	tests := []struct {
 		name   string
@@ -140,23 +140,23 @@ func TestSliceIterator_Reverse(t *testing.T) {
 		{
 			name: "Should provide an empty set when no data exist",
 			fields: fields{
-				slice: []interface{}{},
+				slice: []Entry{},
 			},
-			want: NewSliceIterator([]interface{}{}),
+			want: NewSliceIterator([]Entry{}),
 		},
 		{
 			name: "Should provide a same set for a single entry set",
 			fields: fields{
-				slice: []interface{}{1},
+				slice: []Entry{EntryInt(1)},
 			},
-			want: NewSliceIterator([]interface{}{1}),
+			want: NewSliceIterator([]Entry{EntryInt(1)}),
 		},
 		{
 			name: "Should provide reverse set",
 			fields: fields{
-				slice: []interface{}{7, 6, 1, 2},
+				slice: []Entry{EntryInt(7), EntryInt(6), EntryInt(1), EntryInt(2)},
 			},
-			want: NewSliceIterator([]interface{}{2, 1, 6, 7}),
+			want: NewSliceIterator([]Entry{EntryInt(2), EntryInt(1), EntryInt(6), EntryInt(7)}),
 		},
 	}
 	for _, tt := range tests {

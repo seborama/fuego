@@ -1,32 +1,32 @@
 package fuego
 
-import (
-	"github.com/raviqqe/hamt"
-)
-
 // An OrderedSet is an ordered set
 type OrderedSet struct {
-	slice []hamt.Entry
+	slice []Entry
 }
 
 // NewOrderedSet creates a new OrderedSet
 func NewOrderedSet() OrderedSet {
 	return OrderedSet{
-		slice: []hamt.Entry{},
+		slice: []Entry{},
 	}
 }
 
 // Stream returns a sequential Stream with this collection as its source.
 func (s OrderedSet) Stream() Stream {
 	return NewStream(
-		NewEntrySliceIterator(s.slice))
+		NewSliceIterator(s.slice))
 }
 
-// Insert a value into a set.
-func (s OrderedSet) Insert(e hamt.Entry) Set {
+// Insert a value into this set.
+func (s OrderedSet) Insert(e Entry) Set {
 	for _, entry := range s.slice {
 		if e.Equal(entry) {
-			return s
+			sCopy := make([]Entry, len(s.slice))
+			copy(sCopy, s.slice)
+			return OrderedSet{
+				slice: sCopy,
+			}
 		}
 	}
 	return OrderedSet{
@@ -34,25 +34,35 @@ func (s OrderedSet) Insert(e hamt.Entry) Set {
 	}
 }
 
-// Delete a value from a set.
-func (s OrderedSet) Delete(e hamt.Entry) Set {
+// Delete a value from this set.
+func (s OrderedSet) Delete(e Entry) Set {
 	for idx, val := range s.slice {
 		if val.Equal(e) {
-			var slice []hamt.Entry
-			if idx == 0 {
-				slice = s.slice[1:]
-			} else if idx == s.Size()-1 {
-				slice = s.slice[:idx]
-			} else {
-				slice = append(s.slice[:idx], s.slice[idx+1:]...)
+			var sCopy []Entry
+			switch idx {
+			case 0:
+				sCopy = make([]Entry, len(s.slice)-1)
+				copy(sCopy, s.slice[1:])
+
+			case s.Size() - 1:
+				sCopy = make([]Entry, len(s.slice)-1)
+				copy(sCopy, s.slice[:idx])
+
+			default:
+				sCopy = append(s.slice[:idx], s.slice[idx+1:]...)
 			}
 			return OrderedSet{
-				slice: slice,
+				slice: sCopy,
 			}
 		}
 	}
+
 	// 'e' not found (includes the case where s.slice is empty)
-	return s
+	sCopy := make([]Entry, len(s.slice))
+	copy(sCopy, s.slice)
+	return OrderedSet{
+		slice: sCopy,
+	}
 }
 
 // Size of the OrderedSet.
@@ -62,17 +72,29 @@ func (s OrderedSet) Size() int {
 
 // FirstRest returns a value in a set and a rest of the set.
 // This method is useful for iteration.
-func (s OrderedSet) FirstRest() (hamt.Entry, Set) {
-	return s.slice[0], OrderedSet{slice: s.slice[1:]}
+func (s OrderedSet) FirstRest() (Entry, Set) {
+	sCopy := make([]Entry, len(s.slice)-1)
+	copy(sCopy, s.slice[1:])
+	return s.slice[0], OrderedSet{slice: sCopy}
 }
 
-// Merge merges 2 sets into one.
+// Merge 2 sets into one.
 func (s OrderedSet) Merge(t Set) Set {
-	merge := s
-	for _, entry := range t.(OrderedSet).slice {
-		merge = merge.Insert(entry).(OrderedSet)
+	merge := make([]Entry, len(s.slice))
+	copy(merge, s.slice)
+
+	sliceIndex := make(map[Entry]bool, len(s.slice))
+	for _, v := range s.slice {
+		sliceIndex[v] = true
 	}
+
+	for _, entry := range t.(OrderedSet).slice {
+		if !sliceIndex[entry] {
+			merge = append(merge, entry)
+		}
+	}
+
 	return OrderedSet{
-		slice: merge.slice,
+		slice: merge,
 	}
 }

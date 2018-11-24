@@ -1,9 +1,5 @@
 package fuego
 
-import (
-	"github.com/raviqqe/hamt"
-)
-
 // PanicNoSuchElement signifies that the iterator does not have
 // the requested element.
 const PanicNoSuchElement = "No such element"
@@ -11,7 +7,7 @@ const PanicNoSuchElement = "No such element"
 // An Iterator over a collection.
 type Iterator interface {
 	Forward() Iterator
-	Value() interface{}
+	Value() Entry
 	Reverse() Iterator
 	Size() int
 }
@@ -43,11 +39,11 @@ func (si SetIterator) Forward() Iterator {
 // This does not consume any element unlike Forward().
 // IMPORTANT NOTE: currently, this function uses OrderedSet for the reverse!
 func (si SetIterator) Reverse() Iterator {
-	values := []hamt.Entry{}
+	values := []Entry{}
 
 	subSet := si.set
 	for subSet.Size() != 0 {
-		var e hamt.Entry
+		var e Entry
 		e, subSet = subSet.FirstRest()
 		values = append(values, e)
 	}
@@ -64,7 +60,7 @@ func (si SetIterator) Reverse() Iterator {
 
 // Value returns the element of the collection currently pointed
 // to by the Iterator.
-func (si SetIterator) Value() interface{} {
+func (si SetIterator) Value() Entry {
 	if si.Size() == 0 {
 		panic(PanicNoSuchElement)
 	}
@@ -79,11 +75,11 @@ func (si SetIterator) Size() int {
 
 // SliceIterator is an Iterator over a slice.
 type SliceIterator struct {
-	slice []interface{}
+	slice []Entry
 }
 
 // NewSliceIterator creates a new SliceIterator.
-func NewSliceIterator(s []interface{}) Iterator {
+func NewSliceIterator(s []Entry) Iterator {
 	return SliceIterator{
 		slice: s,
 	}
@@ -104,7 +100,7 @@ func (si SliceIterator) Forward() Iterator {
 // Reverse this iterator - useful for RightReduce amongst other things.
 // This does not consume any element unlike Forward().
 func (si SliceIterator) Reverse() Iterator {
-	reverse := make([]interface{}, len(si.slice))
+	reverse := make([]Entry, len(si.slice))
 	copy(reverse, si.slice)
 
 	for left, right := 0, len(reverse)-1; left < right; left, right = left+1, right-1 {
@@ -118,7 +114,7 @@ func (si SliceIterator) Reverse() Iterator {
 
 // Value returns the element of the collection currently pointed
 // to by the Iterator.
-func (si SliceIterator) Value() interface{} {
+func (si SliceIterator) Value() Entry {
 	if si.slice == nil || len(si.slice) == 0 {
 		panic(PanicNoSuchElement)
 	}
@@ -127,58 +123,5 @@ func (si SliceIterator) Value() interface{} {
 
 // Size returns the total number of elements in the iterator.
 func (si SliceIterator) Size() int {
-	return len(si.slice)
-}
-
-// EntrySliceIterator is an Iterator over a slice.
-type EntrySliceIterator struct {
-	slice []hamt.Entry
-}
-
-// NewEntrySliceIterator creates a new EntrySliceIterator.
-func NewEntrySliceIterator(s []hamt.Entry) Iterator {
-	return EntrySliceIterator{
-		slice: s,
-	}
-}
-
-// Forward to the next element in the collection.
-// This consumes an element, unlike Reverse().
-func (si EntrySliceIterator) Forward() Iterator {
-	if si.Size() <= 1 {
-		return nil
-	}
-
-	return EntrySliceIterator{
-		slice: si.slice[1:],
-	}
-}
-
-// Reverse this iterator - useful for RightReduce amongst other things.
-// This does not consume any element unlike Forward().
-func (si EntrySliceIterator) Reverse() Iterator {
-	reverse := make([]hamt.Entry, len(si.slice))
-	copy(reverse, si.slice)
-
-	for left, right := 0, len(reverse)-1; left < right; left, right = left+1, right-1 {
-		reverse[left], reverse[right] = reverse[right], reverse[left]
-	}
-
-	return EntrySliceIterator{
-		slice: reverse,
-	}
-}
-
-// Value returns the element of the collection currently pointed
-// to by the Iterator.
-func (si EntrySliceIterator) Value() interface{} {
-	if si.slice == nil || len(si.slice) == 0 {
-		panic(PanicNoSuchElement)
-	}
-	return si.slice[0]
-}
-
-// Size returns the total number of elements in the iterator.
-func (si EntrySliceIterator) Size() int {
 	return len(si.slice)
 }
