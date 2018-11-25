@@ -11,7 +11,6 @@ This is a research project in functional programming which I hope will prove use
 Fuego brings a few functional paradigms to Go. The intent is to save development time while promoting code readability and reduce the risk of complex bugs.
 
 
-
 ## Install
 
 ```bash
@@ -40,7 +39,9 @@ Have fun!!
 
 ### Entry
 
-`Entry` is based on `hamt.Entry`. This is an elegant solution from [Yota Toyama](https://github.com/raviqqe): the type can be anything so long as it respects the simple behaviour of `hamt.Entry`. This provides an abstraction of types yet with known behaviour.
+`Entry` is based on `hamt.Entry`. This is an elegant solution from [Yota Toyama](https://github.com/raviqqe): the type can be anything so long as it respects the simple behaviour of `hamt.Entry`. This provides an abstraction of types yet with known behaviour:
+- Hash(): identifies an Entry Uniquely.
+- Equal(): defines equality for a type of `Entry`. `Equal()` is expected to be based on `Hash()`.
 
 ### Maybe
 
