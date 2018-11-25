@@ -22,10 +22,10 @@ func (t Tuple2) Hash() uint32 {
 
 func (t Tuple2) Equal(o Tuple) bool {
 	oT, ok := o.(Tuple2)
-	return &t == o ||
+	return t == o ||
 		(ok &&
-			(t.E1 != nil && oT.E1 != nil && t.E1.Equal(oT.E1)) &&
-			(t.E2 != nil && oT.E2 != nil && t.E2.Equal(oT.E2)))
+			(t.E1 != nil && t.E1.Equal(oT.E1)) &&
+			(t.E2 != nil && t.E2.Equal(oT.E2)))
 }
 
 func (t Tuple2) Arity() int {

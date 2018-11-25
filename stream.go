@@ -59,7 +59,7 @@ func (rp ReferenceStream) Filter(predicate Predicate) Stream {
 // ForEach executes the given function for each entry in this stream.
 func (rp ReferenceStream) ForEach(consumer Consumer) {
 	it := rp.iterator
-	if it.Size() == 0 {
+	if it == nil || it.Size() == 0 {
 		return
 	}
 	for ; it != nil; it = it.Forward() {

@@ -21,7 +21,11 @@ func (me MapEntry) Hash() uint32 {
 	return me.K.Hash()
 }
 
-// Equal compares the key of this MapEntry with given Entry.
+// Equal compares the hashes of the key of this MapEntry with
+// that of the given Entry.
+// Note that MapEntry defines equality as equality in Hash and
+// the Hash of a MapEntry is its MapEntry.K hash (MapEntry.V is
+// not considered)
 func (me MapEntry) Equal(e hamt.Entry) bool {
 	return me.Hash() == e.Hash()
 }
@@ -34,5 +38,5 @@ func (me MapEntry) EqualMapEntry(ome MapEntry) bool {
 // DeepEqual compares the key and value of this MapEntry with those
 // of the given MapEntry.
 func (me MapEntry) DeepEqual(o MapEntry) bool {
-	return me.K.Hash() == o.K.Hash() && me.V == o.V
+	return me.K.Equal(o.K) && me.V == o.V
 }

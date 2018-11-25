@@ -7,8 +7,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// TODO weak tests: the order of elements in HamtSet is not guaranteed
-
 func TestHamtSet_Insert(t *testing.T) {
 	type fields struct {
 		mySet Set
@@ -34,20 +32,6 @@ func TestHamtSet_Insert(t *testing.T) {
 			want: NewHamtSet().
 				Insert(MapEntry{K: EntryInt(1), V: "one"}).
 				Insert(MapEntry{K: EntryInt(5), V: "five"}),
-		},
-		{
-			name: "Should replace duplicate entry on Insert into Set",
-			fields: fields{
-				mySet: NewHamtSet().
-					Insert(MapEntry{K: EntryInt(1), V: "one"}).
-					Insert(MapEntry{K: EntryInt(5), V: "five"}),
-			},
-			args: args{
-				e: MapEntry{K: EntryInt(5), V: "cinq"},
-			},
-			want: NewHamtSet().
-				Insert(MapEntry{K: EntryInt(1), V: "one"}).
-				Insert(MapEntry{K: EntryInt(5), V: "cinq"}),
 		},
 	}
 	for _, tt := range tests {
@@ -142,6 +126,7 @@ func TestHamtSet_Merge(t *testing.T) {
 			fields: fields{
 				set: NewHamtSet().
 					Insert(EntryInt(3)).
+					Insert(EntryInt(5)).
 					Insert(EntryInt(1)).(HamtSet),
 			},
 			args: args{
@@ -151,6 +136,7 @@ func TestHamtSet_Merge(t *testing.T) {
 			},
 			want: NewHamtSet().
 				Insert(EntryInt(3)).
+				Insert(EntryInt(5)).
 				Insert(EntryInt(1)).(HamtSet),
 		},
 	}
@@ -181,7 +167,7 @@ func TestHamtSet_FirstRest(t *testing.T) {
 					Insert(EntryInt(2)).
 					Insert(EntryInt(7)).(HamtSet),
 			},
-			// note: hamt.Set entries are seemingly sorted based on their hash
+			// note: hamt.Set entries are sorted based on their hash
 			want: EntryInt(2),
 			want1: NewHamtSet().
 				Insert(EntryInt(3)).

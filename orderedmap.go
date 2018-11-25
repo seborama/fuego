@@ -42,15 +42,12 @@ func (m OrderedMap) KeySet() Set {
 
 // Insert a value into this map.
 func (m OrderedMap) Insert(k Entry, v interface{}) Map {
-	// newMap := m
-	// if it := NewSetIterator(m.entries); it != nil && it.Size() > 0 {
-	// 	for ; it != nil; it = it.Forward() {
-	// 		if it.Value().(MapEntry).K == k {
-	// 			newMap = newMap.Delete(k).(OrderedMap)
-	// 			break
-	// 		}
-	// 	}
-	// }
+	if val := m.Get(k); val != (EntryNone{}) {
+		if val == v {
+			return m
+		}
+		m = m.Delete(k).(OrderedMap)
+	}
 
 	return OrderedMap{
 		entries: m.entries.
@@ -63,11 +60,11 @@ func (m OrderedMap) Insert(k Entry, v interface{}) Map {
 
 // Delete a value from this map.
 func (m OrderedMap) Delete(k Entry) Map {
-	// Look for presence of entry in the Map
-	// Only the key need matching, as this is a Map
+	// Look for presence of entry in the Map.
+	// Only the keys need matching, as this is a Map.
 	it := NewSetIterator(m.entries)
 	for ; it != nil; it = it.Forward() {
-		if it.Value().(MapEntry).K == k {
+		if it.Value().(MapEntry).K.Equal(k) {
 			return OrderedMap{
 				entries: m.entries.Delete(MapEntry{
 					K: k,
@@ -109,7 +106,7 @@ func (m OrderedMap) Merge(n Map) Map {
 func (m OrderedMap) Get(k Entry) interface{} {
 	it := NewSetIterator(m.entries)
 	for ; it != nil; it = it.Forward() {
-		if it.Value().(MapEntry).K == k {
+		if it.Value().(MapEntry).K.Equal(k) {
 			return it.Value().(MapEntry).V
 		}
 	}

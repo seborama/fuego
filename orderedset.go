@@ -63,6 +63,7 @@ func (s OrderedSet) Delete(e Entry) Set {
 	}
 
 	// 'e' not found (includes the case where s.slice is empty)
+	// TODO replace this block with 'return s'
 	sCopy := make([]Entry, len(s.slice))
 	copy(sCopy, s.slice)
 	return OrderedSet{
