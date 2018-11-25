@@ -22,6 +22,12 @@ func (s OrderedSet) Stream() Stream {
 func (s OrderedSet) Insert(e Entry) Set {
 	for idx, entry := range s.slice {
 		if e.Equal(entry) {
+			// To preserve the order of items, the replacement
+			// entry is positioned over the currently existing one.
+			// Another approach would be to delete the current entry
+			// and append the new one at the end.
+			// Perhaps a switch could be added to OrderedSet to choose
+			// the desired behaviour.
 			sCopy := make([]Entry, len(s.slice))
 			copy(sCopy, s.slice)
 			sCopy[idx] = e
@@ -63,7 +69,6 @@ func (s OrderedSet) Delete(e Entry) Set {
 	}
 
 	// 'e' not found (includes the case where s.slice is empty)
-	// TODO replace this block with 'return s'
 	sCopy := make([]Entry, len(s.slice))
 	copy(sCopy, s.slice)
 	return OrderedSet{
