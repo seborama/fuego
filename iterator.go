@@ -19,6 +19,9 @@ type SetIterator struct {
 
 // NewSetIterator creates a new NewSetIterator.
 func NewSetIterator(s Set) Iterator {
+	if s.Size() == 0 {
+		return nil
+	}
 	return SetIterator{set: s}
 }
 
@@ -39,6 +42,10 @@ func (si SetIterator) Forward() Iterator {
 // This does not consume any element unlike Forward().
 // IMPORTANT NOTE: currently, this function uses OrderedSet for the reverse!
 func (si SetIterator) Reverse() Iterator {
+	if si.Size() == 0 {
+		return nil
+	}
+
 	values := []Entry{}
 
 	subSet := si.set

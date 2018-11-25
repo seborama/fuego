@@ -2,13 +2,13 @@ package fuego
 
 // A OrderedMap is an ordered map
 type OrderedMap struct {
-	entries []MapEntry // TODO use OrderedSet
+	entries OrderedSet
 }
 
 // NewOrderedMap creates a new Map
 func NewOrderedMap() OrderedMap {
 	return OrderedMap{
-		entries: []MapEntry{},
+		entries: NewOrderedSet(),
 	}
 }
 
@@ -22,124 +22,97 @@ func NewOrderedMap() OrderedMap {
 // in this map.
 // Since EntrySet returns a Set, it can be streamed with Set.Stream().
 func (m OrderedMap) EntrySet() Set {
-	newSet := NewOrderedSet()
-	for _, e := range m.entries {
-		newSet = newSet.Insert(MapEntry{e.K, e.V}).(OrderedSet)
-	}
-	return newSet
+	return m.entries
 }
 
 // KeySet returns a Set of keys contained in this map.
 // Since KeySet returns a Set, it can be streamed with Set.Stream().
 // Note that ValueSet() is not implemented because Values can be present
-// multiple times. This could possibly be implemented via []interface{}?
+// multiple times. This could possibly be implemented via []interface{}
+// or a Sequence?
 // It also could be better to use the BiStream() proposed in this file.
 func (m OrderedMap) KeySet() Set {
-	newSet := NewOrderedSet()
-	for _, e := range m.entries {
-		newSet = newSet.Insert(e.K).(OrderedSet)
+	keySet := NewOrderedSet()
+	it := NewSetIterator(m.entries)
+	for ; it != nil; it = it.Forward() {
+		keySet = keySet.Insert(it.Value().(MapEntry).K).(OrderedSet)
 	}
-	return newSet
+	return keySet
 }
 
 // Insert a value into this map.
 func (m OrderedMap) Insert(k Entry, v interface{}) Map {
-	// len+1 to keep room for the '(k,v)' if not already present
-	newMap := make([]MapEntry, len(m.entries)+1)
-	copy(newMap, m.entries)
-
-	foundExisting := false
-	for idx, e := range m.entries {
-		if e.Equal(k) {
-			foundExisting = true
-			newMap[idx] = MapEntry{K: k, V: v}
-			newMap = newMap[:len(newMap)-1] // remove unneeded extra room
-			break
-		}
-	}
-	if !foundExisting {
-		newMap[len(newMap)-1] = MapEntry{K: k, V: v}
-	}
+	// newMap := m
+	// if it := NewSetIterator(m.entries); it != nil && it.Size() > 0 {
+	// 	for ; it != nil; it = it.Forward() {
+	// 		if it.Value().(MapEntry).K == k {
+	// 			newMap = newMap.Delete(k).(OrderedMap)
+	// 			break
+	// 		}
+	// 	}
+	// }
 
 	return OrderedMap{
-		entries: newMap,
+		entries: m.entries.
+			Insert(MapEntry{
+				K: k,
+				V: v,
+			}).(OrderedSet),
 	}
 }
 
 // Delete a value from this map.
 func (m OrderedMap) Delete(k Entry) Map {
-	for idx, e := range m.entries {
-		if e.K.Equal(k) {
-			var sCopy []MapEntry
-			switch idx {
-			case 0:
-				sCopy = make([]MapEntry, len(m.entries)-1)
-				copy(sCopy, m.entries[1:])
-
-			case m.Size() - 1:
-				sCopy = make([]MapEntry, len(m.entries)-1)
-				copy(sCopy, m.entries[:idx])
-
-			default:
-				sCopy = append(m.entries[:idx], m.entries[idx+1:]...)
-			}
+	// Look for presence of entry in the Map
+	// Only the key need matching, as this is a Map
+	it := NewSetIterator(m.entries)
+	for ; it != nil; it = it.Forward() {
+		if it.Value().(MapEntry).K == k {
 			return OrderedMap{
-				entries: sCopy,
-			}
+				entries: m.entries.Delete(MapEntry{
+					K: k,
+					V: it.Value().(MapEntry).V}).(OrderedSet)}
 		}
 	}
 
-	// 'k' not found (includes the case where s.entries is empty)
-	sCopy := make([]MapEntry, len(m.entries))
-	copy(sCopy, m.entries)
-	return OrderedMap{
-		entries: sCopy,
-	}
+	return m
 }
 
 // Size of the Set.
 func (m OrderedMap) Size() int {
-	return len(m.entries)
+	return m.entries.Size()
 }
 
 // FirstRest returns a key-value pair in a map and a rest of the map.
 // This method is useful for iteration.
 // The key and value would be nil if the map is empty.
 func (m OrderedMap) FirstRest() (Entry, interface{}, Map) {
-	sCopy := make([]MapEntry, len(m.entries)-1)
-	copy(sCopy, m.entries[1:])
-	return m.entries[0].K, m.entries[0].V, OrderedMap{entries: sCopy}
+	e, rest := m.entries.FirstRest()
+	return e.(MapEntry).K, e.(MapEntry).V,
+		OrderedMap{
+			entries: rest.(OrderedSet)}
 }
 
 // Merge this map and given map.
 func (m OrderedMap) Merge(n Map) Map {
-	merge := make([]MapEntry, len(m.entries))
-	copy(merge, m.entries)
-
-	sliceIndex := make(map[Entry]bool, len(m.entries))
-	for _, v := range m.entries {
-		sliceIndex[v.K] = true
+	newMap := m
+	it := NewSetIterator(n.EntrySet())
+	for ; it != nil; it = it.Forward() {
+		newMap = newMap.Insert(it.Value().(MapEntry).K, it.Value().(MapEntry).V).(OrderedMap)
 	}
 
-	for _, entry := range n.(OrderedMap).entries {
-		if !sliceIndex[entry.K] {
-			merge = append(merge, entry)
-		}
-	}
-	return OrderedMap{
-		entries: merge,
-	}
+	return newMap
 }
 
 // Get a value in this map corresponding to a given key.
 // It returns nil if no value is found.
 func (m OrderedMap) Get(k Entry) interface{} {
-	for _, e := range m.entries {
-		if e.K.Equal(k) {
-			return e.V
+	it := NewSetIterator(m.entries)
+	for ; it != nil; it = it.Forward() {
+		if it.Value().(MapEntry).K == k {
+			return it.Value().(MapEntry).V
 		}
 	}
-
 	return EntryNone{}
 }
 
@@ -164,8 +137,9 @@ func (m OrderedMap) HasKey(k Entry) bool {
 // HasValue returns true if a given value exists
 // in a map, or false otherwise.
 func (m OrderedMap) HasValue(v interface{}) bool {
-	for _, e := range m.entries {
-		if e.V == v {
+	it := NewSetIterator(m.entries)
+	for ; it != nil; it = it.Forward() {
+		if it.Value().(MapEntry).V == v {
 			return true
 		}
 	}

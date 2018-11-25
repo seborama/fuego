@@ -28,10 +28,13 @@ func (s HamtSet) Insert(e Entry) Set {
 	}
 }
 
-// Delete deletes a value from a set.
+// Delete a value from a set.
 func (s HamtSet) Delete(e Entry) Set {
+	if e == nil {
+		panic(PanicNoSuchElement)
+	}
 	return HamtSet{
-		set: s.set.Delete(e.(hamt.Entry)),
+		set: s.set.Delete(e),
 	}
 }
 

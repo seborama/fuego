@@ -2,8 +2,6 @@ package fuego
 
 import "github.com/raviqqe/hamt"
 
-// TODO: deprecate and use Tuple2 instead??
-
 // MapEntry holds a hamt.Entry key and a value that form an entry in a Map.
 type MapEntry struct {
 	K Entry

@@ -3,7 +3,61 @@ package fuego
 import (
 	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
+
+// TODO weak tests: the order of elements in HamtSet is not guaranteed
+
+func TestHamtSet_Insert(t *testing.T) {
+	type fields struct {
+		mySet Set
+	}
+	type args struct {
+		e Entry
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   Set
+	}{
+		{
+			name: "Should Insert entry into Set",
+			fields: fields{
+				mySet: NewHamtSet().
+					Insert(MapEntry{K: EntryInt(1), V: "one"}),
+			},
+			args: args{
+				e: MapEntry{K: EntryInt(5), V: "five"},
+			},
+			want: NewHamtSet().
+				Insert(MapEntry{K: EntryInt(1), V: "one"}).
+				Insert(MapEntry{K: EntryInt(5), V: "five"}),
+		},
+		{
+			name: "Should replace duplicate entry on Insert into Set",
+			fields: fields{
+				mySet: NewHamtSet().
+					Insert(MapEntry{K: EntryInt(1), V: "one"}).
+					Insert(MapEntry{K: EntryInt(5), V: "five"}),
+			},
+			args: args{
+				e: MapEntry{K: EntryInt(5), V: "cinq"},
+			},
+			want: NewHamtSet().
+				Insert(MapEntry{K: EntryInt(1), V: "one"}).
+				Insert(MapEntry{K: EntryInt(5), V: "cinq"}),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.fields.mySet.Insert(tt.args.e); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("HamtSet.Insert() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
 
 func TestHamtSet_Stream(t *testing.T) {
 	tests := []struct {
@@ -46,7 +100,7 @@ func TestHamtSet_Stream(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := tt.set.Stream(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Set.Stream() = %v, want %v", got, tt.want)
+				t.Errorf("HamtSet.Stream() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -103,7 +157,7 @@ func TestHamtSet_Merge(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := tt.fields.set.Merge(tt.args.t); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Set.Merge() = %v, want %v", got, tt.want)
+				t.Errorf("HamtSet.Merge() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -138,10 +192,10 @@ func TestHamtSet_FirstRest(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got, got1 := tt.fields.set.FirstRest()
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Set.FirstRest() got = %v, want %v", got, tt.want)
+				t.Errorf("HamtSet.FirstRest() got = %v, want %v", got, tt.want)
 			}
 			if !reflect.DeepEqual(got1, tt.want1) {
-				t.Errorf("Set.FirstRest() got1 = %v, want %v", got1, tt.want1)
+				t.Errorf("HamtSet.FirstRest() got1 = %v, want %v", got1, tt.want1)
 			}
 		})
 	}
@@ -179,6 +233,109 @@ func TestHamtSet_Size(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := tt.fields.set.Size(); got != tt.want {
 				t.Errorf("HamtSet.Size() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestHamtSet_Delete(t *testing.T) {
+	type args struct {
+		e Entry
+	}
+	tests := []struct {
+		name    string
+		set     Set
+		args    args
+		want    Set
+		wantErr string
+	}{
+		{
+			name:    "Should return empty set when deleting from empty set",
+			set:     NewHamtSet(),
+			args:    args{},
+			want:    NewHamtSet(),
+			wantErr: PanicNoSuchElement,
+		},
+		{
+			name: "Should return empty set when deleting unique entry from set",
+			set: NewHamtSet().
+				Insert(EntryInt(1)),
+			args: args{
+				e: EntryInt(1),
+			},
+			want: NewHamtSet(),
+		},
+		{
+			name: "Should return original set when deleting non-existent entry from set",
+			set: NewHamtSet().
+				Insert(EntryInt(3)).
+				Insert(EntryInt(8)).
+				Insert(EntryInt(1)).
+				Insert(EntryInt(7)),
+			args: args{
+				e: EntryInt(-999),
+			},
+			want: NewHamtSet().
+				Insert(EntryInt(3)).
+				Insert(EntryInt(8)).
+				Insert(EntryInt(1)).
+				Insert(EntryInt(7)),
+		},
+		{
+			name: "Should return reduced set when deleting first entry from set",
+			set: NewHamtSet().
+				Insert(EntryInt(3)).
+				Insert(EntryInt(8)).
+				Insert(EntryInt(1)).
+				Insert(EntryInt(7)),
+			args: args{
+				e: EntryInt(3),
+			},
+			want: NewHamtSet().
+				Insert(EntryInt(8)).
+				Insert(EntryInt(1)).
+				Insert(EntryInt(7)),
+		},
+		{
+			name: "Should return reduced set when deleting last entry from set",
+			set: NewHamtSet().
+				Insert(EntryInt(3)).
+				Insert(EntryInt(8)).
+				Insert(EntryInt(1)).
+				Insert(EntryInt(7)),
+			args: args{
+				e: EntryInt(7),
+			},
+			want: NewHamtSet().
+				Insert(EntryInt(3)).
+				Insert(EntryInt(8)).
+				Insert(EntryInt(1)),
+		},
+		{
+			name: "Should return reduced set when deleting middle entry from set",
+			set: NewHamtSet().
+				Insert(EntryInt(3)).
+				Insert(EntryInt(8)).
+				Insert(EntryInt(1)).
+				Insert(EntryInt(7)),
+			args: args{
+				e: EntryInt(8),
+			},
+			want: NewHamtSet().
+				Insert(EntryInt(3)).
+				Insert(EntryInt(1)).
+				Insert(EntryInt(7)),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.wantErr != "" {
+				assert.PanicsWithValue(t, tt.wantErr, func() { tt.set.Delete(tt.args.e) })
+				return
+			}
+
+			if got := tt.set.Delete(tt.args.e); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("HamtSet.Delete() = %v, want %v", got, tt.want)
 			}
 		})
 	}

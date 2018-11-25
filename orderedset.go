@@ -20,10 +20,11 @@ func (s OrderedSet) Stream() Stream {
 
 // Insert a value into this set.
 func (s OrderedSet) Insert(e Entry) Set {
-	for _, entry := range s.slice {
+	for idx, entry := range s.slice {
 		if e.Equal(entry) {
 			sCopy := make([]Entry, len(s.slice))
 			copy(sCopy, s.slice)
+			sCopy[idx] = e
 			return OrderedSet{
 				slice: sCopy,
 			}
@@ -36,6 +37,10 @@ func (s OrderedSet) Insert(e Entry) Set {
 
 // Delete a value from this set.
 func (s OrderedSet) Delete(e Entry) Set {
+	if e == nil {
+		panic(PanicNoSuchElement)
+	}
+
 	for idx, val := range s.slice {
 		if val.Equal(e) {
 			var sCopy []Entry

@@ -89,6 +89,9 @@ func (rp ReferenceStream) Reduce(f2 BiFunction) interface{} {
 // RightReduce accumulates the elements of this Set by
 // applying the given function.
 func (rp ReferenceStream) RightReduce(f2 BiFunction) interface{} {
+	if rp.iterator == nil || rp.iterator.Size() == 0 {
+		return nil
+	}
 	reverse := NewStream(rp.iterator.Reverse())
 	return reverse.LeftReduce(f2)
 }

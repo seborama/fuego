@@ -7,6 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// TODO weak tests: the order of elements in HamtMap/HamtSet is not guaranteed
+
 func TestHamtMap_Insert(t *testing.T) {
 	type fields struct {
 		myMap Map

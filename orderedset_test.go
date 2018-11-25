@@ -3,7 +3,59 @@ package fuego
 import (
 	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
+
+func TestOrderedSet_Insert(t *testing.T) {
+	type fields struct {
+		mySet Set
+	}
+	type args struct {
+		e Entry
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   Set
+	}{
+		{
+			name: "Should Insert entry into Set",
+			fields: fields{
+				mySet: NewOrderedSet().
+					Insert(MapEntry{K: EntryInt(1), V: "one"}),
+			},
+			args: args{
+				e: MapEntry{K: EntryInt(5), V: "five"},
+			},
+			want: NewOrderedSet().
+				Insert(MapEntry{K: EntryInt(1), V: "one"}).
+				Insert(MapEntry{K: EntryInt(5), V: "five"}),
+		},
+		{
+			name: "Should replace duplicate entry on Insert into Set",
+			fields: fields{
+				mySet: NewOrderedSet().
+					Insert(MapEntry{K: EntryInt(1), V: "one"}).
+					Insert(MapEntry{K: EntryInt(5), V: "five"}),
+			},
+			args: args{
+				e: MapEntry{K: EntryInt(5), V: "cinq"},
+			},
+			want: NewOrderedSet().
+				Insert(MapEntry{K: EntryInt(1), V: "one"}).
+				Insert(MapEntry{K: EntryInt(5), V: "cinq"}),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.fields.mySet.Insert(tt.args.e); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Set.Insert() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
 
 func TestOrderedSet_Stream(t *testing.T) {
 	tests := []struct {
@@ -188,16 +240,18 @@ func TestOrderedSet_Delete(t *testing.T) {
 		e Entry
 	}
 	tests := []struct {
-		name string
-		set  Set
-		args args
-		want Set
+		name    string
+		set     Set
+		args    args
+		want    Set
+		wantErr string
 	}{
 		{
-			name: "Should return empty set when deleting from empty set",
-			set:  NewOrderedSet(),
-			args: args{},
-			want: NewOrderedSet(),
+			name:    "Should return empty set when deleting from empty set",
+			set:     NewOrderedSet(),
+			args:    args{},
+			want:    NewOrderedSet(),
+			wantErr: PanicNoSuchElement,
 		},
 		{
 			name: "Should return empty set when deleting unique entry from set",
@@ -272,6 +326,11 @@ func TestOrderedSet_Delete(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			if tt.wantErr != "" {
+				assert.PanicsWithValue(t, tt.wantErr, func() { tt.set.Delete(tt.args.e) })
+				return
+			}
+
 			if got := tt.set.Delete(tt.args.e); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("OrderedSet.Delete() = %v, want %v", got, tt.want)
 			}
