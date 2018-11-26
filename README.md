@@ -4,7 +4,7 @@
 
 ## Overview
 
-_Making Go come._
+_Making Go come to functional programming._
 
 This is a research project in functional programming which I hope will prove useful!
 
@@ -20,7 +20,7 @@ go get github.com/seborama/fuego
 Or for a specific version:
 
 ```bash
-go get gopkg.in/seborama/govcr.v3
+go get gopkg.in/seborama/govcr.v5
 ```
 
 ## Contribute
