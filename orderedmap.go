@@ -33,8 +33,7 @@ func (m OrderedMap) EntrySet() Set {
 // It also could be better to use the BiStream() proposed in this file.
 func (m OrderedMap) KeySet() Set {
 	keySet := NewOrderedSet()
-	it := NewSetIterator(m.entries)
-	for ; it != nil; it = it.Forward() {
+	for it := NewSetIterator(m.entries); it != nil; it = it.Forward() {
 		keySet = keySet.Insert(it.Value().(MapEntry).K).(OrderedSet)
 	}
 	return keySet
@@ -42,13 +41,6 @@ func (m OrderedMap) KeySet() Set {
 
 // Insert a value into this map.
 func (m OrderedMap) Insert(k Entry, v interface{}) Map {
-	if val := m.Get(k); val != (EntryNone{}) {
-		if val == v {
-			return m
-		}
-		m = m.Delete(k).(OrderedMap)
-	}
-
 	return OrderedMap{
 		entries: m.entries.
 			Insert(MapEntry{
@@ -60,19 +52,13 @@ func (m OrderedMap) Insert(k Entry, v interface{}) Map {
 
 // Delete a value from this map.
 func (m OrderedMap) Delete(k Entry) Map {
-	// Look for presence of entry in the Map.
-	// Only the keys need matching, as this is a Map.
-	it := NewSetIterator(m.entries)
-	for ; it != nil; it = it.Forward() {
-		if it.Value().(MapEntry).K.Equal(k) {
-			return OrderedMap{
-				entries: m.entries.Delete(MapEntry{
-					K: k,
-					V: it.Value().(MapEntry).V}).(OrderedSet)}
-		}
+	return OrderedMap{
+		entries: m.entries.
+			Delete(MapEntry{
+				K: k,
+				V: nil, // MapEntry equality is based solely on MapEntry.K
+			}).(OrderedSet),
 	}
-
-	return m
 }
 
 // Size of the Set.
@@ -93,19 +79,16 @@ func (m OrderedMap) FirstRest() (Entry, interface{}, Map) {
 // Merge this map and given map.
 func (m OrderedMap) Merge(n Map) Map {
 	newMap := m
-	it := NewSetIterator(n.EntrySet())
-	for ; it != nil; it = it.Forward() {
+	for it := NewSetIterator(n.EntrySet()); it != nil; it = it.Forward() {
 		newMap = newMap.Insert(it.Value().(MapEntry).K, it.Value().(MapEntry).V).(OrderedMap)
 	}
-
 	return newMap
 }
 
 // Get a value in this map corresponding to a given key.
 // It returns nil if no value is found.
 func (m OrderedMap) Get(k Entry) interface{} {
-	it := NewSetIterator(m.entries)
-	for ; it != nil; it = it.Forward() {
+	for it := NewSetIterator(m.entries); it != nil; it = it.Forward() {
 		if it.Value().(MapEntry).K.Equal(k) {
 			return it.Value().(MapEntry).V
 		}
@@ -116,12 +99,7 @@ func (m OrderedMap) Get(k Entry) interface{} {
 // Has returns true if a key-value pair corresponding with a given key is
 // included in a map, or false otherwise.
 func (m OrderedMap) Has(k Entry, v interface{}) bool {
-	value := m.Get(k)
-
-	if _, ok := value.(EntryNone); ok {
-		return false
-	}
-	return value == v
+	return m.Get(k) == v // TODO review this to use .Equal should we implement MapEntry(Entry, Entry)
 }
 
 // HasKey returns true if a given key exists
@@ -134,8 +112,7 @@ func (m OrderedMap) HasKey(k Entry) bool {
 // HasValue returns true if a given value exists
 // in a map, or false otherwise.
 func (m OrderedMap) HasValue(v interface{}) bool {
-	it := NewSetIterator(m.entries)
-	for ; it != nil; it = it.Forward() {
+	for it := NewSetIterator(m.entries); it != nil; it = it.Forward() {
 		if it.Value().(MapEntry).V == v {
 			return true
 		}

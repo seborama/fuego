@@ -116,18 +116,10 @@ func (rp ReferenceStream) Intersperse(e Entry) Stream {
 
 // GroupBy groups the elements of this Stream by classifying them.
 func (rp ReferenceStream) GroupBy(classifier Function) Map {
-	if rp.iterator == nil || rp.iterator.Size() == 0 {
-		return NewOrderedMap()
-	}
-
-	it := rp.iterator
 	groups := map[Entry]OrderedSet{}
-	for ; it != nil; it = it.Forward() {
+	for it := rp.iterator; it != nil; it = it.Forward() {
 		k := classifier(it.Value())
 		v := it.Value()
-		if _, ok := groups[k]; !ok {
-			groups[k] = OrderedSet{}
-		}
 		groups[k] = groups[k].Insert(v).(OrderedSet)
 	}
 

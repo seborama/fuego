@@ -358,7 +358,31 @@ func TestReferenceStream_GroupBy(t *testing.T) {
 		want   Map
 	}{
 		{
-			name: "Should return empty map",
+			name: "Should return empty map when nil iterator",
+			fields: fields{
+				iterator: nil,
+			},
+			args: args{
+				classifier: func(i Entry) Entry {
+					return i.(EntryInt) & 1
+				},
+			},
+			want: NewOrderedMap(),
+		},
+		{
+			name: "Should return empty map when iterator with nil Set",
+			fields: fields{
+				iterator: NewSetIterator(nil),
+			},
+			args: args{
+				classifier: func(i Entry) Entry {
+					return i.(EntryInt) & 1
+				},
+			},
+			want: NewOrderedMap(),
+		},
+		{
+			name: "Should return empty map when empty Set",
 			fields: fields{
 				iterator: NewSetIterator(NewOrderedSet()),
 			},

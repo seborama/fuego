@@ -15,11 +15,5 @@ func (i EntryBool) Hash() uint32 {
 
 // Equal returns true if 'e' and 'i' are equal.
 func (i EntryBool) Equal(e hamt.Entry) bool {
-	j, ok := e.(EntryBool)
-
-	if !ok {
-		return false
-	}
-
-	return i == j
+	return i == e
 }

@@ -36,7 +36,22 @@ func TestOrderedMap_Insert(t *testing.T) {
 				Insert(EntryInt(5), "five"),
 		},
 		{
-			name: "Should replace duplicate entry on Insert into Map",
+			name: "Should keep identical duplicate entry on Insert into Map",
+			fields: fields{
+				myMap: NewOrderedMap().
+					Insert(EntryInt(1), "one").
+					Insert(EntryInt(5), "five"),
+			},
+			args: args{
+				k: EntryInt(5),
+				v: "five",
+			},
+			want: NewOrderedMap().
+				Insert(EntryInt(1), "one").
+				Insert(EntryInt(5), "five"),
+		},
+		{
+			name: "Should replace duplicate entry by key only on Insert into Map",
 			fields: fields{
 				myMap: NewOrderedMap().
 					Insert(EntryInt(1), "one").
@@ -53,7 +68,8 @@ func TestOrderedMap_Insert(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.fields.myMap.Insert(tt.args.k, tt.args.v); !reflect.DeepEqual(got, tt.want) {
+			got := tt.fields.myMap.Insert(tt.args.k, tt.args.v)
+			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Map.Insert() = %v, want %v", got, tt.want)
 			}
 		})
@@ -151,6 +167,10 @@ func TestOrderedMap_Size(t *testing.T) {
 		Insert(EntryInt(2), "two")
 
 	assert.Equal(t, 3, m.Size())
+}
+
+func TestOrderedMap_EmptySize(t *testing.T) {
+	assert.Equal(t, 0, NewOrderedMap().Size())
 }
 
 func TestOrderedMap_Merge(t *testing.T) {

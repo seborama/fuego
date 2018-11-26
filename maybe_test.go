@@ -3,11 +3,31 @@ package fuego
 import (
 	"testing"
 
+	"github.com/raviqqe/hamt"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestMaybeOf_Nil(t *testing.T) {
 	none := MaybeOf(nil)
+	assert.True(t, none.IsEmpty())
+	assert.Exactly(t, MaybeNone(), none)
+}
+
+// entryNil is an Entry for '*int'.
+type entryNil struct{}
+
+// Hash returns a hash for 'i'.
+func (i entryNil) Hash() uint32 {
+	return 0
+}
+
+// Equal returns true if 'e' and 'i' are equal.
+func (i entryNil) Equal(e hamt.Entry) bool {
+	return e == nil
+}
+
+func TestMaybeOf_EntryNil(t *testing.T) {
+	none := MaybeOf(entryNil{})
 	assert.True(t, none.IsEmpty())
 	assert.Exactly(t, MaybeNone(), none)
 }

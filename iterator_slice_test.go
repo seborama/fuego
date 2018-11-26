@@ -61,6 +61,13 @@ func TestSliceIterator_Value(t *testing.T) {
 		wantErr string
 	}{
 		{
+			name: "Should produce PanicNoSuchElement for nil slice",
+			fields: fields{
+				slice: nil,
+			},
+			wantErr: PanicNoSuchElement,
+		},
+		{
 			name: "Should produce PanicNoSuchElement for empty slice",
 			fields: fields{
 				slice: []Entry{},
@@ -101,6 +108,13 @@ func TestSliceIterator_Size(t *testing.T) {
 		fields fields
 		want   int
 	}{
+		{
+			name: "Should return 0 for nil Set",
+			fields: fields{
+				slice: nil,
+			},
+			want: 0,
+		},
 		{
 			name: "Should return 0 for empty Set",
 			fields: fields{

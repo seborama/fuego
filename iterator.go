@@ -19,7 +19,7 @@ type SetIterator struct {
 
 // NewSetIterator creates a new NewSetIterator.
 func NewSetIterator(s Set) Iterator {
-	if s.Size() == 0 {
+	if s == nil || s.Size() == 0 {
 		return nil
 	}
 	return SetIterator{set: s}
@@ -69,7 +69,7 @@ func (si SetIterator) Reverse() Iterator {
 // to by the Iterator.
 func (si SetIterator) Value() Entry {
 	if si.Size() == 0 {
-		panic(PanicNoSuchElement)
+		panic(PanicNoSuchElement) // TODO return 'nil' instead?
 	}
 	e, _ := si.set.FirstRest()
 	return e
@@ -77,6 +77,9 @@ func (si SetIterator) Value() Entry {
 
 // Size returns the total number of elements in the iterator.
 func (si SetIterator) Size() int {
+	if si.set == nil {
+		return 0
+	}
 	return si.set.Size()
 }
 
@@ -122,8 +125,8 @@ func (si SliceIterator) Reverse() Iterator {
 // Value returns the element of the collection currently pointed
 // to by the Iterator.
 func (si SliceIterator) Value() Entry {
-	if si.slice == nil || len(si.slice) == 0 {
-		panic(PanicNoSuchElement)
+	if si.Size() == 0 {
+		panic(PanicNoSuchElement) // TODO return 'nil' instead?
 	}
 	return si.slice[0]
 }
