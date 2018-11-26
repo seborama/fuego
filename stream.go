@@ -58,11 +58,7 @@ func (rp ReferenceStream) Filter(predicate Predicate) Stream {
 
 // ForEach executes the given function for each entry in this stream.
 func (rp ReferenceStream) ForEach(consumer Consumer) {
-	it := rp.iterator
-	if it == nil || it.Size() == 0 {
-		return
-	}
-	for ; it != nil; it = it.Forward() {
+	for it := rp.iterator; it != nil && it.Size() != 0; it = it.Forward() {
 		consumer(it.Value())
 	}
 }
@@ -70,10 +66,10 @@ func (rp ReferenceStream) ForEach(consumer Consumer) {
 // LeftReduce accumulates the elements of this Set by
 // applying the given function.
 func (rp ReferenceStream) LeftReduce(f2 BiFunction) interface{} {
-	if rp.iterator == nil || rp.iterator.Size() == 0 {
+	it := rp.iterator
+	if it == nil || it.Size() == 0 {
 		return nil
 	}
-	it := rp.iterator
 	res := it.Value()
 	for it = it.Forward(); it != nil; it = it.Forward() {
 		res = f2(res, it.Value())

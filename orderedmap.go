@@ -86,7 +86,7 @@ func (m OrderedMap) Merge(n Map) Map {
 }
 
 // Get a value in this map corresponding to a given key.
-// It returns nil if no value is found.
+// It returns EntryNone if no value is found.
 func (m OrderedMap) Get(k Entry) interface{} {
 	for it := NewSetIterator(m.entries); it != nil; it = it.Forward() {
 		if it.Value().(MapEntry).K.Equal(k) {

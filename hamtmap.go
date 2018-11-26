@@ -35,6 +35,7 @@ func (m HamtMap) EntrySet() Set {
 		k2, v2, subMap = subMap.FirstRest()
 		s = s.Insert(MapEntry{k2, v2}).(HamtSet)
 	}
+
 	return s
 }
 
@@ -90,7 +91,7 @@ func (m HamtMap) Merge(n Map) Map {
 }
 
 // Get a value in this map corresponding to a given key.
-// It returns nil if no value is found.
+// It returns EntryNone if no value is found.
 func (m HamtMap) Get(k Entry) interface{} {
 	res := m.myMap.Find(k.(hamt.Entry))
 	if res == nil {
