@@ -109,7 +109,7 @@ func TestTuple2_Equal(t *testing.T) {
 			want: true,
 		},
 		{
-			name: "Should equal with E2 nil",
+			name: "Should NOT equal with E2 nil",
 			fields: fields{
 				E1: EntryString("hi"),
 				E2: nil,
