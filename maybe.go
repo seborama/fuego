@@ -6,7 +6,7 @@ type Maybe struct {
 	isEmpty bool
 }
 
-// A MaybeNone is a Maybe that does not have a value.
+// MaybeNone is a Maybe that does not have a value.
 func MaybeNone() Maybe {
 	return Maybe{
 		value:   nil,
@@ -33,6 +33,8 @@ func MaybeOf(i Entry) Maybe {
 	return MaybeSome(i)
 }
 
+// IsEmpty returns true when this Maybe does not have
+// a value.
 func (m Maybe) IsEmpty() bool { return m.isEmpty }
 
 // Filter    \
@@ -56,7 +58,7 @@ func (m Maybe) GetOrElse(e Entry) Entry {
 	return m.value
 }
 
-// GetOrElse returns this Maybe or the given Maybe if this Maybe is empty.
+// OrElse returns this Maybe or the given Maybe if this Maybe is empty.
 func (m Maybe) OrElse(other Maybe) Maybe {
 	if m.IsEmpty() {
 		return other

@@ -165,9 +165,17 @@ func TestReferenceStream_LeftReduce(t *testing.T) {
 		want   interface{}
 	}{
 		{
+			name: "Should return nil for a nil Stream",
+			fields: fields{
+				iterator: NewSetIterator(nil),
+			},
+			args: args{f2: concatenateStringsBiFunc},
+			want: nil,
+		},
+		{
 			name: "Should return nil for an empty Stream",
 			fields: fields{
-				iterator: NewSetIterator(NewHamtSet()),
+				iterator: SetIterator{set: NewHamtSet()},
 			},
 			args: args{f2: concatenateStringsBiFunc},
 			want: nil,
@@ -231,9 +239,9 @@ func TestReferenceStream_RightReduce(t *testing.T) {
 		want   interface{}
 	}{
 		{
-			name: "Should return nil for an empty Stream",
+			name: "Should return nil for a nil Stream",
 			fields: fields{
-				iterator: NewSetIterator(NewHamtSet()),
+				iterator: NewSetIterator(nil),
 			},
 			args: args{f2: concatenateStringsBiFunc},
 			want: nil,
@@ -286,8 +294,17 @@ func TestReferenceStream_Intersperse(t *testing.T) {
 		want   Stream
 	}{
 		{
-			name:   "Should return a Stream of nil",
+			name:   "Should return a Stream of nil for nil iterator",
 			fields: fields{iterator: nil},
+			args: args{
+				e: EntryString(" - "),
+			},
+			want: NewStream(
+				NewSliceIterator([]Entry{})),
+		},
+		{
+			name:   "Should return a Stream of nil for empty Set",
+			fields: fields{iterator: SetIterator{set: NewHamtSet()}},
 			args: args{
 				e: EntryString(" - "),
 			},

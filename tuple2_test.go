@@ -76,6 +76,63 @@ func TestTuple2_Equal(t *testing.T) {
 		want   bool
 	}{
 		{
+			name: "Should equal with E1 nil and args nil",
+			fields: fields{
+				E1: nil,
+				E2: EntryString("bye"),
+			},
+			args: args{o: nil},
+			want: false,
+		},
+		{
+			name: "Should NOT equal with E1 nil",
+			fields: fields{
+				E1: nil,
+				E2: EntryString("hi"),
+			},
+			args: args{
+				o: Tuple2{
+					E1: nil,
+					E2: EntryString("bye")}},
+			want: false,
+		},
+		{
+			name: "Should equal with E1 nil",
+			fields: fields{
+				E1: nil,
+				E2: EntryString("bye"),
+			},
+			args: args{
+				o: Tuple2{
+					E1: nil,
+					E2: EntryString("bye")}},
+			want: true,
+		},
+		{
+			name: "Should equal with E2 nil",
+			fields: fields{
+				E1: EntryString("hi"),
+				E2: nil,
+			},
+			args: args{
+				o: Tuple2{
+					E1: EntryString("hi"),
+					E2: EntryString("bye")}},
+			want: false,
+		},
+		{
+			name: "Should NOT equal with E2 nil",
+			fields: fields{
+				E1: EntryString("hi"),
+				E2: nil,
+			},
+			args: args{
+				o: Tuple2{
+					E1: EntryString("bye"),
+					E2: nil}},
+			want: false,
+		},
+		{
 			name: "Should equal",
 			fields: fields{
 				E1: EntryString("hi"),

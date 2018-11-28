@@ -21,8 +21,7 @@ func (me MapEntry) Hash() uint32 {
 	return me.K.Hash()
 }
 
-// Equal compares the hashes of the key of this MapEntry with
-// that of the given Entry.
+// Equal returns true when me and e are equal.
 // Note that MapEntry defines equality as equality in Hash and
 // the Hash of a MapEntry is its MapEntry.K hash (MapEntry.V is
 // not considered)
@@ -30,7 +29,11 @@ func (me MapEntry) Equal(e hamt.Entry) bool {
 	return me.Hash() == e.Hash()
 }
 
-// Equal compares the key of this MapEntry with the given MapEntry.
+// EqualMapEntry compares the key of this MapEntry with the
+// given MapEntry.
+// Note that MapEntry defines equality as equality in Hash and
+// the Hash of a MapEntry is its MapEntry.K hash (MapEntry.V is
+// not considered)
 func (me MapEntry) EqualMapEntry(ome MapEntry) bool {
 	return me.Hash() == ome.Hash()
 }

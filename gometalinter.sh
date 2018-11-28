@@ -1,3 +1,3 @@
 #!/bin/bash
 
-gometalinter | grep -v "_test\.go.*[(]lll[)]$"
+gometalinter ./ | grep -v "_test\.go.*[(]lll[)]$"

@@ -69,10 +69,16 @@ func TestTuple1_Equal(t *testing.T) {
 			want: false,
 		},
 		{
-			name:   "Should equal: nil == nil",
+			name:   "Should equal: Tuple(nil) != nil",
 			fields: fields{E1: nil},
 			args:   args{o: nil},
 			want:   false,
+		},
+		{
+			name:   "Should equal: Tuple(nil) == Tuple(nil)",
+			fields: fields{E1: nil},
+			args:   args{o: Tuple1{E1: nil}},
+			want:   true,
 		},
 		{
 			name: "Should equal: hi == hi",
