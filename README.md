@@ -5,7 +5,7 @@
 
 **Important Note**
 
-I am currently working on removing the embedded collections to enable me to focus on core functional aspects.
+I am currently working on removing the embedded collections to enable me to focus on core functional aspects. See Pull Request #5.
 
 I may not re-instate them or perhaps I will create a separate project in the future?
 
