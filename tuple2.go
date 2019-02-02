@@ -36,9 +36,10 @@ func (t Tuple2) Arity() int {
 	return 2
 }
 
-// ToSet returns the elements of this tuple as a Set.
-func (t Tuple2) ToSet() Set {
-	return NewOrderedSet().
-		Insert(t.E1).
-		Insert(t.E2)
+// ToSlice returns the elements of this tuple as a Go slice.
+func (t Tuple2) ToSlice() []Entry {
+	return []Entry{
+		t.E1,
+		t.E2,
+	}
 }

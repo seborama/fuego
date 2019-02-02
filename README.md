@@ -51,42 +51,6 @@ When the value is `nil`, `Maybe` is considered empty unless it was created with 
 
 `MaybeNone()` always produces an empty optional.
 
-### HamtSet
-
-`HamtSet` is based on hamt.Set and entries must implement interface `Entry`.
-
-It is an unordered collection, yet unnaturally sorted (i.e. sorting is based on the hash of the `hamt.Entry`).
-
-An example `Entry` implementation called `EntryInt` is provided in [entry_test.go](entry_test.go).
-
-```go
-// See entry_test.go for "EntryInt"
-NewHamtSet().
-    Insert(EntryInt(1)).
-    Insert(EntryInt(2)).
-    Delete(EntryInt(1)).
-    Insert(EntryInt(3)).
-    Stream()
-```
-
-Uses of streams with Sets are also available in [example_map_test.go](example_map_test.go).
-
-### OrderedSet
-
-This is an **ordered** implementation of a `Set`.
-
-### HamtMap
-
-As with `HamtSet`, `HamtMap` is based on hamt.Map and entries must implement interface `Entry` for its keys but values can be anything (`interface{}`).
-
-It is an unordered collection, yet unnaturally sorted (i.e. sorting is based on the hash of the `hamt.Entry` keys).
-
-See [example_map_test.go](example_map_test.go) for more details of an example of `HamtMap` with Stream and Filter combined together to extract entries which keys are an even number.
-
-### OrderedMap
-
-This is an **ordered** implementation of a `Map`.
-
 ### Tuple
 
 fuego provides these `Tuple`'s:
@@ -117,27 +81,6 @@ func(i,j Entry) Entry
 
 `BiFunction`'s are used with Stream.Reduce() for instance, as seen in [stream_test.go](stream_test.go).
 
-### Iterator
-
-You can create you own `Iterator`'s.
-
-See [iterator.go](iterator.go) for several convenience implementations of iterators:
-- NewSliceIterator
-- NewSetIterator
-
-Iterator supports:
-- Forward
-- Value
-- Reverse
-- Size
-
-```go
-NewSliceIterator([]Entry{EntryInt(2), EntryInt(3)}) // returns an Iterator over []interface{2, 3}
-
-NewSetIterator(NewHamtSet().
-    Insert(EntryInt(2))), // returns an Iterator over a HamtSet that contains a single EntryInt(2)
-```
-
 ### Stream
 
 #### Creation
@@ -145,56 +88,37 @@ NewSetIterator(NewHamtSet().
 ```go
 someGoSlice := []int{1, 2, 3}
 NewStream(
-    NewSliceIterator(someGoSlice)),
-```
-
-```go
-NewStream(
-    NewSetIterator(
-        NewOrderedSet().
-            Insert(EntryInt(1)).
-            Insert(EntryInt(2))))
-```
-
-#### Map
-
-```go
-// See in this README and in helpers_test.go for "functionTimesTwo()"
-NewOrderedSet().
-    Insert(EntryInt(1)).
-    Insert(EntryInt(2)).
-    Insert(EntryInt(3)).
-    Stream().
-    Map(functionTimesTwo())
-// returns EntryInt's {2,4,6}
+    NewSliceIterator(someGoSlice))
 ```
 
 #### Filter
 
 ```go
 // See helpers_test.go for "newEntryIntEqualsTo()"
-NewOrderedSet().
-    Insert(EntryInt(1)).
-    Insert(EntryInt(2)).
-    Insert(EntryInt(3)).
-    Stream().
-    Filter(FunctionPredicate(entryIntEqualsTo(EntryInt(1))).
-        Or(FunctionPredicate(entryIntEqualsTo(EntryInt(3)))))
+someGoSlice := []int{1, 2, 3}
+NewStream(
+    NewSliceIterator(someGoSlice)).
+Stream().
+Filter(FunctionPredicate(entryIntEqualsTo(EntryInt(1))).
+    Or(FunctionPredicate(entryIntEqualsTo(EntryInt(3)))))
 // returns EntryInt's {1,3}
 ```
 
-#### Reduce / LeftReduce / RightReduce
+#### Reduce / LeftReduce
 
 ```go
 // See helpers_test.go for "concatenateStringsBiFunc()"
-NewOrderedSet().
-    Insert(EntryString("four")).
-    Insert(EntryString("twelve")).
-    Insert(EntryString("one")).
-    Insert(EntryString("six")).
-    Insert(EntryString("three"))
-    Stream().
-    Reduce(concatenateStringsBiFunc)
+someGoSlice := []string{
+    "four",
+    "twelve",
+    "one",
+    "six",
+    "three",
+}
+NewStream(
+    NewSliceIterator(someGoSlice)).
+Stream().
+Reduce(concatenateStringsBiFunc)
 // returns EntryString("one-three-twelve-six-four")
 ```
 
@@ -207,24 +131,26 @@ computeSumTotal := func(value interface{}) {
     total += int(value.(EntryInt).Value())
 }
 
-NewOrderedSet().
-    Insert(EntryInt(1)).
-    Insert(EntryInt(2)).
-    Insert(EntryInt(3)).
-    Stream().
-    ForEach(calculateSumTotal)
+someGoSlice := []int{1, 2, 3}
+NewStream(
+    NewSliceIterator(someGoSlice)).
+Stream().
+ForEach(calculateSumTotal)
 // total == 6
 ```
 
 #### Intersperse
 
 ```go
-NewOrderedSet().
-    Insert(EntryString("three")).
-    Insert(EntryString("two")).
-    Insert(EntryString("four")).
-    Stream().
-    Intersperse(EntryString(" - "))
+someGoSlice := []string{
+    "three",
+    "two",
+    "four",
+}
+NewStream(
+    NewSliceIterator(someGoSlice)).
+Stream().
+Intersperse(EntryString(" - "))
 // "three - two - four"
 ```
 
@@ -267,5 +193,4 @@ func intGreaterThanPredicate(rhs int) ƒ.Predicate {
 
 ## Known limitations
 
-- hamt.Set and hamt.Map are not ordered as per their initialisation but rather following their Hash. Use OrderedSet as an alternative.
-- several operations may be memory intensive or poorly performing, notably - but not limited to - in OrderedSet.
+- several operations may be memory intensive or poorly performing.

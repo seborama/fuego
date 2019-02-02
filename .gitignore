@@ -12,5 +12,6 @@
 *.out
 
 
-.history
+/.history/
+/research/
 

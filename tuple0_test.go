@@ -80,22 +80,22 @@ func TestTuple0_Arity(t *testing.T) {
 	}
 }
 
-func TestTuple0_ToSet(t *testing.T) {
+func TestTuple0_ToSlice(t *testing.T) {
 	tests := []struct {
 		name string
 		t    Tuple0
-		want Set
+		want []Entry
 	}{
 		{
 			name: "Should return empty set for Tuple0",
 			t:    Tuple0{},
-			want: NewOrderedSet(),
+			want: []Entry{},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.t.ToSet(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Tuple0.ToSet() = %v, want %v", got, tt.want)
+			if got := tt.t.ToSlice(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Tuple0.ToSlice() = %v, want %v", got, tt.want)
 			}
 		})
 	}

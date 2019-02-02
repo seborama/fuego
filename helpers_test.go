@@ -64,10 +64,10 @@ func TestEntryStringKey(t *testing.T) {
 }
 
 // isEvenNumber is a Predicate for even numbers.
-func isEvenNumber(t ƒ.Entry) bool {
-	k := (t.(ƒ.MapEntry)).K
-	return int(k.(EntryInt))&1 == 0
-}
+// func isEvenNumber(t ƒ.Entry) bool {
+// 	k := (t.(ƒ.MapEntry)).K
+// 	return int(k.(EntryInt))&1 == 0
+// }
 
 // isOddNumber is a Predicate for odd numbers.
 func isOddNumber(t ƒ.Entry) bool {

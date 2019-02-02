@@ -22,7 +22,7 @@ func (t Tuple0) Arity() int {
 	return 0
 }
 
-// ToSet returns an empty Set.
-func (t Tuple0) ToSet() Set {
-	return NewOrderedSet()
+// ToSlice returns the elements of this tuple as a Go slice.
+func (t Tuple0) ToSlice() []Entry {
+	return []Entry{}
 }

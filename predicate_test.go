@@ -368,3 +368,27 @@ func TestOrPredicate(t *testing.T) {
 		})
 	}
 }
+
+func TestFunctionPredicate(t *testing.T) {
+	type args struct {
+		f Function
+	}
+	tests := []struct {
+		name string
+		args args
+		want Predicate
+	}{
+		{
+			name: "Should apply the predicate 'equals to 25' and return false with 100",
+			args: args{entryIntEqualsTo(25)},
+			want: False,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := FunctionPredicate(tt.args.f); !reflect.DeepEqual(got(EntryInt(100)), tt.want(EntryNone{})) {
+				t.Errorf("FunctionPredicate() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
