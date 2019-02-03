@@ -386,7 +386,7 @@ func TestFunctionPredicate(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := FunctionPredicate(tt.args.f); !reflect.DeepEqual(got(EntryInt(100)), tt.want(EntryNone{})) {
+			if got := FunctionPredicate(tt.args.f); !reflect.DeepEqual(got(EntryInt(100)), tt.want(nil)) {
 				t.Errorf("FunctionPredicate() = %v, want %v", got, tt.want)
 			}
 		})
