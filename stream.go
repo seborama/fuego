@@ -27,7 +27,7 @@ func (s Stream) Map(mapper Function) Stream {
 	go func() { // TODO: introduce a cut-off to prevent the go func leak
 		defer close(outstream)
 		for val := range s.stream {
-			outstream <- mapper(val).(Entry)
+			outstream <- mapper(val)
 		}
 	}()
 
@@ -38,16 +38,26 @@ func (s Stream) Map(mapper Function) Stream {
 
 // Filter returns a stream consisting of the elements of this stream that
 // match the given predicate.
-// func (rp Stream) Filter(predicate Predicate) Stream {
-// 	s := []Entry{}
-// 	for it := rp.iterator; it != nil; it = it.Forward() {
-// 		if predicate(it.Value()) {
-// 			s = append(s, it.Value().(Entry))
-// 		}
-// 	}
+func (s Stream) Filter(predicate Predicate) Stream {
+	if s.stream == nil {
+		return Stream{stream: nil}
+	}
 
-// 	return NewStream(NewSliceIterator(s))
-// }
+	outstream := make(chan Entry, cap(s.stream))
+
+	go func() { // TODO: introduce a cut-off to prevent the go func leak
+		defer close(outstream)
+		for val := range s.stream {
+			if predicate(val) {
+				outstream <- val
+			}
+		}
+	}()
+
+	return Stream{
+		stream: outstream,
+	}
+}
 
 // ForEach executes the given function for each entry in this stream.
 // func (rp Stream) ForEach(consumer Consumer) {
