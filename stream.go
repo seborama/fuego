@@ -72,22 +72,23 @@ func (s Stream) ForEach(consumer Consumer) {
 
 // LeftReduce accumulates the elements of this Set by
 // applying the given function.
-// func (rp Stream) LeftReduce(f2 BiFunction) interface{} {
-// 	it := rp.iterator
-// 	if it == nil || it.Size() == 0 {
-// 		return nil
-// 	}
-// 	res := it.Value()
-// 	for it = it.Forward(); it != nil; it = it.Forward() {
-// 		res = f2(res, it.Value())
-// 	}
-// 	return res
-// }
+func (s Stream) LeftReduce(f2 BiFunction) interface{} {
+	if s.stream == nil {
+		return nil
+	}
+
+	res := <-s.stream
+	for val := range s.stream {
+		res = f2(res, val)
+	}
+
+	return res
+}
 
 // Reduce is an alias for LeftReduce.
-// func (rp Stream) Reduce(f2 BiFunction) interface{} {
-// 	return rp.LeftReduce(f2)
-// }
+func (s Stream) Reduce(f2 BiFunction) interface{} {
+	return s.LeftReduce(f2)
+}
 
 // Intersperse inserts an element between all elements of this Stream.
 // func (rp Stream) Intersperse(e Entry) Stream {

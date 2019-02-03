@@ -2,8 +2,7 @@ package fuego_test
 
 import (
 	"fmt"
-
-	"github.com/seborama/fuego"
+	ƒ "github.com/seborama/fuego"
 )
 
 // ExampleFunction shows how to use Function's.
@@ -22,17 +21,24 @@ func ExampleFunction() {
 // There are more interesting examples through the code.
 // Search for `BiFunction` or the BiFunction signature.
 func ExampleBiFunction() {
-	res := fuego.NewHamtSet().
-		Insert(EntryString("four")).
-		Insert(EntryString("twelve")).
-		Insert(EntryString("one")).
-		Insert(EntryString("six")).
-		Insert(EntryString("three")).
-		Stream().
+	data := []ƒ.Entry{
+		EntryString("four"),
+		EntryString("twelve"),
+		EntryString("one"),
+		EntryString("six"),
+		EntryString("three")}
+
+	c := make(chan ƒ.Entry, 1e3)
+	for _, element := range data {
+		c <- element
+	}
+	close(c)
+
+	res := ƒ.NewStream(c).
 		Reduce(concatenateStringsBiFunc)
 
 	fmt.Printf("res = %+v\n", res)
 
 	// Output:
-	// res = one-three-twelve-six-four
+	// res = four-twelve-one-six-three
 }

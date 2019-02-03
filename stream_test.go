@@ -66,6 +66,7 @@ func TestStream_Map(t *testing.T) {
 				EntryInt(4)},
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := Stream{
@@ -101,7 +102,7 @@ func TestStream_Filter(t *testing.T) {
 		want   []Entry
 	}{
 		{
-			name:   "Should return a Stream of nil",
+			name:   "Should return nil for a Stream of nil",
 			fields: fields{stream: nil},
 			args: args{
 				predicate: intGreaterThanPredicate(5),
@@ -127,6 +128,7 @@ func TestStream_Filter(t *testing.T) {
 				EntryInt(8)},
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := Stream{
@@ -171,7 +173,7 @@ func TestStream_ForEach(t *testing.T) {
 		want   want
 	}{
 		{
-			name:   "Should return a Stream of nil",
+			name:   "Should not call consumer for a Stream of nil",
 			fields: fields{stream: nil},
 			args: args{
 				consumer: computeSumTotal,
@@ -201,6 +203,7 @@ func TestStream_ForEach(t *testing.T) {
 			},
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			callCount, total = 0, 0
@@ -214,79 +217,72 @@ func TestStream_ForEach(t *testing.T) {
 	}
 }
 
-// func TestStream_LeftReduce(t *testing.T) {
-// 	concatenateStringsBiFunc := func(i, j Entry) Entry {
-// 		iStr := i.(EntryString)
-// 		jStr := j.(EntryString)
-// 		return iStr + "-" + jStr
-// 	}
+func TestStream_LeftReduce(t *testing.T) {
+	concatenateStringsBiFunc := func(i, j Entry) Entry {
+		iStr := i.(EntryString)
+		jStr := j.(EntryString)
+		return iStr + "-" + jStr
+	}
 
-// 	type fields struct {
-// 		iterator Iterator
-// 	}
-// 	type args struct {
-// 		f2 BiFunction
-// 	}
-// 	tests := []struct {
-// 		name   string
-// 		fields fields
-// 		args   args
-// 		want   interface{}
-// 	}{
-// 		{
-// 			name: "Should return nil for a nil Stream",
-// 			fields: fields{
-// 				iterator: NewSetIterator(nil),
-// 			},
-// 			args: args{f2: concatenateStringsBiFunc},
-// 			want: nil,
-// 		},
-// 		{
-// 			name: "Should return nil for an empty Stream",
-// 			fields: fields{
-// 				iterator: SetIterator{set: NewHamtSet()},
-// 			},
-// 			args: args{f2: concatenateStringsBiFunc},
-// 			want: nil,
-// 		},
-// 		{
-// 			name: "Should return reduction of Set of single element",
-// 			fields: fields{
-// 				iterator: NewSetIterator(NewHamtSet().
-// 					Insert(EntryString("three"))),
-// 			},
-// 			args: args{f2: concatenateStringsBiFunc},
-// 			want: EntryString("three"),
-// 		},
-// 		{
-// 			name: "Should return reduction of Set",
-// 			fields: fields{
-// 				iterator: NewSetIterator(NewHamtSet().
-// 					Insert(EntryString("four")).
-// 					Insert(EntryString("twelve")).
-// 					Insert(EntryString("one")).
-// 					Insert(EntryString("six")).
-// 					Insert(EntryString("three"))),
-// 			},
-// 			args: args{f2: concatenateStringsBiFunc},
-// 			want: EntryString("one-three-twelve-six-four"),
-// 		},
-// 	}
-// 	for _, tt := range tests {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			rp := Stream{
-// 				iterator: tt.fields.iterator,
-// 			}
-// 			if gotReduce := rp.Reduce(tt.args.f2); !assert.Exactly(t, tt.want, gotReduce) {
-// 				return
-// 			}
+	type fields struct {
+		stream chan Entry
+	}
+	type args struct {
+		f2 BiFunction
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   Entry
+	}{
+		{
+			name:   "Should return nil for a Stream of nil",
+			fields: fields{stream: nil},
+			args:   args{f2: concatenateStringsBiFunc},
+			want:   nil,
+		},
+		{
+			name: "Should return reduction of set of single element",
+			fields: fields{
+				stream: func() chan Entry {
+					c := make(chan Entry, 1e3)
+					c <- EntryString("three")
+					close(c)
+					return c
+				}()},
+			args: args{f2: concatenateStringsBiFunc},
+			want: EntryString("three"),
+		},
+		{
+			name: "Should return reduction of set of multiple elements",
+			fields: fields{
+				stream: func() chan Entry {
+					c := make(chan Entry, 1e3)
+					c <- EntryString("four")
+					c <- EntryString("twelve")
+					c <- EntryString("one")
+					c <- EntryString("six")
+					c <- EntryString("three")
+					close(c)
+					return c
+				}()},
+			args: args{f2: concatenateStringsBiFunc},
+			want: EntryString("four-twelve-one-six-three"),
+		},
+	}
 
-// 			if gotLeftReduce := rp.LeftReduce(tt.args.f2); !assert.Exactly(t, tt.want, gotLeftReduce) {
-// 				return
-// 			}
-// 		})
-// 	}
-// }
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := Stream{
+				stream: tt.fields.stream,
+			}
+			if gotReduce := s.Reduce(tt.args.f2); !assert.Exactly(t, tt.want, gotReduce) {
+				return
+			}
+		})
+	}
+}
 
 // func TestStream_Intersperse(t *testing.T) {
 // 	type fields struct {
