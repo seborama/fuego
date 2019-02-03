@@ -3,6 +3,8 @@ package fuego
 import (
 	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func functionTimesTwo() Function {
@@ -146,20 +148,71 @@ func TestStream_Filter(t *testing.T) {
 	}
 }
 
-// func TestStream_ForEach(t *testing.T) {
-// 	total := 0
-// 	computeSumTotal := func(value Entry) {
-// 		total += int(value.(EntryInt))
-// 	}
+func TestStream_ForEach(t *testing.T) {
+	var callCount, total int
+	computeSumTotal := func(value Entry) {
+		callCount++
+		total += int(value.(EntryInt))
+	}
 
-// 	iterator := NewSetIterator(NewHamtSet().
-// 		Insert(EntryInt(4)).
-// 		Insert(EntryInt(1)).
-// 		Insert(EntryInt(3)))
-
-// 	NewStream(iterator).ForEach(computeSumTotal)
-// 	assert.Equal(t, 8, total)
-// }
+	type fields struct {
+		stream chan Entry
+	}
+	type args struct {
+		consumer Consumer
+	}
+	type want struct {
+		total, count int
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   want
+	}{
+		{
+			name:   "Should return a Stream of nil",
+			fields: fields{stream: nil},
+			args: args{
+				consumer: computeSumTotal,
+			},
+			want: want{
+				count: 0,
+				total: 0,
+			},
+		},
+		{
+			name: "Should give produce filtered values as per predicate",
+			fields: fields{
+				stream: func() chan Entry {
+					c := make(chan Entry, 1e3)
+					c <- EntryInt(4)
+					c <- EntryInt(1)
+					c <- EntryInt(3)
+					close(c)
+					return c
+				}()},
+			args: args{
+				consumer: computeSumTotal,
+			},
+			want: want{
+				count: 3,
+				total: 8,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			callCount, total = 0, 0
+			s := Stream{
+				stream: tt.fields.stream,
+			}
+			s.ForEach(tt.args.consumer)
+			assert.Equal(t, tt.want.count, callCount)
+			assert.Equal(t, tt.want.total, total)
+		})
+	}
+}
 
 // func TestStream_LeftReduce(t *testing.T) {
 // 	concatenateStringsBiFunc := func(i, j Entry) Entry {

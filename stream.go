@@ -60,11 +60,15 @@ func (s Stream) Filter(predicate Predicate) Stream {
 }
 
 // ForEach executes the given function for each entry in this stream.
-// func (rp Stream) ForEach(consumer Consumer) {
-// 	for it := rp.iterator; it != nil && it.Size() != 0; it = it.Forward() {
-// 		consumer(it.Value())
-// 	}
-// }
+func (s Stream) ForEach(consumer Consumer) {
+	if s.stream == nil {
+		return
+	}
+
+	for val := range s.stream {
+		consumer(val)
+	}
+}
 
 // LeftReduce accumulates the elements of this Set by
 // applying the given function.
