@@ -23,9 +23,9 @@ func (t Tuple2) Hash() uint32 {
 }
 
 // Equal returns true if 'o' and 't' are equal.
-func (t Tuple2) Equal(o Tuple) bool {
+func (t Tuple2) Equal(o Entry) bool {
 	oT, ok := o.(Tuple2)
-	return t == o ||
+	return t == oT ||
 		(ok &&
 			(t.E1 != nil && t.E1.Equal(oT.E1)) &&
 			(t.E2 != nil && t.E2.Equal(oT.E2)))

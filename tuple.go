@@ -4,5 +4,5 @@ package fuego
 // A special case is Tuple0 which does not hold any value.
 type Tuple interface {
 	Hash() uint32
-	Equal(o Tuple) bool
+	Equal(o Entry) bool
 }

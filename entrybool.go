@@ -1,19 +1,17 @@
 package fuego
 
-import "github.com/raviqqe/hamt"
-
 // EntryBool is an Entry for 'bool'.
 type EntryBool bool
 
-// Hash returns a hash for 'i'.
-func (i EntryBool) Hash() uint32 {
-	if bool(i) {
+// Hash returns a hash for this Entry.
+func (eb EntryBool) Hash() uint32 {
+	if bool(eb) {
 		return 1
 	}
 	return 0
 }
 
-// Equal returns true if 'e' and 'i' are equal.
-func (i EntryBool) Equal(e hamt.Entry) bool {
-	return i == e
+// Equal returns true if this type is equal to 'e'.
+func (eb EntryBool) Equal(e Entry) bool {
+	return eb == e
 }

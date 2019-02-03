@@ -32,15 +32,15 @@ func TestNotPredicate(t *testing.T) {
 			want: false,
 		},
 		{
-			name: "Should negate the predicate",
+			name: "Should confirm the predicate",
 			args: args{
-				p: intGreaterThanPredicate(5),
-				t: EntryInt(2),
+				p: intGreaterThanPredicate(10),
+				t: EntryInt(7),
 			},
 			want: true,
 		},
 		{
-			name: "Should return true when nil predicate",
+			name: "Should return true when nil predicate", // TODO: is that correct?
 			args: args{
 				p: nil,
 				t: EntryInt(2),

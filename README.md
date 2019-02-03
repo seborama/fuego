@@ -39,9 +39,24 @@ Have fun!!
 
 ### Entry
 
-`Entry` is based on `hamt.Entry`. This is an elegant solution from [Yota Toyama](https://github.com/raviqqe): the type can be anything so long as it respects the simple behaviour of `hamt.Entry`. This provides an abstraction of types yet with known behaviour:
+`Entry` is inspired by `hamt.Entry`. This is an elegant solution from [Yota Toyama](https://github.com/raviqqe): the type can be anything so long as it respects the simple behaviour of `hamt.Entry`. This provides an abstraction of types yet with known behaviour:
+
 - Hash(): identifies an Entry Uniquely.
 - Equal(): defines equality for a type of `Entry`. `Equal()` is expected to be based on `Hash()`.
+
+Several Entry implementations are provided:
+
+- EntryBool
+- EntryMap
+- EntrySlice
+
+#### EntryMap
+
+TODO: TBC
+
+#### EntrySlice
+
+TODO: TBC
 
 ### Maybe
 
@@ -59,6 +74,10 @@ fuego provides these `Tuple`'s:
 - Tuple2
 
 The values of fuego `Tuples` is of type `Entry` but can represent any type (see EntryInt and EntryString examples).
+
+### Consumer
+
+TODO: TBC
 
 ### Functions
 

@@ -4,7 +4,6 @@ import (
 	"hash/crc32"
 	"testing"
 
-	"github.com/raviqqe/hamt"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -17,7 +16,7 @@ func (i EntryInt) Hash() uint32 {
 }
 
 // Equal returns true if 'e' and 'i' are equal.
-func (i EntryInt) Equal(e hamt.Entry) bool {
+func (i EntryInt) Equal(e Entry) bool {
 	j, ok := e.(EntryInt)
 
 	if !ok {
@@ -44,7 +43,7 @@ func (i EntryString) Hash() uint32 {
 }
 
 // Equal returns true if 'e' and 'i' are equal.
-func (i EntryString) Equal(e hamt.Entry) bool {
+func (i EntryString) Equal(e Entry) bool {
 	j, ok := e.(EntryString)
 
 	if !ok {

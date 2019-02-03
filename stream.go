@@ -1,7 +1,5 @@
 package fuego
 
-type Map map[Entry][]Entry
-
 // Stream is a sequence of elements supporting sequential and parallel
 // parallel operations.
 type Stream struct {
@@ -9,11 +7,28 @@ type Stream struct {
 }
 
 // NewStream creates a new Stream.
-func NewStream(s chan Entry) Stream {
+func NewStream(c chan Entry) Stream {
 	return Stream{
-		stream: s,
+		stream: c,
 	}
 }
+
+// NewStreamFromSlice creates a new Stream from a Go slice.
+func NewStreamFromSlice(s []Entry) Stream {
+	if s == nil {
+		return NewStream(nil)
+	}
+
+	c := make(chan Entry, 1e3)
+	for _, element := range s {
+		c <- element
+	}
+	close(c)
+
+	return NewStream(c)
+}
+
+// TODO: implement NewStreamFromMap?
 
 // Map returns a slice of channel of Set consisting of the results of
 // applying the given function to the elements of this Set
@@ -109,18 +124,16 @@ func (s Stream) Reduce(f2 BiFunction) interface{} {
 // }
 
 // GroupBy groups the elements of this Stream by classifying them.
-// func (rp Stream) GroupBy(classifier Function) Map {
-// 	groups := Map{}
-// 	for it := rp.iterator; it != nil; it = it.Forward() {
-// 		k := classifier(it.Value())
-// 		v := it.Value()
-// 		groups[k] = groups[k].Insert(v).(OrderedSet)
-// 	}
+func (s Stream) GroupBy(classifier Function) EntryMap {
+	if s.stream == nil {
+		return nil
+	}
 
-// 	newMap := NewOrderedMap()
-// 	for k, v := range groups {
-// 		newMap = newMap.Insert(k, v).(OrderedMap)
-// 	}
+	resultMap := EntryMap{}
+	for val := range s.stream {
+		k := classifier(val)
+		resultMap[k] = append(resultMap[k], val)
+	}
 
-// 	return newMap
-// }
+	return resultMap
+}

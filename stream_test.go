@@ -365,139 +365,103 @@ func TestStream_LeftReduce(t *testing.T) {
 // 	}
 // }
 
-// func TestStream_GroupBy(t *testing.T) {
-// 	type fields struct {
-// 		iterator Iterator
-// 	}
-// 	type args struct {
-// 		classifier Function
-// 	}
-// 	tests := []struct {
-// 		name   string
-// 		fields fields
-// 		args   args
-// 		want   Map
-// 	}{
-// 		{
-// 			name: "Should return empty map when nil iterator",
-// 			fields: fields{
-// 				iterator: nil,
-// 			},
-// 			args: args{
-// 				classifier: func(i Entry) Entry {
-// 					return i.(EntryInt) & 1
-// 				},
-// 			},
-// 			want: NewOrderedMap(),
-// 		},
-// 		{
-// 			name: "Should return empty map when iterator with nil Set",
-// 			fields: fields{
-// 				iterator: NewSetIterator(nil),
-// 			},
-// 			args: args{
-// 				classifier: func(i Entry) Entry {
-// 					return i.(EntryInt) & 1
-// 				},
-// 			},
-// 			want: NewOrderedMap(),
-// 		},
-// 		{
-// 			name: "Should return empty map when empty Set",
-// 			fields: fields{
-// 				iterator: NewSetIterator(NewOrderedSet()),
-// 			},
-// 			args: args{
-// 				classifier: func(i Entry) Entry {
-// 					return i.(EntryInt) & 1
-// 				},
-// 			},
-// 			want: NewOrderedMap(),
-// 		},
-// 		{
-// 			name: "Should group by odd / even numbers",
-// 			fields: fields{
-// 				iterator: NewSetIterator(NewOrderedSet().
-// 					Insert(EntryInt(1)).
-// 					Insert(EntryInt(2)).
-// 					Insert(EntryInt(3)).
-// 					Insert(EntryInt(4))),
-// 			},
-// 			args: args{
-// 				classifier: func(i Entry) Entry {
-// 					return i.(EntryInt) & 1
-// 				},
-// 			},
-// 			want: NewOrderedMap().
-// 				Insert(EntryInt(0), NewOrderedSet().
-// 					Insert(EntryInt(2)).
-// 					Insert(EntryInt(4))).
-// 				Insert(EntryInt(1), NewOrderedSet().
-// 					Insert(EntryInt(1)).
-// 					Insert(EntryInt(3))),
-// 		},
-// 	}
-// 	for _, tt := range tests {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			rp := Stream{
-// 				iterator: tt.fields.iterator,
-// 			}
-// 			got := rp.GroupBy(tt.args.classifier)
-// 			elementsMatch(t, tt.want, got)
-// 		})
-// 	}
-// }
-
-// func elementsMatch(t *testing.T, mapA, mapB Map) {
-// 	keysA, valuesA := splitKeysValues(mapA)
-// 	keysB, valuesB := splitKeysValues(mapB)
-// 	assert.ElementsMatch(t, keysA, keysB, "keys differ")
-// 	assert.ElementsMatch(t, valuesA, valuesB, "values differ")
-// }
-
-// func splitKeysValues(m Map) (keys, values []Entry) {
-// 	m.EntrySet().Stream().ForEach(func(e Entry) {
-// 		keys = append(keys, e.(MapEntry).K)
-// 		e.(MapEntry).V.(OrderedSet).Stream().ForEach(func(e Entry) {
-// 			values = append(values, e)
-// 		})
-// 	})
-// 	return keys, values
-// }
-
-// func TestStream_GroupBy_IteratorResets(t *testing.T) {
-// 	it := NewSetIterator(NewOrderedSet().
-// 		Insert(EntryInt(1)).
-// 		Insert(EntryInt(2)).
-// 		Insert(EntryInt(3)).
-// 		Insert(EntryInt(4)))
-
-// 	rp := Stream{iterator: it}
-
-// 	expected := NewOrderedMap().
-// 		Insert(EntryInt(1), NewOrderedSet().
-// 			Insert(EntryInt(1)).
-// 			Insert(EntryInt(3))).
-// 		Insert(EntryInt(0), NewOrderedSet().
-// 			Insert(EntryInt(2)).
-// 			Insert(EntryInt(4)))
-
-// 	res1 := rp.GroupBy(func(i Entry) Entry {
-// 		return i.(EntryInt) & 1
-// 	})
-// 	elementsMatch(t, res1, expected)
-
-// 	res2 := rp.GroupBy(func(i Entry) Entry {
-// 		return i.(EntryInt) & 1
-// 	})
-// 	elementsMatch(t, res2, expected)
-// }
+func TestStream_GroupBy(t *testing.T) {
+	type fields struct {
+		stream chan Entry
+	}
+	type args struct {
+		classifier Function
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   EntryMap
+	}{
+		{
+			name: "Should return empty map when iterator with nil stream",
+			fields: fields{
+				stream: nil,
+			},
+			args: args{
+				classifier: func(i Entry) Entry {
+					return i.(EntryInt) & 1
+				},
+			},
+			want: EntryMap{},
+		},
+		{
+			name: "Should return empty map when empty stream",
+			fields: fields{
+				stream: func() chan Entry {
+					c := make(chan Entry, 1e3)
+					close(c)
+					return c
+				}(),
+			},
+			args: args{
+				classifier: func(i Entry) Entry {
+					return i.(EntryInt) & 1
+				},
+			},
+			want: EntryMap{},
+		},
+		{
+			name: "Should group by odd / even numbers",
+			fields: fields{
+				stream: func() chan Entry {
+					c := make(chan Entry, 1e3)
+					c <- EntryInt(1)
+					c <- EntryInt(2)
+					c <- EntryInt(3)
+					c <- EntryInt(4)
+					close(c)
+					return c
+				}(),
+			},
+			args: args{
+				classifier: func(i Entry) Entry {
+					return i.(EntryInt) & 1
+				},
+			},
+			want: EntryMap{
+				EntryInt(0): EntrySlice{
+					EntryInt(2),
+					EntryInt(4),
+				},
+				EntryInt(1): EntrySlice{
+					EntryInt(1),
+					EntryInt(3),
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rp := Stream{
+				stream: tt.fields.stream,
+			}
+			got := rp.GroupBy(tt.args.classifier)
+			assert.True(t, got.Equal(tt.want))
+		})
+	}
+}
 
 func TestNewStream(t *testing.T) {
+	emptyChannel := make(chan Entry)
+	populatedChannel := func() chan Entry {
+		c := make(chan Entry, 1e3)
+		c <- EntryInt(1)
+		c <- EntryInt(2)
+		c <- EntryInt(3)
+		c <- EntryInt(4)
+		close(c)
+		return c
+	}()
+
 	type args struct {
 		s chan Entry
 	}
-	emptyChannel := make(chan Entry)
 	tests := []struct {
 		name string
 		args args
@@ -509,15 +473,78 @@ func TestNewStream(t *testing.T) {
 			want: Stream{stream: nil},
 		},
 		{
-			name: "Should create a Stream with a channel",
+			name: "Should create an empty Stream with an empty channel",
 			args: args{s: emptyChannel},
 			want: Stream{stream: emptyChannel},
+		},
+		{
+			name: "Should create a Stream with a populated channel",
+			args: args{
+				s: populatedChannel,
+			},
+			want: Stream{
+				stream: populatedChannel,
+			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := NewStream(tt.args.s); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("NewStream() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestNewStreamFromSlice(t *testing.T) {
+	type args struct {
+		s []Entry
+	}
+	tests := []struct {
+		name string
+		args args
+		want []Entry
+	}{
+		{
+			name: "Should create a Stream with a nil channel",
+			args: args{s: nil},
+			want: nil,
+		},
+		{
+			name: "Should create an empty Stream with an empty channel",
+			args: args{s: []Entry{}},
+			want: []Entry{},
+		},
+		{
+			name: "Should create a Stream with a populated channel",
+			args: args{
+				s: []Entry{
+					EntryInt(1),
+					EntryInt(2),
+					EntryInt(3),
+					EntryInt(4),
+				},
+			},
+			want: []Entry{
+				EntryInt(1),
+				EntryInt(2),
+				EntryInt(3),
+				EntryInt(4),
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var got []Entry
+			if gotStream := NewStreamFromSlice(tt.args.s).stream; gotStream != nil {
+				got = []Entry{}
+				for val := range gotStream {
+					got = append(got, val)
+				}
+			}
+
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("NewStreamFromSlice() = %+v, want %+v", got, tt.want)
 			}
 		})
 	}

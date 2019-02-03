@@ -28,13 +28,7 @@ func ExampleBiFunction() {
 		EntryString("six"),
 		EntryString("three")}
 
-	c := make(chan ƒ.Entry, 1e3)
-	for _, element := range data {
-		c <- element
-	}
-	close(c)
-
-	res := ƒ.NewStream(c).
+	res := ƒ.NewStreamFromSlice(data).
 		Reduce(concatenateStringsBiFunc)
 
 	fmt.Printf("res = %+v\n", res)

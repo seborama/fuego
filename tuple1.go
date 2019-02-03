@@ -14,7 +14,7 @@ func (t Tuple1) Hash() uint32 {
 }
 
 // Equal returns true if 'o' and 't' are equal.
-func (t Tuple1) Equal(o Tuple) bool {
+func (t Tuple1) Equal(o Entry) bool {
 	oT, ok := o.(Tuple1)
 	return t == o ||
 		(ok &&
