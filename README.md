@@ -19,7 +19,7 @@ go get github.com/seborama/fuego
 Or for a specific version:
 
 ```bash
-go get gopkg.in/seborama/govcr.v5
+go get gopkg.in/seborama/fuego.v5
 ```
 
 ## Contribute
