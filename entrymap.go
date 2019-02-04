@@ -30,7 +30,7 @@ func (em EntryMap) Hash() uint32 {
 		return 0
 	}
 
-	var sortedKeyHashes []tuple2
+	sortedKeyHashes := []tuple2{}
 	for k := range em {
 		sortedKeyHashes = append(sortedKeyHashes, tuple2{
 			key:  k,
