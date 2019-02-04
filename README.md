@@ -10,7 +10,6 @@ This is a research project in functional programming which I hope will prove use
 
 Fuego brings a few functional paradigms to Go. The intent is to save development time while promoting code readability and reduce the risk of complex bugs.
 
-
 ## Install
 
 ```bash
@@ -69,6 +68,7 @@ When the value is `nil`, `Maybe` is considered empty unless it was created with 
 ### Tuple
 
 fuego provides these `Tuple`'s:
+
 - Tuple0
 - Tuple1
 - Tuple2
@@ -84,6 +84,7 @@ TODO: TBC
 See [example_function_test.go](example_function_test.go) for basic example uses of `Function` and `BiFunction` and the other tests / examples for more uses.
 
 #### Function
+
 A `Function` is a normal Go function which signature is
 
 ```go
@@ -102,43 +103,48 @@ func(i,j Entry) Entry
 
 ### Stream
 
+A Stream is a wrapper over a Go channel.
+
+**NOTE**
+At present, the Go channel is bufferred. This poses ordering issues in parallel processing. It is likely that in a future release this will change. One option is a slice of channels. This improves parallelism but still poses issues with some scenarios where the continuity of values matters (e.g. calculating Fibonacci sequences) as with Reduce, ...
+
 #### Creation
 
+When providing a Go channel to create a Stream, beware that until you close the channel, the Stream's internal Go function that processes the Stream will remain active. This can lead to a stray Go function.
+
 ```go
-someGoSlice := []int{1, 2, 3}
-NewStream(
-    NewSliceIterator(someGoSlice))
+ƒ.NewStreamFromSlice([]int{1, 2, 3})
+// or if you already have a channel of Entry:
+c := make(chan Entry, 1e3)
+defer close(c)
+c <- EntryString("one")
+// c <- ...
+NewStream(c)
 ```
 
 #### Filter
 
 ```go
 // See helpers_test.go for "newEntryIntEqualsTo()"
-someGoSlice := []int{1, 2, 3}
-NewStream(
-    NewSliceIterator(someGoSlice)).
-Stream().
-Filter(FunctionPredicate(entryIntEqualsTo(EntryInt(1))).
+s := ƒ.NewStreamFromSlice([]int{1, 2, 3})
+s.Filter(FunctionPredicate(entryIntEqualsTo(EntryInt(1))).
     Or(FunctionPredicate(entryIntEqualsTo(EntryInt(3)))))
-// returns EntryInt's {1,3}
+// returns []EntryInt{1,3}
 ```
 
 #### Reduce / LeftReduce
 
 ```go
 // See helpers_test.go for "concatenateStringsBiFunc()"
-someGoSlice := []string{
+ƒ.NewStreamFromSlice(string{
     "four",
     "twelve",
     "one",
     "six",
     "three",
-}
-NewStream(
-    NewSliceIterator(someGoSlice)).
-Stream().
+}).
 Reduce(concatenateStringsBiFunc)
-// returns EntryString("one-three-twelve-six-four")
+// returns EntryString("four-twelve-one-six-three")
 ```
 
 #### ForEach
@@ -150,10 +156,7 @@ computeSumTotal := func(value interface{}) {
     total += int(value.(EntryInt).Value())
 }
 
-someGoSlice := []int{1, 2, 3}
-NewStream(
-    NewSliceIterator(someGoSlice)).
-Stream().
+ƒ.NewStreamFromSlice([]int{1, 2, 3}).
 ForEach(calculateSumTotal)
 // total == 6
 ```
@@ -161,14 +164,11 @@ ForEach(calculateSumTotal)
 #### Intersperse
 
 ```go
-someGoSlice := []string{
+ƒ.NewStreamFromSlice([]string{
     "three",
     "two",
     "four",
-}
-NewStream(
-    NewSliceIterator(someGoSlice)).
-Stream().
+}).
 Intersperse(EntryString(" - "))
 // "three - two - four"
 ```
@@ -186,11 +186,13 @@ func(t interface{}) bool
 ```
 
 A `Predicate` has convenient pre-defined methods:
+
 - Or
 - And
 - Not
 
 Several pre-defined `Predicate`'s exist too:
+
 - True
 - False
 - FunctionPredicate - a Predicate that wraps over a Function
@@ -204,9 +206,9 @@ _ = ƒ.Predicate(ƒ.False).And(ƒ.Predicate(ƒ.False).Or(ƒ.True))(1) // returns
 res := ƒ.Predicate(intGreaterThanPredicate(50)).And(ƒ.True).Not()(23) // res = true
 
 func intGreaterThanPredicate(rhs int) ƒ.Predicate {
-	return func(lhs interface{}) bool {
-		return lhs.(int) > rhs
-	}
+    return func(lhs interface{}) bool {
+        return lhs.(int) > rhs
+    }
 }
 ```
 
