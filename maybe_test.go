@@ -3,7 +3,6 @@ package fuego
 import (
 	"testing"
 
-	"github.com/raviqqe/hamt"
 	"github.com/stretchr/testify/assert"
 )
 
