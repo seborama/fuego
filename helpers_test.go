@@ -69,10 +69,10 @@ func TestEntryStringKey(t *testing.T) {
 // }
 
 // isOddNumber is a Predicate for odd numbers.
-func isOddNumber(t ƒ.Entry) bool {
-	v := t.(EntryInt)
-	return v&1 == 0
-}
+// func isOddNumber(t ƒ.Entry) bool {
+// 	v := t.(EntryInt)
+// 	return v&1 == 0
+// }
 
 // concatenateStringsBiFunc returns a fuego.BiFunction that
 // joins 'i' and 'j' together with a '-' in between.

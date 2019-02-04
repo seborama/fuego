@@ -100,22 +100,27 @@ func (s Stream) Reduce(f2 BiFunction) Entry {
 }
 
 // Intersperse inserts an element between all elements of this Stream.
-// func (rp Stream) Intersperse(e Entry) Stream {
-// 	if rp.iterator == nil || rp.iterator.Size() == 0 {
-// 		return NewStream(NewSliceIterator([]Entry{}))
-// 	}
+func (s Stream) Intersperse(e Entry) Stream {
+	outstream := make(chan Entry, cap(s.stream))
 
-// 	s := make([]Entry, rp.iterator.Size()*2-1)
+	go func() { // TODO: introduce a cut-off to prevent the go func from straying
+		defer close(outstream)
+		if s.stream == nil {
+			return
+		}
+		if val := <-s.stream; val != nil {
+			outstream <- val
+		}
+		for val := range s.stream {
+			outstream <- e
+			outstream <- val
+		}
+	}()
 
-// 	for it, idx := rp.iterator, 0; it != nil; it, idx = it.Forward(), idx+1 {
-// 		s[2*idx] = it.Value().(Entry)
-// 		if idx > 0 {
-// 			s[2*idx-1] = e
-// 		}
-// 	}
-
-// 	return NewStream(NewSliceIterator(s))
-// }
+	return Stream{
+		stream: outstream,
+	}
+}
 
 // GroupBy groups the elements of this Stream by classifying them.
 func (s Stream) GroupBy(classifier Function) EntryMap {

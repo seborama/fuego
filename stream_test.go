@@ -284,86 +284,97 @@ func TestStream_LeftReduce(t *testing.T) {
 	}
 }
 
-// func TestStream_Intersperse(t *testing.T) {
-// 	type fields struct {
-// 		iterator Iterator
-// 	}
-// 	type args struct {
-// 		e Entry
-// 	}
-// 	tests := []struct {
-// 		name   string
-// 		fields fields
-// 		args   args
-// 		want   Stream
-// 	}{
-// 		{
-// 			name:   "Should return a Stream of nil for nil iterator",
-// 			fields: fields{iterator: nil},
-// 			args: args{
-// 				e: EntryString(" - "),
-// 			},
-// 			want: NewStream(
-// 				NewSliceIterator([]Entry{})),
-// 		},
-// 		{
-// 			name:   "Should return a Stream of nil for empty Set",
-// 			fields: fields{iterator: SetIterator{set: NewHamtSet()}},
-// 			args: args{
-// 				e: EntryString(" - "),
-// 			},
-// 			want: NewStream(
-// 				NewSliceIterator([]Entry{})),
-// 		},
-// 		{
-// 			name: "Should return the original Set when it has a single value",
-// 			fields: fields{
-// 				iterator: NewSetIterator(NewHamtSet().
-// 					Insert(EntryString("four")))},
-// 			args: args{
-// 				e: EntryString(" - "),
-// 			},
-// 			want: NewStream(
-// 				NewSliceIterator([]Entry{
-// 					EntryString("four")})),
-// 		},
-// 		{
-// 			name: "Should return the Set with given value interspersed",
-// 			fields: fields{
-// 				iterator: NewSetIterator(NewOrderedSet().
-// 					Insert(EntryString("four")).
-// 					Insert(EntryString("twelve")).
-// 					Insert(EntryString("one")).
-// 					Insert(EntryString("six")).
-// 					Insert(EntryString("three"))),
-// 			},
-// 			args: args{
-// 				e: EntryString(" - "),
-// 			},
-// 			want: NewStream(
-// 				NewSliceIterator([]Entry{
-// 					EntryString("four"),
-// 					EntryString(" - "),
-// 					EntryString("twelve"),
-// 					EntryString(" - "),
-// 					EntryString("one"),
-// 					EntryString(" - "),
-// 					EntryString("six"),
-// 					EntryString(" - "),
-// 					EntryString("three")})),
-// 		},
-// 	}
-// 	for _, tt := range tests {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			rp := Stream{
-// 				iterator: tt.fields.iterator,
-// 			}
-// 			if got := rp.Intersperse(tt.args.e); !reflect.DeepEqual(got, tt.want) {
-// 				t.Errorf("Stream.Intersperse() = %v, want %v", got, tt.want)
-// 			}
-// 		})
-// 	}
-// }
+func TestStream_Intersperse(t *testing.T) {
+	type fields struct {
+		stream chan Entry
+	}
+	type args struct {
+		e Entry
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   []Entry
+	}{
+		{
+			name:   "Should return an empty Stream for nil input Stream",
+			fields: fields{stream: nil},
+			args: args{
+				e: EntryString(" - "),
+			},
+			want: []Entry{},
+		},
+		{
+			name: "Should return an empty Stream for empty input Stream",
+			fields: fields{stream: func() chan Entry {
+				c := make(chan Entry, 1e3)
+				defer close(c)
+				return c
+			}()},
+			args: args{
+				e: EntryString(" - "),
+			},
+			want: []Entry{},
+		},
+		{
+			name: "Should return the original input Stream when it has a single value",
+			fields: fields{stream: func() chan Entry {
+				c := make(chan Entry, 1e3)
+				defer close(c)
+				c <- EntryString("four")
+				return c
+			}()},
+			args: args{
+				e: EntryString(" - "),
+			},
+			want: []Entry{
+				EntryString("four"),
+			},
+		},
+		{
+			name: "Should return the Set with given value interspersed",
+			fields: fields{stream: func() chan Entry {
+				c := make(chan Entry, 1e3)
+				defer close(c)
+				c <- EntryString("four")
+				c <- EntryString("twelve")
+				c <- EntryString("one")
+				c <- EntryString("six")
+				c <- EntryString("three")
+				return c
+			}()},
+			args: args{
+				e: EntryString(" - "),
+			},
+			want: []Entry{
+				EntryString("four"),
+				EntryString(" - "),
+				EntryString("twelve"),
+				EntryString(" - "),
+				EntryString("one"),
+				EntryString(" - "),
+				EntryString("six"),
+				EntryString(" - "),
+				EntryString("three")},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := Stream{
+				stream: tt.fields.stream,
+			}
+			out := s.Intersperse(tt.args.e)
+			got := []Entry{}
+			for e := range out.stream {
+				got = append(got, e)
+			}
+			if !assert.ElementsMatch(t, got, tt.want) {
+				t.Errorf("Stream.Intersperse() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
 
 func TestStream_GroupBy(t *testing.T) {
 	type fields struct {
