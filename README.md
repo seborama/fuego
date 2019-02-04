@@ -2,16 +2,6 @@
 
 [![godoc](https://img.shields.io/badge/godoc-reference-blue.svg)](https://godoc.org/github.com/seborama/fuego) [![goreportcard](https://img.shields.io/badge/go%20report-A%2B-brightgreen.svg)](http://goreportcard.com/report/seborama/fuego) [![cover.run](https://cover.run/go/github.com/seborama/fuego.svg?style=flat&tag=golang-1.9)](https://cover.run/go?tag=golang-1.9&repo=github.com%2Fseborama%2Ffuego) 
 
-
-**Important Note**
-
-I am currently working on removing the embedded collections to enable me to focus on core functional aspects. See pull request [#5](https://github.com/seborama/fuego/pull/5).
-
-I may not re-instate them or perhaps I will create a separate project in the future?
-
-The presence of collections creates a coupling which is detrimental to my ability to evolve this project at a faster pace.
-
-
 ## Overview
 
 _Making Go come to functional programming._
