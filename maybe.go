@@ -1,5 +1,9 @@
 package fuego
 
+// PanicNoSuchElement signifies that the iterator does not have
+// the requested element.
+const PanicNoSuchElement = "No such element"
+
 // A Maybe is a maybe monad.
 type Maybe struct {
 	value   Entry
@@ -38,14 +42,13 @@ func MaybeOf(i Entry) Maybe {
 func (m Maybe) IsEmpty() bool { return m.isEmpty }
 
 // Filter    \
-// Map        > can we use Stream for those?
+// Map        > TODO: can we use Stream for those?
 // FlatMap   /
-// Iterator or Stream?
 
 // Get the value of this Maybe or panic if none exists.
 func (m Maybe) Get() Entry {
 	if m.IsEmpty() {
-		panic(PanicNoSuchElement)
+		panic(PanicNoSuchElement) // TODO: return MaybeNone??
 	}
 	return m.value
 }

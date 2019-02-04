@@ -3,7 +3,6 @@ package fuego
 import (
 	"testing"
 
-	"github.com/raviqqe/hamt"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -22,7 +21,7 @@ func (i entryNil) Hash() uint32 {
 }
 
 // Equal returns true if 'e' and 'i' are equal.
-func (i entryNil) Equal(e hamt.Entry) bool {
+func (i entryNil) Equal(e Entry) bool {
 	return e == nil
 }
 

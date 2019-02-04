@@ -20,7 +20,6 @@ This is a research project in functional programming which I hope will prove use
 
 Fuego brings a few functional paradigms to Go. The intent is to save development time while promoting code readability and reduce the risk of complex bugs.
 
-
 ## Install
 
 ```bash
@@ -49,9 +48,24 @@ Have fun!!
 
 ### Entry
 
-`Entry` is based on `hamt.Entry`. This is an elegant solution from [Yota Toyama](https://github.com/raviqqe): the type can be anything so long as it respects the simple behaviour of `hamt.Entry`. This provides an abstraction of types yet with known behaviour:
+`Entry` is inspired by `hamt.Entry`. This is an elegant solution from [Yota Toyama](https://github.com/raviqqe): the type can be anything so long as it respects the simple behaviour of `hamt.Entry`. This provides an abstraction of types yet with known behaviour:
+
 - Hash(): identifies an Entry Uniquely.
 - Equal(): defines equality for a type of `Entry`. `Equal()` is expected to be based on `Hash()`.
+
+Several Entry implementations are provided:
+
+- EntryBool
+- EntryMap
+- EntrySlice
+
+#### EntryMap
+
+TODO: TBC
+
+#### EntrySlice
+
+TODO: TBC
 
 ### Maybe
 
@@ -61,56 +75,26 @@ When the value is `nil`, `Maybe` is considered empty unless it was created with 
 
 `MaybeNone()` always produces an empty optional.
 
-### HamtSet
-
-`HamtSet` is based on hamt.Set and entries must implement interface `Entry`.
-
-It is an unordered collection, yet unnaturally sorted (i.e. sorting is based on the hash of the `hamt.Entry`).
-
-An example `Entry` implementation called `EntryInt` is provided in [entry_test.go](entry_test.go).
-
-```go
-// See entry_test.go for "EntryInt"
-NewHamtSet().
-    Insert(EntryInt(1)).
-    Insert(EntryInt(2)).
-    Delete(EntryInt(1)).
-    Insert(EntryInt(3)).
-    Stream()
-```
-
-Uses of streams with Sets are also available in [example_map_test.go](example_map_test.go).
-
-### OrderedSet
-
-This is an **ordered** implementation of a `Set`.
-
-### HamtMap
-
-As with `HamtSet`, `HamtMap` is based on hamt.Map and entries must implement interface `Entry` for its keys but values can be anything (`interface{}`).
-
-It is an unordered collection, yet unnaturally sorted (i.e. sorting is based on the hash of the `hamt.Entry` keys).
-
-See [example_map_test.go](example_map_test.go) for more details of an example of `HamtMap` with Stream and Filter combined together to extract entries which keys are an even number.
-
-### OrderedMap
-
-This is an **ordered** implementation of a `Map`.
-
 ### Tuple
 
 fuego provides these `Tuple`'s:
+
 - Tuple0
 - Tuple1
 - Tuple2
 
 The values of fuego `Tuples` is of type `Entry` but can represent any type (see EntryInt and EntryString examples).
 
+### Consumer
+
+TODO: TBC
+
 ### Functions
 
 See [example_function_test.go](example_function_test.go) for basic example uses of `Function` and `BiFunction` and the other tests / examples for more uses.
 
 #### Function
+
 A `Function` is a normal Go function which signature is
 
 ```go
@@ -127,85 +111,50 @@ func(i,j Entry) Entry
 
 `BiFunction`'s are used with Stream.Reduce() for instance, as seen in [stream_test.go](stream_test.go).
 
-### Iterator
-
-You can create you own `Iterator`'s.
-
-See [iterator.go](iterator.go) for several convenience implementations of iterators:
-- NewSliceIterator
-- NewSetIterator
-
-Iterator supports:
-- Forward
-- Value
-- Reverse
-- Size
-
-```go
-NewSliceIterator([]Entry{EntryInt(2), EntryInt(3)}) // returns an Iterator over []interface{2, 3}
-
-NewSetIterator(NewHamtSet().
-    Insert(EntryInt(2))), // returns an Iterator over a HamtSet that contains a single EntryInt(2)
-```
-
 ### Stream
+
+A Stream is a wrapper over a Go channel.
+
+**NOTE**
+At present, the Go channel is bufferred. This poses ordering issues in parallel processing. It is likely that in a future release this will change. One option is a slice of channels. This improves parallelism but still poses issues with some scenarios where the continuity of values matters (e.g. calculating Fibonacci sequences) as with Reduce, ...
 
 #### Creation
 
-```go
-someGoSlice := []int{1, 2, 3}
-NewStream(
-    NewSliceIterator(someGoSlice)),
-```
+When providing a Go channel to create a Stream, beware that until you close the channel, the Stream's internal Go function that processes the Stream will remain active. This can lead to a stray Go function.
 
 ```go
-NewStream(
-    NewSetIterator(
-        NewOrderedSet().
-            Insert(EntryInt(1)).
-            Insert(EntryInt(2))))
-```
-
-#### Map
-
-```go
-// See in this README and in helpers_test.go for "functionTimesTwo()"
-NewOrderedSet().
-    Insert(EntryInt(1)).
-    Insert(EntryInt(2)).
-    Insert(EntryInt(3)).
-    Stream().
-    Map(functionTimesTwo())
-// returns EntryInt's {2,4,6}
+ƒ.NewStreamFromSlice([]int{1, 2, 3})
+// or if you already have a channel of Entry:
+c := make(chan Entry, 1e3)
+defer close(c)
+c <- EntryString("one")
+// c <- ...
+NewStream(c)
 ```
 
 #### Filter
 
 ```go
 // See helpers_test.go for "newEntryIntEqualsTo()"
-NewOrderedSet().
-    Insert(EntryInt(1)).
-    Insert(EntryInt(2)).
-    Insert(EntryInt(3)).
-    Stream().
-    Filter(FunctionPredicate(entryIntEqualsTo(EntryInt(1))).
-        Or(FunctionPredicate(entryIntEqualsTo(EntryInt(3)))))
-// returns EntryInt's {1,3}
+s := ƒ.NewStreamFromSlice([]int{1, 2, 3})
+s.Filter(FunctionPredicate(entryIntEqualsTo(EntryInt(1))).
+    Or(FunctionPredicate(entryIntEqualsTo(EntryInt(3)))))
+// returns []EntryInt{1,3}
 ```
 
-#### Reduce / LeftReduce / RightReduce
+#### Reduce / LeftReduce
 
 ```go
 // See helpers_test.go for "concatenateStringsBiFunc()"
-NewOrderedSet().
-    Insert(EntryString("four")).
-    Insert(EntryString("twelve")).
-    Insert(EntryString("one")).
-    Insert(EntryString("six")).
-    Insert(EntryString("three"))
-    Stream().
-    Reduce(concatenateStringsBiFunc)
-// returns EntryString("one-three-twelve-six-four")
+ƒ.NewStreamFromSlice(string{
+    "four",
+    "twelve",
+    "one",
+    "six",
+    "three",
+}).
+Reduce(concatenateStringsBiFunc)
+// returns EntryString("four-twelve-one-six-three")
 ```
 
 #### ForEach
@@ -217,24 +166,20 @@ computeSumTotal := func(value interface{}) {
     total += int(value.(EntryInt).Value())
 }
 
-NewOrderedSet().
-    Insert(EntryInt(1)).
-    Insert(EntryInt(2)).
-    Insert(EntryInt(3)).
-    Stream().
-    ForEach(calculateSumTotal)
+ƒ.NewStreamFromSlice([]int{1, 2, 3}).
+ForEach(calculateSumTotal)
 // total == 6
 ```
 
 #### Intersperse
 
 ```go
-NewOrderedSet().
-    Insert(EntryString("three")).
-    Insert(EntryString("two")).
-    Insert(EntryString("four")).
-    Stream().
-    Intersperse(EntryString(" - "))
+ƒ.NewStreamFromSlice([]string{
+    "three",
+    "two",
+    "four",
+}).
+Intersperse(EntryString(" - "))
 // "three - two - four"
 ```
 
@@ -251,11 +196,13 @@ func(t interface{}) bool
 ```
 
 A `Predicate` has convenient pre-defined methods:
+
 - Or
 - And
 - Not
 
 Several pre-defined `Predicate`'s exist too:
+
 - True
 - False
 - FunctionPredicate - a Predicate that wraps over a Function
@@ -269,13 +216,12 @@ _ = ƒ.Predicate(ƒ.False).And(ƒ.Predicate(ƒ.False).Or(ƒ.True))(1) // returns
 res := ƒ.Predicate(intGreaterThanPredicate(50)).And(ƒ.True).Not()(23) // res = true
 
 func intGreaterThanPredicate(rhs int) ƒ.Predicate {
-	return func(lhs interface{}) bool {
-		return lhs.(int) > rhs
-	}
+    return func(lhs interface{}) bool {
+        return lhs.(int) > rhs
+    }
 }
 ```
 
 ## Known limitations
 
-- hamt.Set and hamt.Map are not ordered as per their initialisation but rather following their Hash. Use OrderedSet as an alternative.
-- several operations may be memory intensive or poorly performing, notably - but not limited to - in OrderedSet.
+- several operations may be memory intensive or poorly performing.

@@ -1,128 +1,137 @@
 package fuego
 
-// Stream is a sequence of elements supporting sequential and parallel aggregate
-// operations (TODO: not yet supported).
-type Stream interface {
-	Map(mapper Function) Stream
-	Filter(predicate Predicate) Stream
-	// FlatMap(mapper Function) []interface{}
-	// None(predicate Predicate) bool // i.e. NoneMatch
-	// All(predicate Predicate) bool // i.e. AllMatch
-	// FindFirst() Maybe
-	// FindAny() Maybe
-	// OfOne(i interface{}) Stream
-	// Of(i ...interface{}) Stream
-	ForEach(consumer Consumer)
-	Reduce(f2 BiFunction) interface{}
-	LeftReduce(f2 BiFunction) interface{}
-	RightReduce(f2 BiFunction) interface{}
-	Intersperse(e Entry) Stream
-	GroupBy(classifier Function) Map
-}
-
-// ReferenceStream is a simple implementation of a Stream.
-type ReferenceStream struct {
-	iterator Iterator
+// Stream is a sequence of elements supporting sequential and parallel
+// parallel operations.
+type Stream struct {
+	stream chan Entry
 }
 
 // NewStream creates a new Stream.
-func NewStream(it Iterator) Stream {
-	return ReferenceStream{
-		iterator: it,
+func NewStream(c chan Entry) Stream {
+	return Stream{
+		stream: c,
 	}
 }
 
-// Map returns a stream consisting of the results of applying the given
-// function to the elements of this stream.
-func (rp ReferenceStream) Map(mapper Function) Stream {
-	s := []Entry{}
-	for it := rp.iterator; it != nil; it = it.Forward() {
-		s = append(s, mapper(it.Value()).(Entry))
+// NewStreamFromSlice creates a new Stream from a Go slice.
+func NewStreamFromSlice(s []Entry) Stream {
+	c := make(chan Entry, 1e3)
+	defer close(c)
+	for _, element := range s {
+		c <- element
 	}
 
-	return NewStream(NewSliceIterator(s))
+	return NewStream(c)
 }
 
-// Filter returns a stream consisting of the elements of this stream that match
-// the given predicate.
-func (rp ReferenceStream) Filter(predicate Predicate) Stream {
-	s := []Entry{}
-	for it := rp.iterator; it != nil; it = it.Forward() {
-		if predicate(it.Value()) {
-			s = append(s, it.Value().(Entry))
+// TODO: implement NewStreamFromMap?
+
+// Map returns a slice of channel of Set consisting of the results of
+// applying the given function to the elements of this Set
+func (s Stream) Map(mapper Function) Stream {
+	outstream := make(chan Entry, cap(s.stream))
+
+	go func() { // TODO: introduce a cut-off to prevent the go func from straying
+		defer close(outstream)
+		if s.stream == nil {
+			return
 		}
-	}
+		for val := range s.stream {
+			outstream <- mapper(val)
+		}
+	}()
 
-	return NewStream(NewSliceIterator(s))
+	return Stream{
+		stream: outstream,
+	}
+}
+
+// Filter returns a stream consisting of the elements of this stream that
+// match the given predicate.
+func (s Stream) Filter(predicate Predicate) Stream {
+	outstream := make(chan Entry, cap(s.stream))
+
+	go func() { // TODO: introduce a cut-off to prevent the go func from straying
+		defer close(outstream)
+		if s.stream == nil {
+			return
+		}
+		for val := range s.stream {
+			if predicate(val) {
+				outstream <- val
+			}
+		}
+	}()
+
+	return Stream{
+		stream: outstream,
+	}
 }
 
 // ForEach executes the given function for each entry in this stream.
-func (rp ReferenceStream) ForEach(consumer Consumer) {
-	for it := rp.iterator; it != nil && it.Size() != 0; it = it.Forward() {
-		consumer(it.Value())
+func (s Stream) ForEach(consumer Consumer) {
+	if s.stream == nil {
+		return
+	}
+
+	for val := range s.stream {
+		consumer(val)
 	}
 }
 
 // LeftReduce accumulates the elements of this Set by
 // applying the given function.
-func (rp ReferenceStream) LeftReduce(f2 BiFunction) interface{} {
-	it := rp.iterator
-	if it == nil || it.Size() == 0 {
+func (s Stream) LeftReduce(f2 BiFunction) Entry {
+	if s.stream == nil {
 		return nil
 	}
-	res := it.Value()
-	for it = it.Forward(); it != nil; it = it.Forward() {
-		res = f2(res, it.Value())
+
+	res := <-s.stream
+	for val := range s.stream {
+		res = f2(res, val)
 	}
+
 	return res
 }
 
 // Reduce is an alias for LeftReduce.
-func (rp ReferenceStream) Reduce(f2 BiFunction) interface{} {
-	return rp.LeftReduce(f2)
-}
-
-// RightReduce accumulates the elements of this Set by
-// applying the given function.
-func (rp ReferenceStream) RightReduce(f2 BiFunction) interface{} {
-	if rp.iterator == nil || rp.iterator.Size() == 0 {
-		return nil
-	}
-	reverse := NewStream(rp.iterator.Reverse())
-	return reverse.LeftReduce(f2)
+func (s Stream) Reduce(f2 BiFunction) Entry {
+	return s.LeftReduce(f2)
 }
 
 // Intersperse inserts an element between all elements of this Stream.
-func (rp ReferenceStream) Intersperse(e Entry) Stream {
-	if rp.iterator == nil || rp.iterator.Size() == 0 {
-		return NewStream(NewSliceIterator([]Entry{}))
-	}
+func (s Stream) Intersperse(e Entry) Stream {
+	outstream := make(chan Entry, cap(s.stream))
 
-	s := make([]Entry, rp.iterator.Size()*2-1)
-
-	for it, idx := rp.iterator, 0; it != nil; it, idx = it.Forward(), idx+1 {
-		s[2*idx] = it.Value().(Entry)
-		if idx > 0 {
-			s[2*idx-1] = e
+	go func() { // TODO: introduce a cut-off to prevent the go func from straying
+		defer close(outstream)
+		if s.stream == nil {
+			return
 		}
-	}
+		if val := <-s.stream; val != nil {
+			outstream <- val
+		}
+		for val := range s.stream {
+			outstream <- e
+			outstream <- val
+		}
+	}()
 
-	return NewStream(NewSliceIterator(s))
+	return Stream{
+		stream: outstream,
+	}
 }
 
 // GroupBy groups the elements of this Stream by classifying them.
-func (rp ReferenceStream) GroupBy(classifier Function) Map {
-	groups := map[Entry]OrderedSet{}
-	for it := rp.iterator; it != nil; it = it.Forward() {
-		k := classifier(it.Value())
-		v := it.Value()
-		groups[k] = groups[k].Insert(v).(OrderedSet)
+func (s Stream) GroupBy(classifier Function) EntryMap {
+	resultMap := EntryMap{}
+
+	if s.stream != nil {
+		for val := range s.stream {
+			k := classifier(val)
+			resultMap[k] = append(resultMap[k], val)
+		}
 	}
 
-	newMap := NewOrderedMap()
-	for k, v := range groups {
-		newMap = newMap.Insert(k, v).(OrderedMap)
-	}
-
-	return newMap
+	return resultMap
 }

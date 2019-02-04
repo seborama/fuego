@@ -9,7 +9,7 @@ func (t Tuple0) Hash() uint32 {
 }
 
 // Equal returns true if 'o' and 't' are equal.
-func (t Tuple0) Equal(o Tuple) bool {
+func (t Tuple0) Equal(o Entry) bool {
 	// Tuple0 is considered to meet equality when o and t are the
 	// same object (in memory)
 	// However, we pass objects by value, not reference, hence they
@@ -22,7 +22,7 @@ func (t Tuple0) Arity() int {
 	return 0
 }
 
-// ToSet returns an empty Set.
-func (t Tuple0) ToSet() Set {
-	return NewOrderedSet()
+// ToSlice returns the elements of this tuple as a Go slice.
+func (t Tuple0) ToSlice() []Entry {
+	return []Entry{}
 }

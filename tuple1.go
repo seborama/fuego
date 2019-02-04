@@ -14,7 +14,7 @@ func (t Tuple1) Hash() uint32 {
 }
 
 // Equal returns true if 'o' and 't' are equal.
-func (t Tuple1) Equal(o Tuple) bool {
+func (t Tuple1) Equal(o Entry) bool {
 	oT, ok := o.(Tuple1)
 	return t == o ||
 		(ok &&
@@ -26,8 +26,7 @@ func (t Tuple1) Arity() int {
 	return 1
 }
 
-// ToSet returns the elements of this tuple as a Set.
-func (t Tuple1) ToSet() Set {
-	return NewOrderedSet().
-		Insert(t.E1)
+// ToSlice returns the elements of this tuple as a Go slice.
+func (t Tuple1) ToSlice() []Entry {
+	return []Entry{t.E1}
 }

@@ -32,15 +32,15 @@ func TestNotPredicate(t *testing.T) {
 			want: false,
 		},
 		{
-			name: "Should negate the predicate",
+			name: "Should confirm the predicate",
 			args: args{
-				p: intGreaterThanPredicate(5),
-				t: EntryInt(2),
+				p: intGreaterThanPredicate(10),
+				t: EntryInt(7),
 			},
 			want: true,
 		},
 		{
-			name: "Should return true when nil predicate",
+			name: "Should return true when nil predicate", // TODO: is that correct?
 			args: args{
 				p: nil,
 				t: EntryInt(2),
@@ -364,6 +364,30 @@ func TestOrPredicate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := tt.args.p1.Or(tt.args.p2)(tt.args.t); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Or() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestFunctionPredicate(t *testing.T) {
+	type args struct {
+		f Function
+	}
+	tests := []struct {
+		name string
+		args args
+		want Predicate
+	}{
+		{
+			name: "Should apply the predicate 'equals to 25' and return false with 100",
+			args: args{entryIntEqualsTo(25)},
+			want: False,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := FunctionPredicate(tt.args.f); !reflect.DeepEqual(got(EntryInt(100)), tt.want(nil)) {
+				t.Errorf("FunctionPredicate() = %v, want %v", got, tt.want)
 			}
 		})
 	}

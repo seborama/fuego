@@ -14,69 +14,6 @@ func functionTimesTwo() Function {
 	}
 }
 
-func TestReferenceStream_Map(t *testing.T) {
-	type fields struct {
-		iterator Iterator
-	}
-	type args struct {
-		mapper Function
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   Stream
-	}{
-		{
-			name:   "Should return a Stream of nil",
-			fields: fields{iterator: nil},
-			args: args{
-				mapper: functionTimesTwo(),
-			},
-			want: NewStream(
-				NewSliceIterator([]Entry{})),
-		},
-		{
-			name: "Should return a Stream of one double",
-			fields: fields{
-				iterator: NewSetIterator(NewHamtSet().
-					Insert(EntryInt(4)))},
-			args: args{
-				mapper: functionTimesTwo(),
-			},
-			want: NewStream(
-				NewSliceIterator([]Entry{EntryInt(8)})),
-		},
-		{
-			name: "Should return a Stream of 3 doubles",
-			fields: fields{
-				iterator: NewSetIterator(NewHamtSet().
-					Insert(EntryInt(1)).
-					Insert(EntryInt(2)).
-					Insert(EntryInt(3)))},
-			args: args{
-				mapper: functionTimesTwo(),
-			},
-			want: NewStream(
-				NewSliceIterator([]Entry{
-					EntryInt(2),
-					EntryInt(4),
-					EntryInt(6)})),
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			rp := ReferenceStream{
-				iterator: tt.fields.iterator,
-			}
-			_ = rp.iterator
-			if got := rp.Map(tt.args.mapper); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("ReferenceStream.Map() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
 func entryIntEqualsTo(number EntryInt) Function {
 	return func(subject Entry) Entry {
 		subjectEntryInt, ok := subject.(EntryInt)
@@ -88,9 +25,72 @@ func entryIntEqualsTo(number EntryInt) Function {
 	}
 }
 
-func TestReferenceStream_Filter(t *testing.T) {
+func TestStream_Map(t *testing.T) {
 	type fields struct {
-		iterator Iterator
+		stream chan Entry
+	}
+	type args struct {
+		mapper Function
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   []Entry
+	}{
+		{
+			name:   "Should return an empty Stream",
+			fields: fields{stream: nil},
+			args: args{
+				mapper: functionTimesTwo(),
+			},
+			want: []Entry{},
+		},
+		{
+			name: "Should return a Stream of doubled integers",
+			fields: fields{
+				stream: func() chan Entry {
+					c := make(chan Entry, 1e3)
+					defer close(c)
+					c <- EntryInt(1)
+					c <- EntryInt(3)
+					c <- EntryInt(2)
+					return c
+				}()},
+			args: args{
+				mapper: functionTimesTwo(),
+			},
+			want: []Entry{
+				EntryInt(2),
+				EntryInt(6),
+				EntryInt(4)},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := Stream{
+				stream: tt.fields.stream,
+			}
+
+			var got []Entry
+			if gotStream := s.Map(tt.args.mapper).stream; gotStream != nil {
+				got = []Entry{}
+				for val := range gotStream {
+					got = append(got, val)
+				}
+			}
+
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Stream.Map() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestStream_Filter(t *testing.T) {
+	type fields struct {
+		stream chan Entry
 	}
 	type args struct {
 		predicate Predicate
@@ -99,53 +99,125 @@ func TestReferenceStream_Filter(t *testing.T) {
 		name   string
 		fields fields
 		args   args
-		want   Stream
+		want   []Entry
 	}{
 		{
-			name: "Should give {1,3} from {4,1,3} when Predicate wants 1 or 3",
-			fields: fields{
-				iterator: NewSetIterator(NewHamtSet().
-					Insert(EntryInt(4)).
-					Insert(EntryInt(17)).
-					Insert(EntryInt(3)))},
+			name:   "Should return nil for an empty Stream",
+			fields: fields{stream: nil},
 			args: args{
-				predicate: FunctionPredicate(entryIntEqualsTo(EntryInt(17))).
-					Or(FunctionPredicate(entryIntEqualsTo(EntryInt(3)))),
+				predicate: intGreaterThanPredicate(5),
 			},
-			want: NewStream(
-				NewSliceIterator([]Entry{
-					EntryInt(3),
-					EntryInt(17)})),
+			want: []Entry{},
+		},
+		{
+			name: "Should give produce filtered values as per predicate",
+			fields: fields{
+				stream: func() chan Entry {
+					c := make(chan Entry, 1e3)
+					defer close(c)
+					c <- EntryInt(17)
+					c <- EntryInt(8)
+					c <- EntryInt(2)
+					return c
+				}()},
+			args: args{
+				predicate: intGreaterThanPredicate(5),
+			},
+			want: []Entry{
+				EntryInt(17),
+				EntryInt(8)},
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			rp := ReferenceStream{
-				iterator: tt.fields.iterator,
+			s := Stream{
+				stream: tt.fields.stream,
 			}
-			if got := rp.Filter(tt.args.predicate); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("ReferenceStream.Filter() = %v, want %v", got, tt.want)
+
+			var got []Entry
+			if gotStream := s.Filter(tt.args.predicate).stream; gotStream != nil {
+				got = []Entry{}
+				for val := range gotStream {
+					got = append(got, val)
+				}
+			}
+
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Stream.Filter() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestReferenceStream_ForEach(t *testing.T) {
-	total := 0
+func TestStream_ForEach(t *testing.T) {
+	var callCount, total int
 	computeSumTotal := func(value Entry) {
+		callCount++
 		total += int(value.(EntryInt))
 	}
 
-	iterator := NewSetIterator(NewHamtSet().
-		Insert(EntryInt(4)).
-		Insert(EntryInt(1)).
-		Insert(EntryInt(3)))
+	type fields struct {
+		stream chan Entry
+	}
+	type args struct {
+		consumer Consumer
+	}
+	type want struct {
+		total, count int
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   want
+	}{
+		{
+			name:   "Should not call consumer for a Stream of nil",
+			fields: fields{stream: nil},
+			args: args{
+				consumer: computeSumTotal,
+			},
+			want: want{
+				count: 0,
+				total: 0,
+			},
+		},
+		{
+			name: "Should give produce filtered values as per predicate",
+			fields: fields{
+				stream: func() chan Entry {
+					c := make(chan Entry, 1e3)
+					defer close(c)
+					c <- EntryInt(4)
+					c <- EntryInt(1)
+					c <- EntryInt(3)
+					return c
+				}()},
+			args: args{
+				consumer: computeSumTotal,
+			},
+			want: want{
+				count: 3,
+				total: 8,
+			},
+		},
+	}
 
-	NewStream(iterator).ForEach(computeSumTotal)
-	assert.Equal(t, 8, total)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			callCount, total = 0, 0
+			s := Stream{
+				stream: tt.fields.stream,
+			}
+			s.ForEach(tt.args.consumer)
+			assert.Equal(t, tt.want.count, callCount)
+			assert.Equal(t, tt.want.total, total)
+		})
+	}
 }
 
-func TestReferenceStream_LeftReduce(t *testing.T) {
+func TestStream_LeftReduce(t *testing.T) {
 	concatenateStringsBiFunc := func(i, j Entry) Entry {
 		iStr := i.(EntryString)
 		jStr := j.(EntryString)
@@ -153,7 +225,7 @@ func TestReferenceStream_LeftReduce(t *testing.T) {
 	}
 
 	type fields struct {
-		iterator Iterator
+		stream chan Entry
 	}
 	type args struct {
 		f2 BiFunction
@@ -162,127 +234,59 @@ func TestReferenceStream_LeftReduce(t *testing.T) {
 		name   string
 		fields fields
 		args   args
-		want   interface{}
+		want   Entry
 	}{
 		{
-			name: "Should return nil for a nil Stream",
-			fields: fields{
-				iterator: NewSetIterator(nil),
-			},
-			args: args{f2: concatenateStringsBiFunc},
-			want: nil,
+			name:   "Should return nil for a Stream of nil",
+			fields: fields{stream: nil},
+			args:   args{f2: concatenateStringsBiFunc},
+			want:   nil,
 		},
 		{
-			name: "Should return nil for an empty Stream",
+			name: "Should return reduction of set of single element",
 			fields: fields{
-				iterator: SetIterator{set: NewHamtSet()},
-			},
-			args: args{f2: concatenateStringsBiFunc},
-			want: nil,
-		},
-		{
-			name: "Should return reduction of Set of single element",
-			fields: fields{
-				iterator: NewSetIterator(NewHamtSet().
-					Insert(EntryString("three"))),
-			},
+				stream: func() chan Entry {
+					c := make(chan Entry, 1e3)
+					defer close(c)
+					c <- EntryString("three")
+					return c
+				}()},
 			args: args{f2: concatenateStringsBiFunc},
 			want: EntryString("three"),
 		},
 		{
-			name: "Should return reduction of Set",
+			name: "Should return reduction of set of multiple elements",
 			fields: fields{
-				iterator: NewSetIterator(NewHamtSet().
-					Insert(EntryString("four")).
-					Insert(EntryString("twelve")).
-					Insert(EntryString("one")).
-					Insert(EntryString("six")).
-					Insert(EntryString("three"))),
-			},
+				stream: func() chan Entry {
+					c := make(chan Entry, 1e3)
+					defer close(c)
+					c <- EntryString("four")
+					c <- EntryString("twelve")
+					c <- EntryString("one")
+					c <- EntryString("six")
+					c <- EntryString("three")
+					return c
+				}()},
 			args: args{f2: concatenateStringsBiFunc},
-			want: EntryString("one-three-twelve-six-four"),
+			want: EntryString("four-twelve-one-six-three"),
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			rp := ReferenceStream{
-				iterator: tt.fields.iterator,
+			s := Stream{
+				stream: tt.fields.stream,
 			}
-			if gotReduce := rp.Reduce(tt.args.f2); !assert.Exactly(t, tt.want, gotReduce) {
-				return
-			}
-
-			if gotLeftReduce := rp.LeftReduce(tt.args.f2); !assert.Exactly(t, tt.want, gotLeftReduce) {
+			if gotReduce := s.Reduce(tt.args.f2); !assert.Exactly(t, tt.want, gotReduce) {
 				return
 			}
 		})
 	}
 }
 
-func TestReferenceStream_RightReduce(t *testing.T) {
-	concatenateStringsBiFunc := func(i, j Entry) Entry {
-		iStr := i.(EntryString)
-		jStr := j.(EntryString)
-		return iStr + "-" + jStr
-	}
-
+func TestStream_Intersperse(t *testing.T) {
 	type fields struct {
-		iterator Iterator
-	}
-	type args struct {
-		f2 BiFunction
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   interface{}
-	}{
-		{
-			name: "Should return nil for a nil Stream",
-			fields: fields{
-				iterator: NewSetIterator(nil),
-			},
-			args: args{f2: concatenateStringsBiFunc},
-			want: nil,
-		},
-		{
-			name: "Should return reduction of Set of single element",
-			fields: fields{
-				iterator: NewSetIterator(NewHamtSet().
-					Insert(EntryString("three"))),
-			},
-			args: args{f2: concatenateStringsBiFunc},
-			want: EntryString("three"),
-		},
-		{
-			name: "Should return reduction of Set",
-			fields: fields{
-				iterator: NewSetIterator(NewHamtSet().
-					Insert(EntryString("four")).
-					Insert(EntryString("twelve")).
-					Insert(EntryString("one")).
-					Insert(EntryString("six")).
-					Insert(EntryString("three"))),
-			},
-			args: args{f2: concatenateStringsBiFunc},
-			want: EntryString("four-six-twelve-three-one"),
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			rp := ReferenceStream{
-				iterator: tt.fields.iterator,
-			}
-			got := rp.RightReduce(tt.args.f2)
-			assert.Exactly(t, tt.want, got)
-		})
-	}
-}
-
-func TestReferenceStream_Intersperse(t *testing.T) {
-	type fields struct {
-		iterator Iterator
+		stream chan Entry
 	}
 	type args struct {
 		e Entry
@@ -291,79 +295,90 @@ func TestReferenceStream_Intersperse(t *testing.T) {
 		name   string
 		fields fields
 		args   args
-		want   Stream
+		want   []Entry
 	}{
 		{
-			name:   "Should return a Stream of nil for nil iterator",
-			fields: fields{iterator: nil},
+			name:   "Should return an empty Stream for nil input Stream",
+			fields: fields{stream: nil},
 			args: args{
 				e: EntryString(" - "),
 			},
-			want: NewStream(
-				NewSliceIterator([]Entry{})),
+			want: []Entry{},
 		},
 		{
-			name:   "Should return a Stream of nil for empty Set",
-			fields: fields{iterator: SetIterator{set: NewHamtSet()}},
+			name: "Should return an empty Stream for empty input Stream",
+			fields: fields{stream: func() chan Entry {
+				c := make(chan Entry, 1e3)
+				defer close(c)
+				return c
+			}()},
 			args: args{
 				e: EntryString(" - "),
 			},
-			want: NewStream(
-				NewSliceIterator([]Entry{})),
+			want: []Entry{},
 		},
 		{
-			name: "Should return the original Set when it has a single value",
-			fields: fields{
-				iterator: NewSetIterator(NewHamtSet().
-					Insert(EntryString("four")))},
+			name: "Should return the original input Stream when it has a single value",
+			fields: fields{stream: func() chan Entry {
+				c := make(chan Entry, 1e3)
+				defer close(c)
+				c <- EntryString("four")
+				return c
+			}()},
 			args: args{
 				e: EntryString(" - "),
 			},
-			want: NewStream(
-				NewSliceIterator([]Entry{
-					EntryString("four")})),
+			want: []Entry{
+				EntryString("four"),
+			},
 		},
 		{
 			name: "Should return the Set with given value interspersed",
-			fields: fields{
-				iterator: NewSetIterator(NewOrderedSet().
-					Insert(EntryString("four")).
-					Insert(EntryString("twelve")).
-					Insert(EntryString("one")).
-					Insert(EntryString("six")).
-					Insert(EntryString("three"))),
-			},
+			fields: fields{stream: func() chan Entry {
+				c := make(chan Entry, 1e3)
+				defer close(c)
+				c <- EntryString("four")
+				c <- EntryString("twelve")
+				c <- EntryString("one")
+				c <- EntryString("six")
+				c <- EntryString("three")
+				return c
+			}()},
 			args: args{
 				e: EntryString(" - "),
 			},
-			want: NewStream(
-				NewSliceIterator([]Entry{
-					EntryString("four"),
-					EntryString(" - "),
-					EntryString("twelve"),
-					EntryString(" - "),
-					EntryString("one"),
-					EntryString(" - "),
-					EntryString("six"),
-					EntryString(" - "),
-					EntryString("three")})),
+			want: []Entry{
+				EntryString("four"),
+				EntryString(" - "),
+				EntryString("twelve"),
+				EntryString(" - "),
+				EntryString("one"),
+				EntryString(" - "),
+				EntryString("six"),
+				EntryString(" - "),
+				EntryString("three")},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			rp := ReferenceStream{
-				iterator: tt.fields.iterator,
+			s := Stream{
+				stream: tt.fields.stream,
 			}
-			if got := rp.Intersperse(tt.args.e); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("ReferenceStream.Intersperse() = %v, want %v", got, tt.want)
+			out := s.Intersperse(tt.args.e)
+			got := []Entry{}
+			for e := range out.stream {
+				got = append(got, e)
+			}
+			if !assert.ElementsMatch(t, got, tt.want) {
+				t.Errorf("Stream.Intersperse() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestReferenceStream_GroupBy(t *testing.T) {
+func TestStream_GroupBy(t *testing.T) {
 	type fields struct {
-		iterator Iterator
+		stream chan Entry
 	}
 	type args struct {
 		classifier Function
@@ -372,119 +387,176 @@ func TestReferenceStream_GroupBy(t *testing.T) {
 		name   string
 		fields fields
 		args   args
-		want   Map
+		want   EntryMap
 	}{
 		{
-			name: "Should return empty map when nil iterator",
+			name: "Should return empty map when iterator with nil stream",
 			fields: fields{
-				iterator: nil,
+				stream: nil,
 			},
 			args: args{
 				classifier: func(i Entry) Entry {
 					return i.(EntryInt) & 1
 				},
 			},
-			want: NewOrderedMap(),
+			want: EntryMap{},
 		},
 		{
-			name: "Should return empty map when iterator with nil Set",
+			name: "Should return empty map when empty stream",
 			fields: fields{
-				iterator: NewSetIterator(nil),
+				stream: func() chan Entry {
+					c := make(chan Entry, 1e3)
+					defer close(c)
+					return c
+				}(),
 			},
 			args: args{
 				classifier: func(i Entry) Entry {
 					return i.(EntryInt) & 1
 				},
 			},
-			want: NewOrderedMap(),
-		},
-		{
-			name: "Should return empty map when empty Set",
-			fields: fields{
-				iterator: NewSetIterator(NewOrderedSet()),
-			},
-			args: args{
-				classifier: func(i Entry) Entry {
-					return i.(EntryInt) & 1
-				},
-			},
-			want: NewOrderedMap(),
+			want: EntryMap{},
 		},
 		{
 			name: "Should group by odd / even numbers",
 			fields: fields{
-				iterator: NewSetIterator(NewOrderedSet().
-					Insert(EntryInt(1)).
-					Insert(EntryInt(2)).
-					Insert(EntryInt(3)).
-					Insert(EntryInt(4))),
+				stream: func() chan Entry {
+					c := make(chan Entry, 1e3)
+					defer close(c)
+					c <- EntryInt(1)
+					c <- EntryInt(2)
+					c <- EntryInt(3)
+					c <- EntryInt(4)
+					return c
+				}(),
 			},
 			args: args{
 				classifier: func(i Entry) Entry {
 					return i.(EntryInt) & 1
 				},
 			},
-			want: NewOrderedMap().
-				Insert(EntryInt(0), NewOrderedSet().
-					Insert(EntryInt(2)).
-					Insert(EntryInt(4))).
-				Insert(EntryInt(1), NewOrderedSet().
-					Insert(EntryInt(1)).
-					Insert(EntryInt(3))),
+			want: EntryMap{
+				EntryInt(0): EntrySlice{
+					EntryInt(2),
+					EntryInt(4),
+				},
+				EntryInt(1): EntrySlice{
+					EntryInt(1),
+					EntryInt(3),
+				},
+			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			rp := ReferenceStream{
-				iterator: tt.fields.iterator,
+			rp := Stream{
+				stream: tt.fields.stream,
 			}
 			got := rp.GroupBy(tt.args.classifier)
-			elementsMatch(t, tt.want, got)
+			assert.True(t, got.Equal(tt.want))
 		})
 	}
 }
 
-func elementsMatch(t *testing.T, mapA, mapB Map) {
-	keysA, valuesA := splitKeysValues(mapA)
-	keysB, valuesB := splitKeysValues(mapB)
-	assert.ElementsMatch(t, keysA, keysB, "keys differ")
-	assert.ElementsMatch(t, valuesA, valuesB, "values differ")
-}
+func TestNewStream(t *testing.T) {
+	emptyChannel := make(chan Entry)
+	populatedChannel := func() chan Entry {
+		c := make(chan Entry, 1e3)
+		defer close(c)
+		c <- EntryInt(1)
+		c <- EntryInt(2)
+		c <- EntryInt(3)
+		c <- EntryInt(4)
+		return c
+	}()
 
-func splitKeysValues(m Map) (keys, values []Entry) {
-	m.EntrySet().Stream().ForEach(func(e Entry) {
-		keys = append(keys, e.(MapEntry).K)
-		e.(MapEntry).V.(OrderedSet).Stream().ForEach(func(e Entry) {
-			values = append(values, e)
+	type args struct {
+		s chan Entry
+	}
+	tests := []struct {
+		name string
+		args args
+		want Stream
+	}{
+		{
+			name: "Should create a Stream with a nil channel",
+			args: args{s: nil},
+			want: Stream{stream: nil},
+		},
+		{
+			name: "Should create an empty Stream with an empty channel",
+			args: args{s: emptyChannel},
+			want: Stream{stream: emptyChannel},
+		},
+		{
+			name: "Should create a Stream with a populated channel",
+			args: args{
+				s: populatedChannel,
+			},
+			want: Stream{
+				stream: populatedChannel,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := NewStream(tt.args.s); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("NewStream() = %v, want %v", got, tt.want)
+			}
 		})
-	})
-	return keys, values
+	}
 }
 
-func TestStream_GroupBy_IteratorResets(t *testing.T) {
-	it := NewSetIterator(NewOrderedSet().
-		Insert(EntryInt(1)).
-		Insert(EntryInt(2)).
-		Insert(EntryInt(3)).
-		Insert(EntryInt(4)))
+func TestNewStreamFromSlice(t *testing.T) {
+	type args struct {
+		s []Entry
+	}
+	tests := []struct {
+		name string
+		args args
+		want []Entry
+	}{
+		{
+			name: "Should create a Stream with an empty channel",
+			args: args{s: nil},
+			want: []Entry{},
+		},
+		{
+			name: "Should create an empty Stream with an empty channel",
+			args: args{s: []Entry{}},
+			want: []Entry{},
+		},
+		{
+			name: "Should create a Stream with a populated channel",
+			args: args{
+				s: []Entry{
+					EntryInt(1),
+					EntryInt(2),
+					EntryInt(3),
+					EntryInt(4),
+				},
+			},
+			want: []Entry{
+				EntryInt(1),
+				EntryInt(2),
+				EntryInt(3),
+				EntryInt(4),
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var got []Entry
+			if gotStream := NewStreamFromSlice(tt.args.s).stream; gotStream != nil {
+				got = []Entry{}
+				for val := range gotStream {
+					got = append(got, val)
+				}
+			}
 
-	rp := ReferenceStream{iterator: it}
-
-	expected := NewOrderedMap().
-		Insert(EntryInt(1), NewOrderedSet().
-			Insert(EntryInt(1)).
-			Insert(EntryInt(3))).
-		Insert(EntryInt(0), NewOrderedSet().
-			Insert(EntryInt(2)).
-			Insert(EntryInt(4)))
-
-	res1 := rp.GroupBy(func(i Entry) Entry {
-		return i.(EntryInt) & 1
-	})
-	elementsMatch(t, res1, expected)
-
-	res2 := rp.GroupBy(func(i Entry) Entry {
-		return i.(EntryInt) & 1
-	})
-	elementsMatch(t, res2, expected)
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("NewStreamFromSlice() = %+v, want %+v", got, tt.want)
+			}
+		})
+	}
 }

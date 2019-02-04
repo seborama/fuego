@@ -223,7 +223,7 @@ func TestTuple2_Arity(t *testing.T) {
 	}
 }
 
-func TestTuple2_ToSet(t *testing.T) {
+func TestTuple2_ToSlice(t *testing.T) {
 	type fields struct {
 		E1 Entry
 		E2 Entry
@@ -231,7 +231,7 @@ func TestTuple2_ToSet(t *testing.T) {
 	tests := []struct {
 		name   string
 		fields fields
-		want   Set
+		want   []Entry
 	}{
 		{
 			name: "Should return 2-set with value",
@@ -239,9 +239,9 @@ func TestTuple2_ToSet(t *testing.T) {
 				E1: EntryString("hi"),
 				E2: EntryString("bye"),
 			},
-			want: NewOrderedSet().
-				Insert(EntryString("hi")).
-				Insert(EntryString("bye")),
+			want: []Entry{
+				EntryString("hi"),
+				EntryString("bye")},
 		},
 	}
 	for _, tt := range tests {
@@ -250,8 +250,8 @@ func TestTuple2_ToSet(t *testing.T) {
 				E1: tt.fields.E1,
 				E2: tt.fields.E2,
 			}
-			if got := t2.ToSet(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Tuple2.ToSet() = %v, want %v", got, tt.want)
+			if got := t2.ToSlice(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Tuple2.ToSlice() = %v, want %v", got, tt.want)
 			}
 		})
 	}

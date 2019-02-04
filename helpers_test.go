@@ -4,7 +4,6 @@ import (
 	"hash/crc32"
 	"testing"
 
-	"github.com/raviqqe/hamt"
 	ƒ "github.com/seborama/fuego"
 	"github.com/stretchr/testify/assert"
 )
@@ -18,7 +17,7 @@ func (i EntryInt) Hash() uint32 {
 }
 
 // Equal returns true if 'e' and 'i' are equal.
-func (i EntryInt) Equal(e hamt.Entry) bool {
+func (i EntryInt) Equal(e ƒ.Entry) bool {
 	j, ok := e.(EntryInt)
 
 	if !ok {
@@ -45,7 +44,7 @@ func (i EntryString) Hash() uint32 {
 }
 
 // Equal returns true if 'e' and 'i' are equal.
-func (i EntryString) Equal(e hamt.Entry) bool {
+func (i EntryString) Equal(e ƒ.Entry) bool {
 	j, ok := e.(EntryString)
 
 	if !ok {
@@ -64,16 +63,16 @@ func TestEntryStringKey(t *testing.T) {
 }
 
 // isEvenNumber is a Predicate for even numbers.
-func isEvenNumber(t ƒ.Entry) bool {
-	k := (t.(ƒ.MapEntry)).K
-	return int(k.(EntryInt))&1 == 0
-}
+// func isEvenNumber(t ƒ.Entry) bool {
+// 	k := (t.(ƒ.MapEntry)).K
+// 	return int(k.(EntryInt))&1 == 0
+// }
 
 // isOddNumber is a Predicate for odd numbers.
-func isOddNumber(t ƒ.Entry) bool {
-	v := t.(EntryInt)
-	return v&1 == 0
-}
+// func isOddNumber(t ƒ.Entry) bool {
+// 	v := t.(EntryInt)
+// 	return v&1 == 0
+// }
 
 // concatenateStringsBiFunc returns a fuego.BiFunction that
 // joins 'i' and 'j' together with a '-' in between.
