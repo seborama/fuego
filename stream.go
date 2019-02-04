@@ -15,15 +15,11 @@ func NewStream(c chan Entry) Stream {
 
 // NewStreamFromSlice creates a new Stream from a Go slice.
 func NewStreamFromSlice(s []Entry) Stream {
-	if s == nil {
-		return NewStream(nil)
-	}
-
 	c := make(chan Entry, 1e3)
+	defer close(c)
 	for _, element := range s {
 		c <- element
 	}
-	close(c)
 
 	return NewStream(c)
 }
@@ -33,14 +29,13 @@ func NewStreamFromSlice(s []Entry) Stream {
 // Map returns a slice of channel of Set consisting of the results of
 // applying the given function to the elements of this Set
 func (s Stream) Map(mapper Function) Stream {
-	if s.stream == nil {
-		return Stream{stream: nil}
-	}
-
 	outstream := make(chan Entry, cap(s.stream))
 
-	go func() { // TODO: introduce a cut-off to prevent the go func leak
+	go func() { // TODO: introduce a cut-off to prevent the go func from straying
 		defer close(outstream)
+		if s.stream == nil {
+			return
+		}
 		for val := range s.stream {
 			outstream <- mapper(val)
 		}
@@ -54,14 +49,13 @@ func (s Stream) Map(mapper Function) Stream {
 // Filter returns a stream consisting of the elements of this stream that
 // match the given predicate.
 func (s Stream) Filter(predicate Predicate) Stream {
-	if s.stream == nil {
-		return Stream{stream: nil}
-	}
-
 	outstream := make(chan Entry, cap(s.stream))
 
-	go func() { // TODO: introduce a cut-off to prevent the go func leak
+	go func() { // TODO: introduce a cut-off to prevent the go func from straying
 		defer close(outstream)
+		if s.stream == nil {
+			return
+		}
 		for val := range s.stream {
 			if predicate(val) {
 				outstream <- val
@@ -87,7 +81,7 @@ func (s Stream) ForEach(consumer Consumer) {
 
 // LeftReduce accumulates the elements of this Set by
 // applying the given function.
-func (s Stream) LeftReduce(f2 BiFunction) interface{} {
+func (s Stream) LeftReduce(f2 BiFunction) Entry {
 	if s.stream == nil {
 		return nil
 	}
@@ -101,7 +95,7 @@ func (s Stream) LeftReduce(f2 BiFunction) interface{} {
 }
 
 // Reduce is an alias for LeftReduce.
-func (s Stream) Reduce(f2 BiFunction) interface{} {
+func (s Stream) Reduce(f2 BiFunction) Entry {
 	return s.LeftReduce(f2)
 }
 
@@ -125,14 +119,13 @@ func (s Stream) Reduce(f2 BiFunction) interface{} {
 
 // GroupBy groups the elements of this Stream by classifying them.
 func (s Stream) GroupBy(classifier Function) EntryMap {
-	if s.stream == nil {
-		return nil
-	}
-
 	resultMap := EntryMap{}
-	for val := range s.stream {
-		k := classifier(val)
-		resultMap[k] = append(resultMap[k], val)
+
+	if s.stream != nil {
+		for val := range s.stream {
+			k := classifier(val)
+			resultMap[k] = append(resultMap[k], val)
+		}
 	}
 
 	return resultMap

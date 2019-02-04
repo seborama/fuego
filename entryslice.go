@@ -7,7 +7,7 @@ type EntrySlice []Entry
 
 // Hash returns a hash for this Entry.
 func (es EntrySlice) Hash() uint32 {
-	if es == nil || len(es) == 0 {
+	if len(es) == 0 {
 		return 0
 	}
 

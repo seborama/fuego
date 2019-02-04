@@ -9,16 +9,12 @@ type EntryMap map[Entry]EntrySlice
 
 // Stream returns a stream of tuples the elements of the EntryMap.
 func (em EntryMap) Stream() Stream {
-	if em == nil {
-		return NewStream(nil)
-	}
-
 	c := make(chan Entry, 1e3)
+	defer close(c)
 
 	for k, v := range em {
 		c <- Tuple2{k, v}
 	}
-	close(c)
 
 	return NewStream(c)
 }
@@ -30,7 +26,7 @@ type tuple2 struct {
 
 // Hash returns a hash for this Entry.
 func (em EntryMap) Hash() uint32 {
-	if em == nil || len(em) == 0 {
+	if len(em) == 0 {
 		return 0
 	}
 
@@ -41,7 +37,7 @@ func (em EntryMap) Hash() uint32 {
 			hash: k.Hash(),
 		})
 	}
-	sort.Slice(sortedKeyHashes, func(i, j int) bool {
+	sort.SliceStable(sortedKeyHashes, func(i, j int) bool {
 		return sortedKeyHashes[i].hash < sortedKeyHashes[j].hash
 	})
 

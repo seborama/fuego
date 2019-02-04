@@ -74,7 +74,7 @@ func TestEntryMapEqual(t *testing.T) {
 			name: "Should return false for when comparee is not an EntryMap",
 			fields: fields{
 				slice1: EntryMap{},
-				slice2: EntryBool(true)},
+				slice2: EntrySlice{}},
 			want: false,
 		},
 		{

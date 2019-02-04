@@ -39,22 +39,22 @@ func TestStream_Map(t *testing.T) {
 		want   []Entry
 	}{
 		{
-			name:   "Should return a Stream of nil",
+			name:   "Should return an empty Stream",
 			fields: fields{stream: nil},
 			args: args{
 				mapper: functionTimesTwo(),
 			},
-			want: nil,
+			want: []Entry{},
 		},
 		{
 			name: "Should return a Stream of doubled integers",
 			fields: fields{
 				stream: func() chan Entry {
 					c := make(chan Entry, 1e3)
+					defer close(c)
 					c <- EntryInt(1)
 					c <- EntryInt(3)
 					c <- EntryInt(2)
-					close(c)
 					return c
 				}()},
 			args: args{
@@ -102,22 +102,22 @@ func TestStream_Filter(t *testing.T) {
 		want   []Entry
 	}{
 		{
-			name:   "Should return nil for a Stream of nil",
+			name:   "Should return nil for an empty Stream",
 			fields: fields{stream: nil},
 			args: args{
 				predicate: intGreaterThanPredicate(5),
 			},
-			want: nil,
+			want: []Entry{},
 		},
 		{
 			name: "Should give produce filtered values as per predicate",
 			fields: fields{
 				stream: func() chan Entry {
 					c := make(chan Entry, 1e3)
+					defer close(c)
 					c <- EntryInt(17)
 					c <- EntryInt(8)
 					c <- EntryInt(2)
-					close(c)
 					return c
 				}()},
 			args: args{
@@ -188,10 +188,10 @@ func TestStream_ForEach(t *testing.T) {
 			fields: fields{
 				stream: func() chan Entry {
 					c := make(chan Entry, 1e3)
+					defer close(c)
 					c <- EntryInt(4)
 					c <- EntryInt(1)
 					c <- EntryInt(3)
-					close(c)
 					return c
 				}()},
 			args: args{
@@ -247,8 +247,8 @@ func TestStream_LeftReduce(t *testing.T) {
 			fields: fields{
 				stream: func() chan Entry {
 					c := make(chan Entry, 1e3)
+					defer close(c)
 					c <- EntryString("three")
-					close(c)
 					return c
 				}()},
 			args: args{f2: concatenateStringsBiFunc},
@@ -259,12 +259,12 @@ func TestStream_LeftReduce(t *testing.T) {
 			fields: fields{
 				stream: func() chan Entry {
 					c := make(chan Entry, 1e3)
+					defer close(c)
 					c <- EntryString("four")
 					c <- EntryString("twelve")
 					c <- EntryString("one")
 					c <- EntryString("six")
 					c <- EntryString("three")
-					close(c)
 					return c
 				}()},
 			args: args{f2: concatenateStringsBiFunc},
@@ -395,7 +395,7 @@ func TestStream_GroupBy(t *testing.T) {
 			fields: fields{
 				stream: func() chan Entry {
 					c := make(chan Entry, 1e3)
-					close(c)
+					defer close(c)
 					return c
 				}(),
 			},
@@ -411,11 +411,11 @@ func TestStream_GroupBy(t *testing.T) {
 			fields: fields{
 				stream: func() chan Entry {
 					c := make(chan Entry, 1e3)
+					defer close(c)
 					c <- EntryInt(1)
 					c <- EntryInt(2)
 					c <- EntryInt(3)
 					c <- EntryInt(4)
-					close(c)
 					return c
 				}(),
 			},
@@ -451,11 +451,11 @@ func TestNewStream(t *testing.T) {
 	emptyChannel := make(chan Entry)
 	populatedChannel := func() chan Entry {
 		c := make(chan Entry, 1e3)
+		defer close(c)
 		c <- EntryInt(1)
 		c <- EntryInt(2)
 		c <- EntryInt(3)
 		c <- EntryInt(4)
-		close(c)
 		return c
 	}()
 
@@ -506,9 +506,9 @@ func TestNewStreamFromSlice(t *testing.T) {
 		want []Entry
 	}{
 		{
-			name: "Should create a Stream with a nil channel",
+			name: "Should create a Stream with an empty channel",
 			args: args{s: nil},
-			want: nil,
+			want: []Entry{},
 		},
 		{
 			name: "Should create an empty Stream with an empty channel",

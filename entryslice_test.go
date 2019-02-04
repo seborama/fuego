@@ -20,6 +20,11 @@ func TestEntrySliceHash(t *testing.T) {
 		want   uint32
 	}{
 		{
+			name:   "Should return 0 for a nil slice",
+			fields: fields{slice: nil},
+			want:   0,
+		},
+		{
 			name:   "Should return 0 for an empty slice",
 			fields: fields{slice: EntrySlice{}},
 			want:   0,
@@ -60,7 +65,7 @@ func TestEntrySliceEqual(t *testing.T) {
 			name: "Should return false for when comparee is not an EntrySlice",
 			fields: fields{
 				slice1: EntrySlice{},
-				slice2: EntryBool(true)},
+				slice2: EntryMap{}},
 			want: false,
 		},
 		{
