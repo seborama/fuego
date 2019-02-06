@@ -2,8 +2,8 @@ package fuego
 
 // TODO: consider two types of streams: CStreams (channel based as shown here) and SStreams (slice based). The former allows for infinite streams and thinner memory usage within the CStream object but lacks performance when the operation requires to deal with the end of the steam (it has to consume all the elements of the steam sequentially). SStreams require the entire data to be stored internally from the onset. However,  slices are seekable and can read from the end or be consumed backwards easily.
 
-// Stream is a sequence of elements supporting sequential and parallel
-// parallel operations.
+// Stream is a sequence of elements supporting sequential and
+// (in the future?) parallel operations.
 type Stream struct {
 	stream chan Entry
 }
@@ -181,6 +181,25 @@ func (s Stream) GroupBy(classifier Function) EntryMap {
 // Unfold()
 // Fold()?
 
+// MapToInt produces an EntryInt stream.
+func (s Stream) MapToInt(toInt ToIntFunction) IntStream {
+	outstream := make(chan EntryInt, cap(s.stream))
+
+	go func() { // TODO: introduce a cut-off to prevent the go func from straying
+		defer close(outstream)
+		if s.stream == nil {
+			return
+		}
+		for val := range s.stream {
+			outstream <- toInt(val)
+		}
+	}()
+
+	return IntStream{
+		stream: outstream,
+	}
+}
+
 // Count the number of elements in the stream.
 func (s Stream) Count() int {
 	if s.stream == nil {
@@ -201,7 +220,7 @@ func (s Stream) Count() int {
 }
 
 // Close the stream.
-// Panics if s.stream is nil.
+// Panics if s.stream is nil or already closed.
 func (s Stream) Close() {
 	close(s.stream)
 }

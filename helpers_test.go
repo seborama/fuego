@@ -8,33 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// EntryString is a ƒ.Entry for 'int'.
-type EntryInt int
-
-// Hash returns a hash for 'i'.
-func (i EntryInt) Hash() uint32 {
-	return uint32(i)
-}
-
-// Equal returns true if 'e' and 'i' are equal.
-func (i EntryInt) Equal(e ƒ.Entry) bool {
-	j, ok := e.(EntryInt)
-
-	if !ok {
-		return false
-	}
-
-	return i == j
-}
-
-func TestEntryInt(t *testing.T) {
-	t.Log(EntryInt(42))
-}
-
-func TestEntryIntKey(t *testing.T) {
-	assert.Equal(t, uint32(42), EntryInt(42).Hash())
-}
-
 // EntryString is a ƒ.Entry for 'string'.
 type EntryString string
 
@@ -74,7 +47,7 @@ func TestEntryStringKey(t *testing.T) {
 // 	return v&1 == 0
 // }
 
-// concatenateStringsBiFunc returns a fuego.BiFunction that
+// concatenateStringsBiFunc returns a ƒ.BiFunction that
 // joins 'i' and 'j' together with a '-' in between.
 func concatenateStringsBiFunc(i, j ƒ.Entry) ƒ.Entry {
 	iStr := i.(EntryString)
@@ -82,23 +55,23 @@ func concatenateStringsBiFunc(i, j ƒ.Entry) ƒ.Entry {
 	return iStr + "-" + jStr
 }
 
-// timesTwo returns a fuego.Function than multiplies 'i' by 2.
+// timesTwo returns a ƒ.Function than multiplies 'i' by 2.
 func timesTwo() ƒ.Function {
 	return func(i ƒ.Entry) ƒ.Entry {
-		return 2 * i.(EntryInt)
+		return 2 * i.(ƒ.EntryInt)
 	}
 }
 
 // isEvenNumberFunction is a Function that returns true when 'i' is
 // an even number.
 func isEvenNumberFunction(i ƒ.Entry) ƒ.Entry {
-	return ƒ.EntryBool(i.(EntryInt)&1 == 0)
+	return ƒ.EntryBool(i.(ƒ.EntryInt)&1 == 0)
 }
 
 // intGreaterThanPredicate is a Predicate for numbers greater
 // than 'rhs'.
 func intGreaterThanPredicate(rhs int) ƒ.Predicate {
 	return func(lhs ƒ.Entry) bool {
-		return int(lhs.(EntryInt)) > rhs
+		return int(lhs.(ƒ.EntryInt)) > rhs
 	}
 }

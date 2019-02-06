@@ -8,20 +8,20 @@ import (
 // ExampleStream_GroupBy shows a use of Stream's with GroupBy.
 func ExampleStream_GroupBy() {
 	data := []ƒ.Entry{
-		ƒ.Tuple2{E1: EntryInt(1), E2: EntryString("one")},
-		ƒ.Tuple2{E1: EntryInt(2), E2: EntryString("two")},
-		ƒ.Tuple2{E1: EntryInt(3), E2: EntryString("three")},
-		ƒ.Tuple2{E1: EntryInt(4), E2: EntryString("four")},
-		ƒ.Tuple2{E1: EntryInt(5), E2: EntryString("five")},
-		ƒ.Tuple2{E1: EntryInt(6), E2: EntryString("six")},
-		ƒ.Tuple2{E1: EntryInt(7), E2: EntryString("seven")},
-		ƒ.Tuple2{E1: EntryInt(8), E2: EntryString("eight")},
-		ƒ.Tuple2{E1: EntryInt(9), E2: EntryString("nine")}}
+		ƒ.Tuple2{E1: ƒ.EntryInt(1), E2: EntryString("one")},
+		ƒ.Tuple2{E1: ƒ.EntryInt(2), E2: EntryString("two")},
+		ƒ.Tuple2{E1: ƒ.EntryInt(3), E2: EntryString("three")},
+		ƒ.Tuple2{E1: ƒ.EntryInt(4), E2: EntryString("four")},
+		ƒ.Tuple2{E1: ƒ.EntryInt(5), E2: EntryString("five")},
+		ƒ.Tuple2{E1: ƒ.EntryInt(6), E2: EntryString("six")},
+		ƒ.Tuple2{E1: ƒ.EntryInt(7), E2: EntryString("seven")},
+		ƒ.Tuple2{E1: ƒ.EntryInt(8), E2: EntryString("eight")},
+		ƒ.Tuple2{E1: ƒ.EntryInt(9), E2: EntryString("nine")}}
 
 	resMap := map[ƒ.Entry]interface{}{}
 	ƒ.NewStreamFromSlice(data).
 		GroupBy(func(i ƒ.Entry) ƒ.Entry {
-			return i.(ƒ.Tuple2).E1.(EntryInt) & 1
+			return i.(ƒ.Tuple2).E1.(ƒ.EntryInt) & 1
 		}).
 		Stream().
 		ForEach(func(e ƒ.Entry) {
@@ -29,7 +29,7 @@ func ExampleStream_GroupBy() {
 		})
 
 	for i := 0; i < len(resMap); i++ {
-		fmt.Printf("%d => %v\n", i, resMap[EntryInt(i)])
+		fmt.Printf("%d => %v\n", i, resMap[ƒ.EntryInt(i)])
 	}
 
 	// Output:

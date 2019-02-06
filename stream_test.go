@@ -1,6 +1,7 @@
 package fuego
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -571,7 +572,7 @@ func TestStream_Close(t *testing.T) {
 		panic  bool
 	}{
 		{
-			name:   "Should panic on closing nil channel",
+			name:   "Should panic when closing nil channel",
 			fields: fields{stream: nil},
 			panic:  true,
 		},
@@ -581,7 +582,7 @@ func TestStream_Close(t *testing.T) {
 			panic:  false,
 		},
 		{
-			name: "Should panic an closing a closed channel",
+			name: "Should panic when closing a closed channel",
 			fields: fields{stream: func() chan Entry {
 				c := make(chan Entry)
 				defer close(c)
@@ -662,6 +663,77 @@ func TestStream_Count(t *testing.T) {
 			}
 			if got := s.Count(); got != tt.want {
 				t.Errorf("Stream.Count() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestStream_MapToInt(t *testing.T) {
+	type fields struct {
+		stream chan Entry
+	}
+	type args struct {
+		toInt ToIntFunction
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   IntStream
+	}{
+		{
+			name: "Should",
+			fields: fields{stream: func() chan Entry {
+				c := make(chan Entry, 1e3)
+				defer close(c)
+				c <- EntryString("a")
+				c <- EntryBool(false)
+				c <- EntryString("b")
+				c <- EntryInt(-17)
+				c <- EntryString("c")
+				return c
+			}()},
+			args: args{
+				toInt: func(e Entry) EntryInt {
+					switch j := e.(type) {
+					case EntryInt:
+						return j
+					case EntryString:
+						return EntryInt(j[0])
+					default:
+						return EntryInt(0xdeadbeef)
+					}
+				},
+			},
+			want: NewIntStreamFromSlice([]EntryInt{
+				EntryInt(97),
+				EntryInt(0xdeadbeef),
+				EntryInt(98),
+				EntryInt(-17),
+				EntryInt(99),
+			}),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := Stream{
+				stream: tt.fields.stream,
+			}
+			got := s.MapToInt(tt.args.toInt)
+			if !assert.IsType(t, IntStream{}, got) {
+				t.Errorf("Stream.MapToInt() did not return type = %v, want %v", got, tt.want)
+			}
+
+			wantStr := ""
+			for v := range tt.want.stream {
+				wantStr += fmt.Sprintf("%v ", v)
+			}
+			gotStr := ""
+			for v := range got.stream {
+				gotStr += fmt.Sprintf("%v ", v)
+			}
+			if !assert.Equal(t, wantStr, gotStr) {
+				t.Errorf("Stream.MapToInt() = %v, want %v", gotStr, wantStr)
 			}
 		})
 	}

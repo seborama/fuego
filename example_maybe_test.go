@@ -16,7 +16,7 @@ func ExampleMaybe() {
 	if assert.PanicsWithValue(nil, ƒ.PanicNoSuchElement, func() {
 		fmt.Printf("m2.Get=%v\n", m2.Get())
 	}) {
-		fmt.Println("m2.Get() panics with fuego.PanicNoSuchElement")
+		fmt.Println("m2.Get() panics with ƒ.PanicNoSuchElement")
 	}
 
 	fmt.Printf("m2.GetOrElse=%v\n", m2.GetOrElse(EntryString("Bonjour le monde")))
@@ -24,6 +24,6 @@ func ExampleMaybe() {
 	// Output:
 	// m1.Get=Hello World
 	// m1.GetOrElse=Hello World
-	// m2.Get() panics with fuego.PanicNoSuchElement
+	// m2.Get() panics with ƒ.PanicNoSuchElement
 	// m2.GetOrElse=Bonjour le monde
 }
