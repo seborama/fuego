@@ -174,6 +174,12 @@ func (s Stream) GroupBy(classifier Function) EntryMap {
 // Count (as a map reduction operation - is that different to the Count() already implemented?)
 // Fold / FoldLeft
 // Find / FindLast
+// Zip / Unzip
+// Concat?
+// Range(from, toExclusive)?
+// RangeBy(from,toExclusive, step)?
+// Unfold()
+// Fold()?
 
 // Count the number of elements in the stream.
 func (s Stream) Count() int {
