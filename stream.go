@@ -79,11 +79,11 @@ func (s Stream) ForEach(consumer Consumer) {
 	}
 }
 
-// LeftReduce accumulates the elements of this Set by
+// LeftReduce accumulates the elements of this Stream by
 // applying the given function.
 func (s Stream) LeftReduce(f2 BiFunction) Entry {
 	if s.stream == nil {
-		return nil
+		return nil // TODO: return Maybe
 	}
 
 	res := <-s.stream
@@ -134,4 +134,66 @@ func (s Stream) GroupBy(classifier Function) EntryMap {
 	}
 
 	return resultMap
+}
+
+// TODO list:
+// Methods with ** require the Stream to be finite and closed (or use a Future, perhaps Future.Stream()?)
+// **Distinct()
+// Drop(uint64) - drops the first n elements of the Stream.
+// **DropRight(uint64) - drops the last n elements of the Stream. Only meaningful if the Stream is closed.
+// DropWhile(Predicate) - Returns the a Stream representing the longest suffix of this iterable whose first element does not satisfy the predicate
+// FilterNot(Predicate) - <=> to Filter(Not(Predicate))
+// **EndsWith([]Entry) - Tests whether this Stream ends with the []Entry
+// Peek(Consumer) - Like ForEach but returns Stream as it was at the point of Peek
+// Limit(uint64) - Returns a Stream consisting of at most n elements.
+// MapToInt8(ToIntFunction) \
+// MapToInt16(ToIntFunction)  \
+// MapToInt32(ToIntFunction)   \
+// MapToInt64(ToIntFunction)    \
+// MapToUint8(ToUintFunction)     \
+// MapToUint16(ToUintFunction)      \ All these exist as syntactic sugar to allow for things like x.Sum(), x.Max(), x.Substr(), etc
+// MapToUint32(ToUintFunction)      /
+// MapToUint64(ToUintFunction)     /
+// MapToFloat32(ToFloatFunction)   /
+// MapToFloat64(ToFloatFunction)  /
+// MapToString(ToStringFunction) /
+// FlatMap
+// FlatMapToXXX (Int, Uint, etc) => is this the same as FlatMap().MapToXXX()?
+// **Sorted(Comparator)
+// Skip
+// TakeWhile - see DropXXX()
+// ToSlice
+// Collect
+// Contains
+// ContainsAll
+// Head
+// Last
+// Tail
+// Count (as a map reduction operation - is that different to the Count() already implemented?)
+// Fold / FoldLeft
+// Find / FindLast
+
+// Count the number of elements in the stream.
+func (s Stream) Count() int {
+	if s.stream == nil {
+		return 0
+	}
+
+	func() {
+		defer func() { _ = recover() }()
+		s.Close()
+	}()
+
+	count := 0
+	for range s.stream {
+		count++
+	}
+
+	return count
+}
+
+// Close the stream.
+// Panics if s.stream is nil.
+func (s Stream) Close() {
+	close(s.stream)
 }

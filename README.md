@@ -177,6 +177,14 @@ Intersperse(EntryString(" - "))
 
 Please refer to [stream_test.go](stream_test.go) for an example that groups numbers by parity (odd / even).
 
+#### Count
+
+Counts the number of elements in the Stream. This will close the Stream.
+
+#### Close
+
+Closes the Stream. It cannot receive more data but can continue consuming buffered messages.
+
 ### Predicates
 
 A `Predicate` is a normal Go function which signature is

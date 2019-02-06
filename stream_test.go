@@ -560,3 +560,109 @@ func TestNewStreamFromSlice(t *testing.T) {
 		})
 	}
 }
+
+func TestStream_Close(t *testing.T) {
+	type fields struct {
+		stream chan Entry
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		panic  bool
+	}{
+		{
+			name:   "Should panic on closing nil channel",
+			fields: fields{stream: nil},
+			panic:  true,
+		},
+		{
+			name:   "Should close an open channel",
+			fields: fields{stream: make(chan Entry)},
+			panic:  false,
+		},
+		{
+			name: "Should panic an closing a closed channel",
+			fields: fields{stream: func() chan Entry {
+				c := make(chan Entry)
+				defer close(c)
+				return c
+			}()},
+			panic: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := Stream{
+				stream: tt.fields.stream,
+			}
+			assert.Equal(t, tt.panic, assert.Panics(&testing.T{}, func() { s.Close() }))
+		})
+	}
+}
+
+func TestStream_Count(t *testing.T) {
+	type fields struct {
+		stream chan Entry
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   int
+	}{
+		{
+			name:   "Should return 0 for a nil channel",
+			fields: fields{stream: nil},
+			want:   0,
+		},
+		{
+			name: "Should return 0 for an empty open channel",
+			fields: fields{stream: func() chan Entry {
+				c := make(chan Entry, 1e3)
+				return c
+			}()},
+			want: 0,
+		},
+		{
+			name: "Should return 0 for an empty closed channel",
+			fields: fields{stream: func() chan Entry {
+				c := make(chan Entry, 1e3)
+				defer close(c)
+				return c
+			}()},
+			want: 0,
+		},
+		{
+			name: "Should return 3 for a size 3 open channel",
+			fields: fields{stream: func() chan Entry {
+				c := make(chan Entry, 1e3)
+				c <- EntryInt(1)
+				c <- EntryInt(2)
+				c <- EntryInt(1)
+				return c
+			}()},
+			want: 3,
+		},
+		{
+			name: "Should return 3 for a size 3 closed channel",
+			fields: fields{stream: func() chan Entry {
+				c := make(chan Entry, 1e3)
+				defer close(c)
+				c <- EntryInt(1)
+				c <- EntryInt(2)
+				c <- EntryInt(1)
+				return c
+			}()},
+			want: 3,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := Stream{
+				stream: tt.fields.stream,
+			}
+			if got := s.Count(); got != tt.want {
+				t.Errorf("Stream.Count() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
