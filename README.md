@@ -144,9 +144,18 @@ NewStream(c)
 
 ```go
 // See helpers_test.go for "newEntryIntEqualsTo()"
-s := ƒ.NewStreamFromSlice([]int{1, 2, 3})
-s.Filter(FunctionPredicate(entryIntEqualsTo(EntryInt(1))).
-    Or(FunctionPredicate(entryIntEqualsTo(EntryInt(3)))))
+s := ƒ.NewStreamFromSlice([]Entry{
+    EntryInt(1),
+    EntryInt(2),
+    EntryInt(3),
+})
+
+s.Filter(
+        FunctionPredicate(entryIntEqualsTo(EntryInt(1))).
+            Or(
+                FunctionPredicate(entryIntEqualsTo(EntryInt(3)))),
+)
+
 // returns []EntryInt{1,3}
 ```
 
@@ -154,14 +163,14 @@ s.Filter(FunctionPredicate(entryIntEqualsTo(EntryInt(1))).
 
 ```go
 // See helpers_test.go for "concatenateStringsBiFunc()"
-ƒ.NewStreamFromSlice(string{
-    "four",
-    "twelve",
-    "one",
-    "six",
-    "three",
+ƒ.NewStreamFromSlice([]Entry{
+    EntryString("four"),
+    EntryString("twelve)",
+    EntryString("one"),
+    EntryString("six"),
+    EntryString("three"),
 }).
-Reduce(concatenateStringsBiFunc)
+    Reduce(concatenateStringsBiFunc)
 // returns EntryString("four-twelve-one-six-three")
 ```
 
@@ -174,20 +183,24 @@ computeSumTotal := func(value interface{}) {
     total += int(value.(EntryInt).Value())
 }
 
-ƒ.NewStreamFromSlice([]int{1, 2, 3}).
-ForEach(calculateSumTotal)
+s := ƒ.NewStreamFromSlice([]Entry{
+    EntryInt(1),
+    EntryInt(2),
+    EntryInt(3),
+}).
+    ForEach(calculateSumTotal)
 // total == 6
 ```
 
 #### Intersperse
 
 ```go
-ƒ.NewStreamFromSlice([]string{
-    "three",
-    "two",
-    "four",
+ƒ.NewStreamFromSlice([]Entry{
+    EntryString("three"),
+    EntryString("two"),
+    EntryString("four"),
 }).
-Intersperse(EntryString(" - "))
+    Intersperse(EntryString(" - "))
 // "three - two - four"
 ```
 
@@ -197,7 +210,7 @@ Please refer to [stream_test.go](stream_test.go) for an example that groups numb
 
 #### Count
 
-Counts the number of elements in the Stream. This will close the Stream.
+Counts the number of elements in the Stream.
 
 #### Close
 
@@ -205,10 +218,10 @@ Closes the Stream. It cannot receive more data but can continue consuming buffer
 
 ### Predicates
 
-A `Predicate` is a normal Go function which signature is
+A `Predicate` is a normal Go function which signature is:
 
 ```go
-func(t interface{}) bool
+type Predicate func(t Entry) bool
 ```
 
 A `Predicate` has convenient pre-defined methods:
@@ -227,13 +240,17 @@ See [example_predicate_test.go](example_predicate_test.go) for some examples.
 
 ```go
 // ƒ is ALT+f on Mac. For other OSes, search the internet,  for instance,  this page: https://en.wikipedia.org/wiki/%C6%91#Appearance_in_computer_fonts
-_ = ƒ.Predicate(ƒ.False).And(ƒ.Predicate(ƒ.False).Or(ƒ.True))(1) // returns false
+    _ = ƒ.Predicate(ƒ.False).
+        ƒ.And(Predicate(ƒ.False).
+            ƒ.Or(ƒ.True))(ƒ.EntryInt(1)) // returns false
 
-res := ƒ.Predicate(intGreaterThanPredicate(50)).And(ƒ.True).Not()(23) // res = true
+res := ƒ.Predicate(intGreaterThanPredicate(50)).
+        And(ƒ.True).
+        Not()(ƒ.EntryInt(23)) // res = true
 
 func intGreaterThanPredicate(rhs int) ƒ.Predicate {
-    return func(lhs interface{}) bool {
-        return lhs.(int) > rhs
+    return func(lhs ƒ.Entry) bool {
+        return int(lhs.(ƒ.EntryInt)) > rhs
     }
 }
 ```
