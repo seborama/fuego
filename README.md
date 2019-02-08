@@ -19,12 +19,14 @@ go get github.com/seborama/fuego
 Or for a specific version:
 
 ```bash
-go get gopkg.in/seborama/fuego.v5
+go get gopkg.in/seborama/fuego.v6
 ```
 
 ## Contribute
 
 Contributions and feedback are welcome.
+
+As this project is still in early stages, large portions of the code get crafted and thrown away.
 
 For contributions, you must develop in TDD fashion and ideally provide Go testable examples (if meaningful).
 
@@ -46,6 +48,7 @@ Have fun!!
 Several Entry implementations are provided:
 
 - EntryBool
+- EntryInt
 - EntryMap
 - EntrySlice
 
@@ -73,7 +76,7 @@ fuego provides these `Tuple`'s:
 - Tuple1
 - Tuple2
 
-The values of fuego `Tuples` is of type `Entry` but can represent any type (see EntryInt and EntryString examples).
+The values of fuego `Tuples` are  of type `Entry`.
 
 ### Consumer
 
@@ -101,6 +104,15 @@ func(i,j Entry) Entry
 
 `BiFunction`'s are used with Stream.Reduce() for instance, as seen in [stream_test.go](stream_test.go).
 
+#### ToIntFunction
+
+This is a special case of Function used to convert a Stream to an IntStream.
+
+
+```go
+type ToIntFunction func(e Entry) EntryInt
+```
+
 ### Stream
 
 A Stream is a wrapper over a Go channel.
@@ -110,10 +122,16 @@ At present, the Go channel is bufferred. This poses ordering issues in parallel 
 
 #### Creation
 
-When providing a Go channel to create a Stream, beware that until you close the channel, the Stream's internal Go function that processes the Stream will remain active. This can lead to a stray Go function.
+When providing a Go channel to create a Stream, beware that until you close the channel, the Stream's internal Go function that processes the data on the channel will remain active. It will block until either new data is produced or the channel is closed by the producer. When a producer forgets to close the channel, the Go function will stray.
+
+Streams created from a slice do not suffer from thisissue because they are closed when the slice content is fully pushed to the Stream.
 
 ```go
-ƒ.NewStreamFromSlice([]int{1, 2, 3})
+ƒ.NewStreamFromSlice([]Entry{
+    EntryInt(1),
+    EntryInt(2),
+    EntryInt(3),
+})
 // or if you already have a channel of Entry:
 c := make(chan Entry, 1e3)
 defer close(c)
@@ -126,9 +144,18 @@ NewStream(c)
 
 ```go
 // See helpers_test.go for "newEntryIntEqualsTo()"
-s := ƒ.NewStreamFromSlice([]int{1, 2, 3})
-s.Filter(FunctionPredicate(entryIntEqualsTo(EntryInt(1))).
-    Or(FunctionPredicate(entryIntEqualsTo(EntryInt(3)))))
+s := ƒ.NewStreamFromSlice([]Entry{
+    EntryInt(1),
+    EntryInt(2),
+    EntryInt(3),
+})
+
+s.Filter(
+        FunctionPredicate(entryIntEqualsTo(EntryInt(1))).
+            Or(
+                FunctionPredicate(entryIntEqualsTo(EntryInt(3)))),
+)
+
 // returns []EntryInt{1,3}
 ```
 
@@ -136,14 +163,14 @@ s.Filter(FunctionPredicate(entryIntEqualsTo(EntryInt(1))).
 
 ```go
 // See helpers_test.go for "concatenateStringsBiFunc()"
-ƒ.NewStreamFromSlice(string{
-    "four",
-    "twelve",
-    "one",
-    "six",
-    "three",
+ƒ.NewStreamFromSlice([]Entry{
+    EntryString("four"),
+    EntryString("twelve)",
+    EntryString("one"),
+    EntryString("six"),
+    EntryString("three"),
 }).
-Reduce(concatenateStringsBiFunc)
+    Reduce(concatenateStringsBiFunc)
 // returns EntryString("four-twelve-one-six-three")
 ```
 
@@ -156,20 +183,24 @@ computeSumTotal := func(value interface{}) {
     total += int(value.(EntryInt).Value())
 }
 
-ƒ.NewStreamFromSlice([]int{1, 2, 3}).
-ForEach(calculateSumTotal)
+s := ƒ.NewStreamFromSlice([]Entry{
+    EntryInt(1),
+    EntryInt(2),
+    EntryInt(3),
+}).
+    ForEach(calculateSumTotal)
 // total == 6
 ```
 
 #### Intersperse
 
 ```go
-ƒ.NewStreamFromSlice([]string{
-    "three",
-    "two",
-    "four",
+ƒ.NewStreamFromSlice([]Entry{
+    EntryString("three"),
+    EntryString("two"),
+    EntryString("four"),
 }).
-Intersperse(EntryString(" - "))
+    Intersperse(EntryString(" - "))
 // "three - two - four"
 ```
 
@@ -179,7 +210,7 @@ Please refer to [stream_test.go](stream_test.go) for an example that groups numb
 
 #### Count
 
-Counts the number of elements in the Stream. This will close the Stream.
+Counts the number of elements in the Stream.
 
 #### Close
 
@@ -187,10 +218,10 @@ Closes the Stream. It cannot receive more data but can continue consuming buffer
 
 ### Predicates
 
-A `Predicate` is a normal Go function which signature is
+A `Predicate` is a normal Go function which signature is:
 
 ```go
-func(t interface{}) bool
+type Predicate func(t Entry) bool
 ```
 
 A `Predicate` has convenient pre-defined methods:
@@ -209,13 +240,17 @@ See [example_predicate_test.go](example_predicate_test.go) for some examples.
 
 ```go
 // ƒ is ALT+f on Mac. For other OSes, search the internet,  for instance,  this page: https://en.wikipedia.org/wiki/%C6%91#Appearance_in_computer_fonts
-_ = ƒ.Predicate(ƒ.False).And(ƒ.Predicate(ƒ.False).Or(ƒ.True))(1) // returns false
+    _ = ƒ.Predicate(ƒ.False).
+        ƒ.And(Predicate(ƒ.False).
+            ƒ.Or(ƒ.True))(ƒ.EntryInt(1)) // returns false
 
-res := ƒ.Predicate(intGreaterThanPredicate(50)).And(ƒ.True).Not()(23) // res = true
+res := ƒ.Predicate(intGreaterThanPredicate(50)).
+        And(ƒ.True).
+        Not()(ƒ.EntryInt(23)) // res = true
 
 func intGreaterThanPredicate(rhs int) ƒ.Predicate {
-    return func(lhs interface{}) bool {
-        return lhs.(int) > rhs
+    return func(lhs ƒ.Entry) bool {
+        return int(lhs.(ƒ.EntryInt)) > rhs
     }
 }
 ```
