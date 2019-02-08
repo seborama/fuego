@@ -19,12 +19,14 @@ go get github.com/seborama/fuego
 Or for a specific version:
 
 ```bash
-go get gopkg.in/seborama/fuego.v5
+go get gopkg.in/seborama/fuego.v6
 ```
 
 ## Contribute
 
 Contributions and feedback are welcome.
+
+As this project is still in early stages, large portions of the code get crafted and thrown away.
 
 For contributions, you must develop in TDD fashion and ideally provide Go testable examples (if meaningful).
 
@@ -46,6 +48,7 @@ Have fun!!
 Several Entry implementations are provided:
 
 - EntryBool
+- EntryInt
 - EntryMap
 - EntrySlice
 
@@ -73,7 +76,7 @@ fuego provides these `Tuple`'s:
 - Tuple1
 - Tuple2
 
-The values of fuego `Tuples` is of type `Entry` but can represent any type (see EntryInt and EntryString examples).
+The values of fuego `Tuples` are  of type `Entry`.
 
 ### Consumer
 
@@ -101,6 +104,15 @@ func(i,j Entry) Entry
 
 `BiFunction`'s are used with Stream.Reduce() for instance, as seen in [stream_test.go](stream_test.go).
 
+#### ToIntFunction
+
+This is a special case of Function used to convert a Stream to an IntStream.
+
+
+```go
+type ToIntFunction func(e Entry) EntryInt
+```
+
 ### Stream
 
 A Stream is a wrapper over a Go channel.
@@ -110,10 +122,16 @@ At present, the Go channel is bufferred. This poses ordering issues in parallel 
 
 #### Creation
 
-When providing a Go channel to create a Stream, beware that until you close the channel, the Stream's internal Go function that processes the Stream will remain active. This can lead to a stray Go function.
+When providing a Go channel to create a Stream, beware that until you close the channel, the Stream's internal Go function that processes the data on the channel will remain active. It will block until either new data is produced or the channel is closed by the producer. When a producer forgets to close the channel, the Go function will stray.
+
+Streams created from a slice do not suffer from thisissue because they are closed when the slice content is fully pushed to the Stream.
 
 ```go
-ƒ.NewStreamFromSlice([]int{1, 2, 3})
+ƒ.NewStreamFromSlice([]Entry{
+    EntryInt(1),
+    EntryInt(2),
+    EntryInt(3),
+})
 // or if you already have a channel of Entry:
 c := make(chan Entry, 1e3)
 defer close(c)
