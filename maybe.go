@@ -1,8 +1,7 @@
 package fuego
 
-// PanicNoSuchElement signifies that the iterator does not have
-// the requested element.
-const PanicNoSuchElement = "No such element"
+// PanicNoSuchElement signifies that the requested element is not present.
+const PanicNoSuchElement = "no such element"
 
 // A Maybe is a maybe monad.
 type Maybe struct {

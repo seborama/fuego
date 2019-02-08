@@ -459,7 +459,11 @@ func TestStream_GroupBy(t *testing.T) {
 	}
 }
 
-func TestNewStream(t *testing.T) {
+func TestStream_NewStreamFromNilChannelPanics(t *testing.T) {
+	assert.PanicsWithValue(t, PanicMissingChannel, func() { NewStream(nil) })
+}
+
+func TestStream_NewStream(t *testing.T) {
 	emptyChannel := make(chan Entry)
 	populatedChannel := func() chan Entry {
 		c := make(chan Entry, 1e3)
@@ -479,11 +483,6 @@ func TestNewStream(t *testing.T) {
 		args args
 		want Stream
 	}{
-		{
-			name: "Should create a Stream with a nil channel",
-			args: args{s: nil},
-			want: Stream{stream: nil},
-		},
 		{
 			name: "Should create an empty Stream with an empty channel",
 			args: args{s: emptyChannel},
@@ -508,7 +507,7 @@ func TestNewStream(t *testing.T) {
 	}
 }
 
-func TestNewStreamFromSlice(t *testing.T) {
+func TestStream_NewStreamFromSlice(t *testing.T) {
 	type args struct {
 		s []Entry
 	}
@@ -569,26 +568,26 @@ func TestStream_Close(t *testing.T) {
 	tests := []struct {
 		name   string
 		fields fields
-		panic  bool
+		want   bool
 	}{
 		{
-			name:   "Should panic when closing nil channel",
+			name:   "Should return false when closing nil channel",
 			fields: fields{stream: nil},
-			panic:  true,
+			want:   false,
 		},
 		{
-			name:   "Should close an open channel",
+			name:   "Should return true close an open channel",
 			fields: fields{stream: make(chan Entry)},
-			panic:  false,
+			want:   true,
 		},
 		{
-			name: "Should panic when closing a closed channel",
+			name: "Should return false when closing a closed channel",
 			fields: fields{stream: func() chan Entry {
 				c := make(chan Entry)
 				defer close(c)
 				return c
 			}()},
-			panic: true,
+			want: false,
 		},
 	}
 	for _, tt := range tests {
@@ -596,7 +595,7 @@ func TestStream_Close(t *testing.T) {
 			s := Stream{
 				stream: tt.fields.stream,
 			}
-			assert.Equal(t, tt.panic, assert.Panics(&testing.T{}, func() { s.Close() }))
+			assert.Equal(t, tt.want, s.Close())
 		})
 	}
 }
@@ -616,14 +615,6 @@ func TestStream_Count(t *testing.T) {
 			want:   0,
 		},
 		{
-			name: "Should return 0 for an empty open channel",
-			fields: fields{stream: func() chan Entry {
-				c := make(chan Entry, 1e3)
-				return c
-			}()},
-			want: 0,
-		},
-		{
 			name: "Should return 0 for an empty closed channel",
 			fields: fields{stream: func() chan Entry {
 				c := make(chan Entry, 1e3)
@@ -631,17 +622,6 @@ func TestStream_Count(t *testing.T) {
 				return c
 			}()},
 			want: 0,
-		},
-		{
-			name: "Should return 3 for a size 3 open channel",
-			fields: fields{stream: func() chan Entry {
-				c := make(chan Entry, 1e3)
-				c <- EntryInt(1)
-				c <- EntryInt(2)
-				c <- EntryInt(1)
-				return c
-			}()},
-			want: 3,
 		},
 		{
 			name: "Should return 3 for a size 3 closed channel",
@@ -669,6 +649,17 @@ func TestStream_Count(t *testing.T) {
 }
 
 func TestStream_MapToInt(t *testing.T) {
+	entryToInt := func(e Entry) EntryInt {
+		switch j := e.(type) {
+		case EntryInt:
+			return j
+		case EntryString:
+			return EntryInt(j[0])
+		default:
+			return EntryInt(0xdeadbeef)
+		}
+	}
+
 	type fields struct {
 		stream chan Entry
 	}
@@ -682,7 +673,15 @@ func TestStream_MapToInt(t *testing.T) {
 		want   IntStream
 	}{
 		{
-			name: "Should",
+			name:   "Should map a nil stream to an empty stream of EntryInt's",
+			fields: fields{stream: nil},
+			args: args{
+				toInt: entryToInt,
+			},
+			want: NewIntStreamFromSlice([]EntryInt{}),
+		},
+		{
+			name: "Should map a stream of Entry's to a stream of EntryInt's",
 			fields: fields{stream: func() chan Entry {
 				c := make(chan Entry, 1e3)
 				defer close(c)
