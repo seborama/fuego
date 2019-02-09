@@ -42,10 +42,10 @@ For contributions, you must develop in TDD fashion and ideally provide Go testab
 
 The code documentation can be found on [godoc](http://godoc.org/github.com/seborama/fuego).
 
-**The tests form the best source of documentation. Fuego comes with a good collection of unit tests and testable Go examples. Don't be shy, open them up and read them and tinker with them!
+*The tests form the best source of documentation. Fuego comes with a good collection of unit tests and testable Go examples. Don't be shy, open them up and read them and tinker with them!
 
 Note however that most tests use unbuffered channels to help detect deadlocks. On real life scenarios, it is recommended to use buffered channels for increased performance. 
-**
+*
 
 Have fun!!
 
@@ -127,7 +127,7 @@ type ToIntFunction func(e Entry) EntryInt
 
 A Stream is a wrapper over a Go channel.
 
-**NOTE**
+*NOTE*
 
 Concurrent streams are challenging to implement owing to ordering issues in parallel processing. At the moment, the view is that the most sensible approach is to delegate control to users. Multiple fuego streams can be created and data distributed across as desired. This empowers users of fuego to implement the desired behaviour of their pipelines.
 
