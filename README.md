@@ -38,6 +38,20 @@ For contributions, you must develop in TDD fashion and ideally provide Go testab
 
 3- Producers and consumers should be running in separate Go routines to prevent deadlocks when the channels' buffers fill up.
 
+## Concretely
+
+In simpler terms, this that producers remain in control of the supply of messages on the streams. Conversely, consumers form the demand.
+
+This has implications on the tension between producers and consumers...
+
+## Pressure
+
+Go channels support the concept of pressure through their buffering capability.
+
+This becomes interesting when combining channels in a pipeline.
+
+When a producer Stream is faster than its consumer Stream, it will naturally stop producing when the buffer is full. This can cascade upstream and prevent overloading downstream consumers. Consumers just like producers can choose a buffering capacity independently. This enables consumers to 
+
 ## Main features
 
 The code documentation can be found on [godoc](http://godoc.org/github.com/seborama/fuego).
