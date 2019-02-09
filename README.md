@@ -127,7 +127,7 @@ type ToIntFunction func(e Entry) EntryInt
 
 A Stream is a wrapper over a Go channel.
 
-*NOTE*
+**NOTE**
 
 Concurrent streams are challenging to implement owing to ordering issues in parallel processing. At the moment, the view is that the most sensible approach is to delegate control to users. Multiple fuego streams can be created and data distributed across as desired. This empowers users of fuego to implement the desired behaviour of their pipelines.
 
