@@ -14,12 +14,14 @@ func TestIntStream_NewIntStreamFromNilChannelPanics(t *testing.T) {
 func TestNewIntStream(t *testing.T) {
 	emptyChannel := make(chan EntryInt)
 	populatedChannel := func() chan EntryInt {
-		c := make(chan EntryInt, 1e3)
-		defer close(c)
-		c <- EntryInt(1)
-		c <- EntryInt(2)
-		c <- EntryInt(3)
-		c <- EntryInt(4)
+		c := make(chan EntryInt)
+		go func() {
+			defer close(c)
+			c <- EntryInt(1)
+			c <- EntryInt(2)
+			c <- EntryInt(3)
+			c <- EntryInt(4)
+		}()
 		return c
 	}()
 
@@ -162,8 +164,10 @@ func TestIntStream_MaxPanicsWhenNilInstream(t *testing.T) {
 func TestIntStream_MaxPanicsWhenEmptyInstream(t *testing.T) {
 	assert.PanicsWithValue(t, PanicNoSuchElement, func() {
 		NewIntStream(func() chan EntryInt {
-			c := make(chan EntryInt, 1e3)
-			defer close(c)
+			c := make(chan EntryInt)
+			go func() {
+				defer close(c)
+			}()
 			return c
 		}()).Max()
 	})
@@ -182,9 +186,11 @@ func TestIntStream_Max(t *testing.T) {
 			name: "Should return the sole entry in the stream",
 			fields: fields{
 				stream: func() chan EntryInt {
-					c := make(chan EntryInt, 1e3)
-					defer close(c)
-					c <- EntryInt(1618)
+					c := make(chan EntryInt)
+					go func() {
+						defer close(c)
+						c <- EntryInt(1618)
+					}()
 					return c
 				}(),
 			},
@@ -194,12 +200,14 @@ func TestIntStream_Max(t *testing.T) {
 			name: "Should return 31415",
 			fields: fields{
 				stream: func() chan EntryInt {
-					c := make(chan EntryInt, 1e3)
-					defer close(c)
-					c <- EntryInt(-210)
-					c <- EntryInt(21)
-					c <- EntryInt(31415)
-					c <- EntryInt(10)
+					c := make(chan EntryInt)
+					go func() {
+						defer close(c)
+						c <- EntryInt(-210)
+						c <- EntryInt(21)
+						c <- EntryInt(31415)
+						c <- EntryInt(10)
+					}()
 					return c
 				}(),
 			},

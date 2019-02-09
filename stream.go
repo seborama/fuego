@@ -28,11 +28,14 @@ func NewStream(c chan Entry) Stream {
 // stream is closed.
 func NewStreamFromSlice(slice []Entry) Stream {
 	c := make(chan Entry, 1e3)
-	// TODO: add test to confirm the stream gets closed
-	defer close(c) // slices have finite size: close stream after all data was read.
-	for _, element := range slice {
-		c <- element
-	}
+
+	go func() {
+		// TODO: add test to confirm the stream gets closed
+		defer close(c) // slices have finite size: close stream after all data was read.
+		for _, element := range slice {
+			c <- element
+		}
+	}()
 
 	return NewStream(c)
 }

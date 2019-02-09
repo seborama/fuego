@@ -51,11 +51,13 @@ func TestStream_Map(t *testing.T) {
 			name: "Should return a Stream of doubled integers",
 			fields: fields{
 				stream: func() chan Entry {
-					c := make(chan Entry, 1e3)
-					defer close(c)
-					c <- EntryInt(1)
-					c <- EntryInt(3)
-					c <- EntryInt(2)
+					c := make(chan Entry, 1)
+					go func() {
+						defer close(c)
+						c <- EntryInt(1)
+						c <- EntryInt(3)
+						c <- EntryInt(2)
+					}()
 					return c
 				}()},
 			args: args{
@@ -75,7 +77,8 @@ func TestStream_Map(t *testing.T) {
 			}
 
 			var got []Entry
-			if gotStream := s.Map(tt.args.mapper).stream; gotStream != nil {
+			stream := s.Map(tt.args.mapper)
+			if gotStream := stream.stream; gotStream != nil {
 				got = []Entry{}
 				for val := range gotStream {
 					got = append(got, val)
@@ -114,11 +117,13 @@ func TestStream_Filter(t *testing.T) {
 			name: "Should give produce filtered values as per predicate",
 			fields: fields{
 				stream: func() chan Entry {
-					c := make(chan Entry, 1e3)
-					defer close(c)
-					c <- EntryInt(17)
-					c <- EntryInt(8)
-					c <- EntryInt(2)
+					c := make(chan Entry, 1)
+					go func() {
+						defer close(c)
+						c <- EntryInt(17)
+						c <- EntryInt(8)
+						c <- EntryInt(2)
+					}()
 					return c
 				}()},
 			args: args{
@@ -188,11 +193,13 @@ func TestStream_ForEach(t *testing.T) {
 			name: "Should give produce filtered values as per predicate",
 			fields: fields{
 				stream: func() chan Entry {
-					c := make(chan Entry, 1e3)
-					defer close(c)
-					c <- EntryInt(4)
-					c <- EntryInt(1)
-					c <- EntryInt(3)
+					c := make(chan Entry)
+					go func() {
+						defer close(c)
+						c <- EntryInt(4)
+						c <- EntryInt(1)
+						c <- EntryInt(3)
+					}()
 					return c
 				}()},
 			args: args{
@@ -247,9 +254,11 @@ func TestStream_LeftReduce(t *testing.T) {
 			name: "Should return reduction of set of single element",
 			fields: fields{
 				stream: func() chan Entry {
-					c := make(chan Entry, 1e3)
-					defer close(c)
-					c <- EntryString("three")
+					c := make(chan Entry)
+					go func() {
+						defer close(c)
+						c <- EntryString("three")
+					}()
 					return c
 				}()},
 			args: args{f2: concatenateStringsBiFunc},
@@ -259,13 +268,15 @@ func TestStream_LeftReduce(t *testing.T) {
 			name: "Should return reduction of set of multiple elements",
 			fields: fields{
 				stream: func() chan Entry {
-					c := make(chan Entry, 1e3)
-					defer close(c)
-					c <- EntryString("four")
-					c <- EntryString("twelve")
-					c <- EntryString("one")
-					c <- EntryString("six")
-					c <- EntryString("three")
+					c := make(chan Entry)
+					go func() {
+						defer close(c)
+						c <- EntryString("four")
+						c <- EntryString("twelve")
+						c <- EntryString("one")
+						c <- EntryString("six")
+						c <- EntryString("three")
+					}()
 					return c
 				}()},
 			args: args{f2: concatenateStringsBiFunc},
@@ -309,8 +320,10 @@ func TestStream_Intersperse(t *testing.T) {
 		{
 			name: "Should return an empty Stream for empty input Stream",
 			fields: fields{stream: func() chan Entry {
-				c := make(chan Entry, 1e3)
-				defer close(c)
+				c := make(chan Entry)
+				go func() {
+					defer close(c)
+				}()
 				return c
 			}()},
 			args: args{
@@ -321,9 +334,11 @@ func TestStream_Intersperse(t *testing.T) {
 		{
 			name: "Should return the original input Stream when it has a single value",
 			fields: fields{stream: func() chan Entry {
-				c := make(chan Entry, 1e3)
-				defer close(c)
-				c <- EntryString("four")
+				c := make(chan Entry)
+				go func() {
+					defer close(c)
+					c <- EntryString("four")
+				}()
 				return c
 			}()},
 			args: args{
@@ -336,13 +351,15 @@ func TestStream_Intersperse(t *testing.T) {
 		{
 			name: "Should return the Set with given value interspersed",
 			fields: fields{stream: func() chan Entry {
-				c := make(chan Entry, 1e3)
-				defer close(c)
-				c <- EntryString("four")
-				c <- EntryString("twelve")
-				c <- EntryString("one")
-				c <- EntryString("six")
-				c <- EntryString("three")
+				c := make(chan Entry)
+				go func() {
+					defer close(c)
+					c <- EntryString("four")
+					c <- EntryString("twelve")
+					c <- EntryString("one")
+					c <- EntryString("six")
+					c <- EntryString("three")
+				}()
 				return c
 			}()},
 			args: args{
@@ -406,8 +423,10 @@ func TestStream_GroupBy(t *testing.T) {
 			name: "Should return empty map when empty stream",
 			fields: fields{
 				stream: func() chan Entry {
-					c := make(chan Entry, 1e3)
-					defer close(c)
+					c := make(chan Entry)
+					go func() {
+						defer close(c)
+					}()
 					return c
 				}(),
 			},
@@ -422,12 +441,14 @@ func TestStream_GroupBy(t *testing.T) {
 			name: "Should group by odd / even numbers",
 			fields: fields{
 				stream: func() chan Entry {
-					c := make(chan Entry, 1e3)
-					defer close(c)
-					c <- EntryInt(1)
-					c <- EntryInt(2)
-					c <- EntryInt(3)
-					c <- EntryInt(4)
+					c := make(chan Entry)
+					go func() {
+						defer close(c)
+						c <- EntryInt(1)
+						c <- EntryInt(2)
+						c <- EntryInt(3)
+						c <- EntryInt(4)
+					}()
 					return c
 				}(),
 			},
@@ -466,12 +487,14 @@ func TestStream_NewStreamFromNilChannelPanics(t *testing.T) {
 func TestStream_NewStream(t *testing.T) {
 	emptyChannel := make(chan Entry)
 	populatedChannel := func() chan Entry {
-		c := make(chan Entry, 1e3)
-		defer close(c)
-		c <- EntryInt(1)
-		c <- EntryInt(2)
-		c <- EntryInt(3)
-		c <- EntryInt(4)
+		c := make(chan Entry)
+		go func() {
+			defer close(c)
+			c <- EntryInt(1)
+			c <- EntryInt(2)
+			c <- EntryInt(3)
+			c <- EntryInt(4)
+		}()
 		return c
 	}()
 
@@ -617,8 +640,10 @@ func TestStream_Count(t *testing.T) {
 		{
 			name: "Should return 0 for an empty closed channel",
 			fields: fields{stream: func() chan Entry {
-				c := make(chan Entry, 1e3)
-				defer close(c)
+				c := make(chan Entry)
+				go func() {
+					defer close(c)
+				}()
 				return c
 			}()},
 			want: 0,
@@ -626,11 +651,13 @@ func TestStream_Count(t *testing.T) {
 		{
 			name: "Should return 3 for a size 3 closed channel",
 			fields: fields{stream: func() chan Entry {
-				c := make(chan Entry, 1e3)
-				defer close(c)
-				c <- EntryInt(1)
-				c <- EntryInt(2)
-				c <- EntryInt(1)
+				c := make(chan Entry, 1)
+				go func() {
+					defer close(c)
+					c <- EntryInt(1)
+					c <- EntryInt(2)
+					c <- EntryInt(1)
+				}()
 				return c
 			}()},
 			want: 3,
@@ -683,13 +710,15 @@ func TestStream_MapToInt(t *testing.T) {
 		{
 			name: "Should map a stream of Entry's to a stream of EntryInt's",
 			fields: fields{stream: func() chan Entry {
-				c := make(chan Entry, 1e3)
-				defer close(c)
-				c <- EntryString("a")
-				c <- EntryBool(false)
-				c <- EntryString("b")
-				c <- EntryInt(-17)
-				c <- EntryString("c")
+				c := make(chan Entry, 2)
+				go func() {
+					defer close(c)
+					c <- EntryString("a")
+					c <- EntryBool(false)
+					c <- EntryString("b")
+					c <- EntryInt(-17)
+					c <- EntryString("c")
+				}()
 				return c
 			}()},
 			args: args{
@@ -713,14 +742,16 @@ func TestStream_MapToInt(t *testing.T) {
 			}),
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := Stream{
 				stream: tt.fields.stream,
 			}
-			got := s.MapToInt(tt.args.toInt)
-			if !assert.IsType(t, IntStream{}, got) {
-				t.Errorf("Stream.MapToInt() did not return type = %v, want %v", got, tt.want)
+			gotIntStream := s.MapToInt(tt.args.toInt)
+
+			if !assert.IsType(t, IntStream{}, gotIntStream) {
+				t.Errorf("Stream.MapToInt() did not return type = %T, want IntStream", gotIntStream)
 			}
 
 			wantStr := ""
@@ -728,7 +759,7 @@ func TestStream_MapToInt(t *testing.T) {
 				wantStr += fmt.Sprintf("%v ", v)
 			}
 			gotStr := ""
-			for v := range got.stream {
+			for v := range gotIntStream.stream {
 				gotStr += fmt.Sprintf("%v ", v)
 			}
 			if !assert.Equal(t, wantStr, gotStr) {

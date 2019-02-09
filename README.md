@@ -1,6 +1,6 @@
-# fuego - Functional Experiment in Go.
+# fuego - Functional Experiment in Go
 
-[![godoc](https://img.shields.io/badge/godoc-reference-blue.svg)](https://godoc.org/github.com/seborama/fuego) [![goreportcard](https://img.shields.io/badge/go%20report-A%2B-brightgreen.svg)](http://goreportcard.com/report/seborama/fuego) [![cover.run](https://cover.run/go/github.com/seborama/fuego.svg?style=flat&tag=golang-1.9)](https://cover.run/go?tag=golang-1.9&repo=github.com%2Fseborama%2Ffuego) 
+[![godoc](https://img.shields.io/badge/godoc-reference-blue.svg)](https://godoc.org/github.com/seborama/fuego) [![goreportcard](https://img.shields.io/badge/go%20report-A%2B-brightgreen.svg)](http://goreportcard.com/report/seborama/fuego) [![cover.run](https://cover.run/go/github.com/seborama/fuego.svg?style=flat&tag=golang-1.9)](https://cover.run/go?tag=golang-1.9&repo=github.com%2Fseborama%2Ffuego)
 
 ## Overview
 
@@ -108,7 +108,6 @@ func(i,j Entry) Entry
 
 This is a special case of Function used to convert a Stream to an IntStream.
 
-
 ```go
 type ToIntFunction func(e Entry) EntryInt
 ```
@@ -133,10 +132,14 @@ Streams created from a slice do not suffer from thisissue because they are close
     EntryInt(3),
 })
 // or if you already have a channel of Entry:
-c := make(chan Entry, 1e3)
-defer close(c)
-c <- EntryString("one")
-// c <- ...
+c := make(chan Entry) // you could add a buffer size as a second arg, if desired
+go func() {
+    defer close(c)
+    c <- EntryString("one")
+    c <- EntryString("two")
+    c <- EntryString("three")
+    // c <- ...
+}()
 NewStream(c)
 ```
 
@@ -215,6 +218,16 @@ Counts the number of elements in the Stream.
 #### Close
 
 Closes the Stream. It cannot receive more data but can continue consuming buffered messages.
+
+### IntStream
+
+A Stream of EntryInt.
+
+It (future) contains all of the methods Stream exposes and additional methods that pertain to EntryInt.
+
+#### Max
+
+Returns the greatest EntryInt in the stream.
 
 ### Predicates
 

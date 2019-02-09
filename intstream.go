@@ -25,10 +25,13 @@ func NewIntStream(c chan EntryInt) IntStream {
 // published.
 func NewIntStreamFromSlice(is []EntryInt) IntStream {
 	c := make(chan EntryInt, 1e3)
-	defer close(c)
-	for _, element := range is {
-		c <- element
-	}
+
+	go func() {
+		defer close(c)
+		for _, element := range is {
+			c <- element
+		}
+	}()
 
 	return NewIntStream(c)
 }
@@ -45,11 +48,11 @@ func (is IntStream) Max() EntryInt {
 	if is.stream == nil {
 		panic(PanicMissingChannel)
 	}
-	if len(is.stream) == 0 {
+
+	max, ok := <-is.stream
+	if !ok {
 		panic(PanicNoSuchElement)
 	}
-
-	max := <-is.stream
 	for ei := range is.stream {
 		if ei > max {
 			max = ei
