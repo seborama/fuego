@@ -38,6 +38,14 @@ The code documentation can be found on [godoc](http://godoc.org/github.com/sebor
 
 Have fun!!
 
+### Golden rules
+
+1- Producers close their channel. In other words, when you create a channel, you are responsible for closing it. Whenever the fuego creates a channel, it is responsible for closing it.
+
+2- Consumers do not close channels.
+
+3- Producers and consumers should be running in separate Go routines to prevent deadlocks when the channel's buffer fills up.
+
 ### Entry
 
 `Entry` is inspired by `hamt.Entry`. This is an elegant solution from [Yota Toyama](https://github.com/raviqqe): the type can be anything so long as it respects the simple behaviour of `hamt.Entry`. This provides an abstraction of types yet with known behaviour:
