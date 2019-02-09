@@ -42,9 +42,9 @@ For contributions, you must develop in TDD fashion and ideally provide Go testab
 
 The code documentation can be found on [godoc](http://godoc.org/github.com/seborama/fuego).
 
-**The tests form the best source of documentation. Fuego comes with a good collection of unit tests and testable Go examples. Don't be shy, open them up and read them and tinker with them!
+**The tests form the best source of documentation. Fuego comes with a good collection of unit tests and testable Go examples. Don't be shy, open them up and read them and tinker with them!**
 
-Note however that most tests use unbuffered channels to help detect deadlocks. On real life scenarios, it is recommended to use buffered channels for increased performance.** 
+**Note however that most tests use unbuffered channels to help detect deadlocks. On real life scenarios, it is recommended to use buffered channels for increased performance.** 
 
 Have fun!!
 
