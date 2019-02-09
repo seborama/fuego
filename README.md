@@ -30,6 +30,14 @@ As this project is still in early stages, large portions of the code get crafted
 
 For contributions, you must develop in TDD fashion and ideally provide Go testable examples (if meaningful).
 
+## The Golden rules of the game
+
+1- Producers close their channel. In other words, when you create a channel, you are responsible for closing it. Whenever the fuego creates a channel, it is responsible for closing it.
+
+2- Consumers do not close channels.
+
+3- Producers and consumers should be running in separate Go routines to prevent deadlocks when the channel's buffer fills up.
+
 ## Main features
 
 The code documentation can be found on [godoc](http://godoc.org/github.com/seborama/fuego).
@@ -37,14 +45,6 @@ The code documentation can be found on [godoc](http://godoc.org/github.com/sebor
 **The tests form the best source of documentation. Fuego comes with a good collection of unit tests and testable Go examples. Don't be shy, open them up and read them and tinker with them!**
 
 Have fun!!
-
-### Golden rules
-
-1- Producers close their channel. In other words, when you create a channel, you are responsible for closing it. Whenever the fuego creates a channel, it is responsible for closing it.
-
-2- Consumers do not close channels.
-
-3- Producers and consumers should be running in separate Go routines to prevent deadlocks when the channel's buffer fills up.
 
 ### Entry
 
