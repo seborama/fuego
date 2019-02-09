@@ -32,11 +32,11 @@ For contributions, you must develop in TDD fashion and ideally provide Go testab
 
 ## The Golden rules of the game
 
-1- Producers close their channel. In other words, when you create a channel, you are responsible for closing it. Whenever the fuego creates a channel, it is responsible for closing it.
+1- Producers close their channel. In other words, when you create a channel, you are responsible for closing it. Similarly, whenever fuego creates a channel, it is responsible for closing it.
 
 2- Consumers do not close channels.
 
-3- Producers and consumers should be running in separate Go routines to prevent deadlocks when the channel's buffer fills up.
+3- Producers and consumers should be running in separate Go routines to prevent deadlocks when the channels' buffers fill up.
 
 ## Main features
 
