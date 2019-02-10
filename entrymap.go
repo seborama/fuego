@@ -8,8 +8,8 @@ import (
 type EntryMap map[Entry]EntrySlice
 
 // Stream returns a stream of tuples the elements of the EntryMap.
-func (em EntryMap) Stream() Stream {
-	c := make(chan Entry, 1e3)
+func (em EntryMap) Stream(bufsize int) Stream {
+	c := make(chan Entry, bufsize)
 
 	go func() {
 		defer close(c)

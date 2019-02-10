@@ -19,11 +19,11 @@ func ExampleStream_GroupBy() {
 		ƒ.Tuple2{E1: ƒ.EntryInt(9), E2: EntryString("nine")}}
 
 	resMap := map[ƒ.Entry]interface{}{}
-	ƒ.NewStreamFromSlice(data).
+	ƒ.NewStreamFromSlice(data, 0).
 		GroupBy(func(i ƒ.Entry) ƒ.Entry {
 			return i.(ƒ.Tuple2).E1.(ƒ.EntryInt) & 1
 		}).
-		Stream().
+		Stream(0).
 		ForEach(func(e ƒ.Entry) {
 			resMap[e.(ƒ.Tuple2).E1] = e.(ƒ.Tuple2).E2
 		})

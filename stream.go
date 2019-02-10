@@ -26,8 +26,8 @@ func NewStream(c chan Entry) Stream {
 // NewStreamFromSlice creates a new Stream from a Go slice.
 // The slice data is published to the stream after which the
 // stream is closed.
-func NewStreamFromSlice(slice []Entry) Stream {
-	c := make(chan Entry, 1e3)
+func NewStreamFromSlice(slice []Entry, bufsize int) Stream {
+	c := make(chan Entry, bufsize)
 
 	go func() {
 		// TODO: add test to confirm the stream gets closed
@@ -217,9 +217,7 @@ func (s Stream) MapToInt(toInt ToIntFunction) IntStream {
 		}
 	}()
 
-	return IntStream{
-		stream: outstream,
-	}
+	return NewIntStream(outstream)
 }
 
 // Count the number of elements in the stream.
@@ -239,15 +237,4 @@ func (s Stream) Count() int {
 	}
 
 	return count
-}
-
-// Close the stream and returns true if success.
-func (s Stream) Close() bool {
-	closed := false
-	func() {
-		defer func() { _ = recover() }()
-		close(s.stream)
-		closed = true
-	}()
-	return closed
 }

@@ -193,7 +193,7 @@ func TestEntryMap_Stream(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var got []Entry
-			if gotStream := tt.em.Stream().stream; gotStream != nil {
+			if gotStream := tt.em.Stream(0).stream; gotStream != nil {
 				got = []Entry{}
 				for val := range gotStream {
 					got = append(got, val)

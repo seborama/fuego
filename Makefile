@@ -2,7 +2,7 @@ deps:
 	go get -d -t -v ./...
 
 test: deps
-	go test -cover -race -parallel 5 ./...
+	go test -timeout 5s -cover -race -parallel 100
 
 lint: deps
 

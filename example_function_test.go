@@ -28,7 +28,7 @@ func ExampleBiFunction() {
 		EntryString("six"),
 		EntryString("three")}
 
-	res := ƒ.NewStreamFromSlice(data).
+	res := ƒ.NewStreamFromSlice(data, 0).
 		Reduce(concatenateStringsBiFunc)
 
 	fmt.Printf("res = %+v\n", res)

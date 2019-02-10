@@ -225,13 +225,13 @@ func TestStream_ForEach(t *testing.T) {
 	}
 }
 
-func TestStream_LeftReduce(t *testing.T) {
-	concatenateStringsBiFunc := func(i, j Entry) Entry {
-		iStr := i.(EntryString)
-		jStr := j.(EntryString)
-		return iStr + "-" + jStr
-	}
+func concatenateStringsBiFunc(i, j Entry) Entry {
+	iStr := i.(EntryString)
+	jStr := j.(EntryString)
+	return iStr + "-" + jStr
+}
 
+func TestStream_LeftReduce(t *testing.T) {
 	type fields struct {
 		stream chan Entry
 	}
@@ -570,7 +570,7 @@ func TestStream_NewStreamFromSlice(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var got []Entry
-			if gotStream := NewStreamFromSlice(tt.args.s).stream; gotStream != nil {
+			if gotStream := NewStreamFromSlice(tt.args.s, 0).stream; gotStream != nil {
 				got = []Entry{}
 				for val := range gotStream {
 					got = append(got, val)
@@ -580,45 +580,6 @@ func TestStream_NewStreamFromSlice(t *testing.T) {
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("NewStreamFromSlice() = %+v, want %+v", got, tt.want)
 			}
-		})
-	}
-}
-
-func TestStream_Close(t *testing.T) {
-	type fields struct {
-		stream chan Entry
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		want   bool
-	}{
-		{
-			name:   "Should return false when closing nil channel",
-			fields: fields{stream: nil},
-			want:   false,
-		},
-		{
-			name:   "Should return true close an open channel",
-			fields: fields{stream: make(chan Entry)},
-			want:   true,
-		},
-		{
-			name: "Should return false when closing a closed channel",
-			fields: fields{stream: func() chan Entry {
-				c := make(chan Entry)
-				defer close(c)
-				return c
-			}()},
-			want: false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := Stream{
-				stream: tt.fields.stream,
-			}
-			assert.Equal(t, tt.want, s.Close())
 		})
 	}
 }
@@ -705,7 +666,7 @@ func TestStream_MapToInt(t *testing.T) {
 			args: args{
 				toInt: entryToInt,
 			},
-			want: NewIntStreamFromSlice([]EntryInt{}),
+			want: NewIntStreamFromSlice([]EntryInt{}, 0),
 		},
 		{
 			name: "Should map a stream of Entry's to a stream of EntryInt's",
@@ -739,7 +700,7 @@ func TestStream_MapToInt(t *testing.T) {
 				EntryInt(98),
 				EntryInt(-17),
 				EntryInt(99),
-			}),
+			}, 0),
 		},
 	}
 

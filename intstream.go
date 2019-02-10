@@ -5,7 +5,7 @@ package fuego
 // IntStream is a sequence of EntryInt elements supporting sequential
 // and (in the future?) parallel operations.
 type IntStream struct {
-	stream chan EntryInt
+	Stream
 }
 
 // NewIntStream creates a new IntStream.
@@ -15,16 +15,24 @@ func NewIntStream(c chan EntryInt) IntStream {
 	if c == nil {
 		panic(PanicMissingChannel)
 	}
+	ic := make(chan Entry, cap(c))
+	go func() {
+		defer close(ic)
+		for val := range c {
+			ic <- val
+		}
+	}()
+
 	return IntStream{
-		stream: c,
+		NewStream(ic),
 	}
 }
 
 // NewIntStreamFromSlice creates a new IntStream from a Go slice of EntryInt.
 // The stream will be closed once all the slice data has been
 // published.
-func NewIntStreamFromSlice(is []EntryInt) IntStream {
-	c := make(chan EntryInt, 1e3)
+func NewIntStreamFromSlice(is []EntryInt, bufsize int) IntStream {
+	c := make(chan EntryInt, bufsize)
 
 	go func() {
 		defer close(c)
@@ -49,11 +57,13 @@ func (is IntStream) Max() EntryInt {
 		panic(PanicMissingChannel)
 	}
 
-	max, ok := <-is.stream
+	val, ok := <-is.stream
 	if !ok {
 		panic(PanicNoSuchElement)
 	}
-	for ei := range is.stream {
+	max := val.(EntryInt)
+	for e := range is.stream {
+		ei := e.(EntryInt)
 		if ei > max {
 			max = ei
 		}
@@ -61,13 +71,79 @@ func (is IntStream) Max() EntryInt {
 	return max
 }
 
-// Close the stream and returns true if success.
-func (is IntStream) Close() bool {
-	closed := false
-	func() {
-		defer func() { _ = recover() }()
-		close(is.stream)
-		closed = true
-	}()
-	return closed
+// Min returns the smallest number in the stream.
+// Panics if the channel is nil or the stream is empty.
+// This is a special case of a reduction and is equivalent to:
+//   is.Reduce(min) // where min is a BiFunction that returns
+//                  // the smallest of two integers.
+// This is a terminal operation and hence expects
+// the producer to close the stream in order to complete (or
+// it will block).
+func (is IntStream) Min() EntryInt {
+	if is.stream == nil {
+		panic(PanicMissingChannel)
+	}
+
+	val, ok := <-is.stream
+	if !ok {
+		panic(PanicNoSuchElement)
+	}
+	min := val.(EntryInt)
+	for e := range is.stream {
+		ei := e.(EntryInt)
+		if ei < min {
+			min = ei
+		}
+	}
+	return min
+}
+
+// Sum adds the numbers in the stream.
+// Panics if the channel is nil or the stream is empty.
+// This is a special case of a reduction and is equivalent to:
+//   is.Reduce(sum) // where max is a BiFunction that adds
+//                  // two integers.
+// This is a terminal operation and hence expects
+// the producer to close the stream in order to complete (or
+// it will block).
+func (is IntStream) Sum() EntryInt {
+	if is.stream == nil {
+		panic(PanicMissingChannel)
+	}
+
+	val, ok := <-is.stream
+	if !ok {
+		panic(PanicNoSuchElement)
+	}
+	sum := val.(EntryInt)
+	for e := range is.stream {
+		ei := e.(EntryInt)
+		sum += ei
+	}
+	return sum
+}
+
+// Average returns the average of the numbers in the stream.
+// Panics if the channel is nil or the stream is empty.
+// This is a special case of a reduction.
+// This is a terminal operation and hence expects
+// the producer to close the stream in order to complete (or
+// it will block).
+func (is IntStream) Average() EntryInt {
+	if is.stream == nil {
+		panic(PanicMissingChannel)
+	}
+
+	val, ok := <-is.stream
+	if !ok {
+		panic(PanicNoSuchElement)
+	}
+	cnt := 1
+	sum := val.(EntryInt)
+	for e := range is.stream {
+		ei := e.(EntryInt)
+		sum += ei
+		cnt++
+	}
+	return EntryInt(int(sum) / (cnt))
 }
