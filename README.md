@@ -72,11 +72,23 @@ Several Entry implementations are provided:
 
 #### EntryMap
 
-TODO: TBC
+This is a map of `Entry` defined as:
+
+```go
+type EntryMap map[Entry]EntrySlice
+```
+
+GroupBy methods use an `EntryMap` to return data.
+
+It is important to remember that maps are **not** ordered.
 
 #### EntrySlice
 
-TODO: TBC
+This is an ordered slice of `Entry` elements which signature is:
+
+```go
+type EntrySlice []Entry
+```
 
 ### Maybe
 
@@ -98,7 +110,12 @@ The values of fuego `Tuples` are  of type `Entry`.
 
 ### Consumer
 
-TODO: TBC
+Consumer is a kind of side-effect function that accepts one argument and does not
+return any value.
+
+```go
+type Consumer func(i Entry)
+```
 
 ### Functions
 
@@ -106,7 +123,7 @@ See [example_function_test.go](example_function_test.go) for basic example uses 
 
 #### Function
 
-A `Function` is a normal Go function which signature is
+A `Function` is a normal Go function which signature is:
 
 ```go
 func(i Entry) Entry
@@ -114,7 +131,7 @@ func(i Entry) Entry
 
 #### BiFunction
 
-A `BiFunction` is a normal Go function which signature is
+A `BiFunction` is a normal Go function which signature is:
 
 ```go
 func(i,j Entry) Entry
@@ -134,7 +151,7 @@ type ToIntFunction func(e Entry) EntryInt
 
 A Stream is a wrapper over a Go channel.
 
-**NOTE**
+**NOTE:**
 
 Concurrent streams are challenging to implement owing to ordering issues in parallel processing. At the moment, the view is that the most sensible approach is to delegate control to users. Multiple fuego streams can be created and data distributed across as desired. This empowers users of fuego to implement the desired behaviour of their pipelines.
 
@@ -142,14 +159,14 @@ Concurrent streams are challenging to implement owing to ordering issues in para
 
 When providing a Go channel to create a Stream, beware that until you close the channel, the Stream's internal Go function that processes the data on the channel will remain active. It will block until either new data is produced or the channel is closed by the producer. When a producer forgets to close the channel, the Go function will stray.
 
-Streams created from a slice do not suffer from thisissue because they are closed when the slice content is fully pushed to the Stream.
+Streams created from a slice do not suffer from this issue because they are closed when the slice content is fully pushed to the Stream.
 
 ```go
 ƒ.NewStreamFromSlice([]Entry{
     EntryInt(1),
     EntryInt(2),
     EntryInt(3),
-})
+}, 1e3)
 // or if you already have a channel of Entry:
 c := make(chan Entry) // you could add a buffer size as a second arg, if desired
 go func() {
@@ -170,7 +187,7 @@ s := ƒ.NewStreamFromSlice([]Entry{
     EntryInt(1),
     EntryInt(2),
     EntryInt(3),
-})
+}, 0)
 
 s.Filter(
         FunctionPredicate(entryIntEqualsTo(EntryInt(1))).
@@ -191,7 +208,7 @@ s.Filter(
     EntryString("one"),
     EntryString("six"),
     EntryString("three"),
-}).
+}, 1e3).
     Reduce(concatenateStringsBiFunc)
 // returns EntryString("four-twelve-one-six-three")
 ```
@@ -209,7 +226,7 @@ s := ƒ.NewStreamFromSlice([]Entry{
     EntryInt(1),
     EntryInt(2),
     EntryInt(3),
-}).
+}, 0).
     ForEach(calculateSumTotal)
 // total == 6
 ```
@@ -221,7 +238,7 @@ s := ƒ.NewStreamFromSlice([]Entry{
     EntryString("three"),
     EntryString("two"),
     EntryString("four"),
-}).
+}, 1e3).
     Intersperse(EntryString(" - "))
 // "three - two - four"
 ```
@@ -242,11 +259,25 @@ Closes the Stream. It cannot receive more data but can continue consuming buffer
 
 A Stream of EntryInt.
 
-It (future) contains all of the methods Stream exposes and additional methods that pertain to EntryInt.
+It contains all of the methods Stream exposes and additional methods that pertain to an `EntryInt` stream such as aggregate functions (`Sum()`, `Average()`, etc).
+
+The current implementation is based on `Stream` and an intermediary channel that converts incoming `EntryInt` elements to `Entry`. This approach offers programming conciseness but the use of an intermediary channel likely decreases performance.
 
 #### Max
 
-Returns the greatest EntryInt in the stream.
+Returns the greatest element in the stream.
+
+#### Min
+
+Returns the smallest element in the stream.
+
+#### Sum
+
+Returns the sum of all elements in the stream.
+
+#### Average
+
+Returns the average of all elements in the stream.
 
 ### Predicates
 
