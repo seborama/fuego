@@ -188,6 +188,8 @@ func (s Stream) GroupBy(classifier Function) EntryMap {
 // Collect
 // Contains
 // ContainsAll
+// Match
+// MatchNone
 // Head
 // Last
 // Tail

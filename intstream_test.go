@@ -13,8 +13,13 @@ func TestIntStream_NewIntStreamFromNilChannelPanics(t *testing.T) {
 }
 
 func TestNewIntStream(t *testing.T) {
-	t.SkipNow() // TODO: IMPROVE test to permit this scenario!
-	emptyChannel := make(chan EntryInt)
+	emptyChannel := func() chan EntryInt {
+		c := make(chan EntryInt)
+		go func() {
+			defer close(c)
+		}()
+		return c
+	}
 	populatedChannel := func() chan EntryInt {
 		c := make(chan EntryInt)
 		go func() {
@@ -25,7 +30,7 @@ func TestNewIntStream(t *testing.T) {
 			c <- EntryInt(4)
 		}()
 		return c
-	}()
+	}
 
 	type args struct {
 		s chan EntryInt
@@ -37,22 +42,32 @@ func TestNewIntStream(t *testing.T) {
 	}{
 		{
 			name: "Should create an empty IntStream with an empty channel",
-			args: args{s: emptyChannel},
-			want: NewIntStream(emptyChannel),
+			args: args{s: emptyChannel()},
+			want: NewIntStream(emptyChannel()),
 		},
 		{
 			name: "Should create a IntStream with a populated channel",
 			args: args{
-				s: populatedChannel,
+				s: populatedChannel(),
 			},
-			want: NewIntStream(populatedChannel),
+			want: NewIntStream(populatedChannel()),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := NewIntStream(tt.args.s); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewIntStream() = %v, want %v", got, tt.want)
-			}
+			gotValues := []EntryInt{}
+			gotStream := NewIntStream(tt.args.s)
+			gotStream.ForEach(func(e Entry) {
+				gotValues = append(gotValues, e.(EntryInt))
+			})
+
+			wantValues := []EntryInt{}
+			tt.want.ForEach(func(e Entry) {
+				wantValues = append(wantValues, e.(EntryInt))
+			})
+
+			assert.IsType(t, tt.want, gotStream)
+			assert.EqualValues(t, wantValues, gotValues)
 		})
 	}
 }

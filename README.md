@@ -52,7 +52,7 @@ The code documentation can be found on [godoc](http://godoc.org/github.com/sebor
 
 **The tests form the best source of documentation. Fuego comes with a good collection of unit tests and testable Go examples. Don't be shy, open them up and read them and tinker with them!**
 
-**Note however that most tests use unbuffered channels to help detect deadlocks. On real life scenarios, it is recommended to use buffered channels for increased performance.** 
+**Note however that most tests use unbuffered channels to help detect deadlocks. On real life scenarios, it is recommended to use buffered channels for increased performance.**
 
 Have fun!!
 
@@ -278,6 +278,14 @@ Returns the sum of all elements in the stream.
 #### Average
 
 Returns the average of all elements in the stream.
+
+### FloatStream
+
+A Stream of `EntryFloat`. It is akin to `IntStream` but for `EntryFloat`'s.
+
+It contains all of the methods Stream exposes and additional methods that pertain to an `EntryFloat` stream such as aggregate functions (`Sum()`, `Average()`, etc). For a description of all specific methods, see `IntStream`.
+
+The current implementation is based on `Stream` and an intermediary channel that converts incoming `EntryFloat` elements to `Entry`. This approach offers programming conciseness but the use of an intermediary channel likely decreases performance.
 
 ### Predicates
 
