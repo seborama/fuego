@@ -240,3 +240,22 @@ func (s Stream) Count() int {
 
 	return count
 }
+
+// AnyMatch returns whether any of the elements in the stream
+// satisfies the predicate.
+// This is a continuous terminal operation and hence expects
+// the producer to close the stream in order to complete (or
+// it will block).
+func (s Stream) AnyMatch(p Predicate) bool {
+	if s.stream == nil {
+		return false
+	}
+
+	for val := range s.stream {
+		if p(val) {
+			return true
+		}
+	}
+
+	return false
+}

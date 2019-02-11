@@ -251,9 +251,19 @@ Please refer to [stream_test.go](stream_test.go) for an example that groups numb
 
 Counts the number of elements in the Stream.
 
-#### Close
+#### AnyMatch
 
-Closes the Stream. It cannot receive more data but can continue consuming buffered messages.
+Returns true if any of the elements in the stream satisfies the Predicate argument.
+
+```go
+ƒ.NewStreamFromSlice([]Entry{
+    EntryString("three"),
+    EntryString("two"),
+    EntryString("four"),
+}, 1e3).
+    AnyMatch(func(e Entry) bool { return e.Equal(EntryString("three")) })
+// true
+```
 
 ### IntStream
 

@@ -729,3 +729,60 @@ func TestStream_MapToInt(t *testing.T) {
 		})
 	}
 }
+
+func TestStream_AnyMatch(t *testing.T) {
+	dataGenerator := func() chan Entry {
+		c := make(chan Entry, 2)
+		go func() {
+			defer close(c)
+			c <- EntryString("a")
+			c <- EntryBool(false)
+			c <- EntryString("b")
+			c <- EntryInt(-17)
+			c <- EntryString("c")
+		}()
+		return c
+	}
+
+	type fields struct {
+		stream chan Entry
+	}
+	type args struct {
+		p Predicate
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   bool
+	}{
+		{
+			name:   "Should not match when channel is nil",
+			fields: fields{stream: nil},
+			args:   args{p: True},
+			want:   false,
+		},
+		{
+			name:   "Should not match",
+			fields: fields{stream: dataGenerator()},
+			args:   args{p: func(e Entry) bool { return e.Equal(EntryString("not in here")) }},
+			want:   false,
+		},
+		{
+			name:   "Should match",
+			fields: fields{stream: dataGenerator()},
+			args:   args{p: func(e Entry) bool { return e.Equal(EntryString("b")) }},
+			want:   true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := Stream{
+				stream: tt.fields.stream,
+			}
+			if got := s.AnyMatch(tt.args.p); got != tt.want {
+				t.Errorf("Stream.AnyMatch() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
