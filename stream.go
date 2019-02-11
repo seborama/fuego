@@ -40,7 +40,7 @@ func NewStreamFromSlice(slice []Entry, bufsize int) Stream {
 	return NewStream(c)
 }
 
-// TODO: implement NewStreamFromMap?
+// TODO: implement NewStreamFromMap -> Stream of Keys / Stream of Values?
 
 // Map returns a slice of channel of Set consisting of the results of
 // applying the given function to the elements of this stream.
@@ -49,7 +49,7 @@ func NewStreamFromSlice(slice []Entry, bufsize int) Stream {
 func (s Stream) Map(mapper Function) Stream {
 	outstream := make(chan Entry, cap(s.stream))
 
-	go func() { // TODO: introduce a cut-off to prevent the go func from straying
+	go func() {
 		defer close(outstream) // TODO: add test to confirm the stream gets closed
 		if s.stream == nil {
 			return
@@ -71,7 +71,7 @@ func (s Stream) Map(mapper Function) Stream {
 func (s Stream) Filter(predicate Predicate) Stream {
 	outstream := make(chan Entry, cap(s.stream))
 
-	go func() { // TODO: introduce a cut-off to prevent the go func from straying
+	go func() {
 		defer close(outstream) // TODO: add test to confirm the stream gets closed
 		if s.stream == nil {
 			return
@@ -132,7 +132,7 @@ func (s Stream) Reduce(f2 BiFunction) Entry {
 func (s Stream) Intersperse(e Entry) Stream {
 	outstream := make(chan Entry, cap(s.stream))
 
-	go func() { // TODO: introduce a cut-off to prevent the go func from straying
+	go func() {
 		defer close(outstream) // TODO: add test to confirm the stream gets closed
 		if s.stream == nil {
 			return
@@ -209,7 +209,7 @@ func (s Stream) GroupBy(classifier Function) EntryMap {
 func (s Stream) MapToInt(toInt ToIntFunction) IntStream {
 	outstream := make(chan EntryInt, cap(s.stream))
 
-	go func() { // TODO: introduce a cut-off to prevent the go func from straying
+	go func() {
 		defer close(outstream) // TODO: add test to confirm the stream gets closed
 		if s.stream == nil {
 			return

@@ -50,8 +50,8 @@ func TestNotPredicate(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.args.p.Not()(tt.args.t); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Not() = %v, want %v", got, tt.want)
+			if got := tt.args.p.Negate()(tt.args.t); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Negate() = %v, want %v", got, tt.want)
 			}
 		})
 	}

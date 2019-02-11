@@ -317,7 +317,7 @@ See [example_predicate_test.go](example_predicate_test.go) for some examples.
 
 res := ƒ.Predicate(intGreaterThanPredicate(50)).
         And(ƒ.True).
-        Not()(ƒ.EntryInt(23)) // res = true
+        Negate()(ƒ.EntryInt(23)) // res = true
 
 func intGreaterThanPredicate(rhs int) ƒ.Predicate {
     return func(lhs ƒ.Entry) bool {

@@ -28,6 +28,11 @@ func (p Predicate) Or(other Predicate) Predicate {
 	}
 }
 
+// Negate is an alias for Not().
+func (p Predicate) Negate() Predicate {
+	return p.Not()
+}
+
 // Not is the logical negation of a predicate.
 func (p Predicate) Not() Predicate {
 	return func(t Entry) bool {
@@ -49,5 +54,5 @@ func False(t Entry) bool {
 
 // True is a predicate that returns always true.
 func True(t Entry) bool {
-	return Predicate(False).Not()(nil)
+	return Predicate(False).Negate()(nil)
 }

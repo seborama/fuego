@@ -8,7 +8,7 @@ import (
 
 // ExamplePredicate shows how to use and combine Predicates.
 func ExamplePredicate() {
-	res := ƒ.Predicate(ƒ.False).Not()(ƒ.EntryInt(1))
+	res := ƒ.Predicate(ƒ.False).Negate()(ƒ.EntryInt(1))
 	fmt.Printf("Not False == %+v\n", res)
 
 	res = ƒ.Predicate(ƒ.True).And(ƒ.False)(ƒ.EntryInt(1))
@@ -51,7 +51,7 @@ func ExamplePredicate_functionPredicate() {
 // scratch.
 // Notice how we get all Predicate helpers (And, Or, Not, etc) for "free".
 func ExamplePredicate_predicate() {
-	res := intGreaterThanPredicate(50).And(ƒ.True).Not()(ƒ.EntryInt(23))
+	res := intGreaterThanPredicate(50).And(ƒ.True).Negate()(ƒ.EntryInt(23))
 	fmt.Printf("res = %v", res)
 
 	// Output:
