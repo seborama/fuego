@@ -265,6 +265,34 @@ Returns true if any of the elements in the stream satisfies the Predicate argume
 // true
 ```
 
+#### NoneMatch
+
+Returns true if none of the elements in the stream satisfies the Predicate argument.
+
+```go
+ƒ.NewStreamFromSlice([]Entry{
+    EntryString("three"),
+    EntryString("two"),
+    EntryString("four"),
+}, 1e3).
+    NoneMatch(func(e Entry) bool { return e.Equal(EntryString("nothing like this")) })
+// true
+```
+
+#### AllMatch
+
+Returns true if every element in the stream satisfies the Predicate argument.
+
+```go
+ƒ.NewStreamFromSlice([]Entry{
+    EntryString("three"),
+    EntryString("two"),
+    EntryString("fourth"),
+}, 1e3).
+    AllMatch(func(e Entry) bool { return strings.Contains(string(e), "t") })
+// true
+```
+
 ### IntStream
 
 A Stream of EntryInt.
