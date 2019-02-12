@@ -188,8 +188,8 @@ func (s Stream) GroupBy(classifier Function) EntryMap {
 // Collect
 // Contains
 // ContainsAll
-// Match
-// MatchNone
+// AllMatch
+// NoneMatch
 // Head
 // Last
 // Tail
@@ -241,6 +241,25 @@ func (s Stream) Count() int {
 	return count
 }
 
+// AllMatch returns whether all of the elements in the stream
+// satisfy the predicate.
+// This is a continuous terminal operation and hence expects
+// the producer to close the stream in order to complete (or
+// it will block).
+func (s Stream) AllMatch(p Predicate) bool {
+	if s.stream == nil {
+		return false
+	}
+
+	for val := range s.stream {
+		if !p(val) {
+			return false
+		}
+	}
+
+	return true
+}
+
 // AnyMatch returns whether any of the elements in the stream
 // satisfies the predicate.
 // This is a continuous terminal operation and hence expects
@@ -258,4 +277,13 @@ func (s Stream) AnyMatch(p Predicate) bool {
 	}
 
 	return false
+}
+
+// NoneMatch returns whether none of the elements in the stream
+// satisfies the predicate. It is the opposite of AnyMatch.
+// This is a continuous terminal operation and hence expects
+// the producer to close the stream in order to complete (or
+// it will block).
+func (s Stream) NoneMatch(p Predicate) bool {
+	return !s.AnyMatch(p)
 }

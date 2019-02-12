@@ -757,19 +757,19 @@ func TestStream_AnyMatch(t *testing.T) {
 		want   bool
 	}{
 		{
-			name:   "Should not match when channel is nil",
+			name:   "Should not match any when channel is nil",
 			fields: fields{stream: nil},
 			args:   args{p: True},
 			want:   false,
 		},
 		{
-			name:   "Should not match",
+			name:   "Should not match any",
 			fields: fields{stream: dataGenerator()},
 			args:   args{p: func(e Entry) bool { return e.Equal(EntryString("not in here")) }},
 			want:   false,
 		},
 		{
-			name:   "Should match",
+			name:   "Should match any",
 			fields: fields{stream: dataGenerator()},
 			args:   args{p: func(e Entry) bool { return e.Equal(EntryString("b")) }},
 			want:   true,
@@ -782,6 +782,120 @@ func TestStream_AnyMatch(t *testing.T) {
 			}
 			if got := s.AnyMatch(tt.args.p); got != tt.want {
 				t.Errorf("Stream.AnyMatch() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestStream_NoneMatch(t *testing.T) {
+	dataGenerator := func() chan Entry {
+		c := make(chan Entry, 2)
+		go func() {
+			defer close(c)
+			c <- EntryString("a")
+			c <- EntryBool(false)
+			c <- EntryString("b")
+			c <- EntryInt(-17)
+			c <- EntryString("c")
+		}()
+		return c
+	}
+
+	type fields struct {
+		stream chan Entry
+	}
+	type args struct {
+		p Predicate
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   bool
+	}{
+		{
+			name:   "Should satisfy when channel is nil",
+			fields: fields{stream: nil},
+			args:   args{p: True},
+			want:   true,
+		},
+		{
+			name:   "Should satisfy",
+			fields: fields{stream: dataGenerator()},
+			args:   args{p: func(e Entry) bool { return e.Equal(EntryString("not in here")) }},
+			want:   true,
+		},
+		{
+			name:   "Should not satisfy",
+			fields: fields{stream: dataGenerator()},
+			args:   args{p: func(e Entry) bool { return e.Equal(EntryString("b")) }},
+			want:   false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := Stream{
+				stream: tt.fields.stream,
+			}
+			if got := s.NoneMatch(tt.args.p); got != tt.want {
+				t.Errorf("Stream.NoneMatch() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestStream_AllMatch(t *testing.T) {
+	dataGenerator := func() chan Entry {
+		c := make(chan Entry, 2)
+		go func() {
+			defer close(c)
+			c <- EntryString("a")
+			c <- EntryBool(false)
+			c <- EntryString("b")
+			c <- EntryInt(-17)
+			c <- EntryString("c")
+		}()
+		return c
+	}
+
+	type fields struct {
+		stream chan Entry
+	}
+	type args struct {
+		p Predicate
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   bool
+	}{
+		{
+			name:   "Should not match all when channel is nil",
+			fields: fields{stream: nil},
+			args:   args{p: True},
+			want:   false,
+		},
+		{
+			name:   "Should match all",
+			fields: fields{stream: dataGenerator()},
+			args:   args{p: func(e Entry) bool { return !e.Equal(EntryString("not in here")) }},
+			want:   true,
+		},
+		{
+			name:   "Should not match all",
+			fields: fields{stream: dataGenerator()},
+			args:   args{p: func(e Entry) bool { return e.Equal(EntryString("b")) }},
+			want:   false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := Stream{
+				stream: tt.fields.stream,
+			}
+			if got := s.AllMatch(tt.args.p); got != tt.want {
+				t.Errorf("Stream.AllMatch() = %v, want %v", got, tt.want)
 			}
 		})
 	}
