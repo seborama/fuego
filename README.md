@@ -293,6 +293,36 @@ Returns true if every element in the stream satisfies the Predicate argument.
 // true
 ```
 
+#### Drop
+
+Drops the first 'n' elements of the stream.
+
+```go
+ƒ.NewStreamFromSlice([]Entry{
+    EntryString("three"),
+    EntryString("two"),
+    EntryString("fourth"),
+}, 1e3).
+    Drop(2)
+// Stream of EntryString("fourth")
+```
+
+#### DropWhile
+
+Drops the first elements of the stream while the predicate satisfies.
+
+```go
+ƒ.NewStreamFromSlice([]Entry{
+    EntryString("three"),
+    EntryString("two"),
+    EntryString("fourth"),
+}, 1e3).
+    Drop(func(e Entry) bool {
+        return e.Equal(EntryString("three"))
+    })
+// Stream of EntryString("two") and EntryString("fourth")
+```
+
 ### IntStream
 
 A Stream of EntryInt.

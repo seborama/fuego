@@ -171,9 +171,7 @@ func (s Stream) GroupBy(classifier Function) EntryMap {
 // TODO list:
 // Methods with ** require the Stream to be finite and closed (or use a Future, perhaps Future.Stream()?)
 // **Distinct()
-// Drop(uint64) - drops the first n elements of the Stream.
 // **DropRight(uint64) - drops the last n elements of the Stream. Only meaningful if the Stream is closed.
-// DropWhile(Predicate) - Returns the a Stream representing the longest suffix of this iterable whose first element does not satisfy the predicate
 // FilterNot(Predicate) - <=> to Filter(Not(Predicate))
 // **EndsWith([]Entry) - Tests whether this Stream ends with the []Entry
 // Peek(Consumer) - Like ForEach but returns Stream as it was at the point of Peek
@@ -182,14 +180,11 @@ func (s Stream) GroupBy(classifier Function) EntryMap {
 // FlatMap
 // FlatMapToXXX (Int, Uint, etc) => is this the same as FlatMap().MapToXXX()?
 // **Sorted(Comparator)
-// Skip
-// TakeWhile - see DropXXX()
+// TakeWhile - see DropXXX()?
 // ToSlice
 // Collect
 // Contains
 // ContainsAll
-// AllMatch
-// NoneMatch
 // Head
 // Last
 // Tail
@@ -286,4 +281,49 @@ func (s Stream) AnyMatch(p Predicate) bool {
 // it will block).
 func (s Stream) NoneMatch(p Predicate) bool {
 	return !s.AnyMatch(p)
+}
+
+// Drop the first 'n' elements of this stream.
+func (s Stream) Drop(n uint64) Stream {
+	if n >= 1 {
+		i := uint64(1)
+		for range s.stream {
+			if i >= n {
+				break
+			}
+			i++
+		}
+	}
+	return s
+}
+
+// DropWhile drops the first elements of this stream while the predicate
+// is satisfied.
+// This function streams continuously until the in-stream is closed at
+// which point the out-stream will be closed too.
+func (s Stream) DropWhile(p Predicate) Stream {
+	outstream := make(chan Entry, cap(s.stream))
+
+	go func() {
+		defer close(outstream) // TODO: add test to confirm the stream gets closed
+		if s.stream == nil {
+			return
+		}
+
+		// drop elements as required
+		for val := range s.stream {
+			if p(val) {
+				continue
+			}
+			outstream <- val // this one belongs!
+			break
+		}
+
+		// flush the remainder to outstream
+		for val := range s.stream {
+			outstream <- val
+		}
+	}()
+
+	return NewStream(outstream)
 }

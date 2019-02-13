@@ -900,3 +900,155 @@ func TestStream_AllMatch(t *testing.T) {
 		})
 	}
 }
+
+func TestStream_Drop(t *testing.T) {
+	data := []Entry{
+		EntryString("a"),
+		EntryBool(false),
+		EntryString("b"),
+		EntryInt(-17),
+		EntryString("c"),
+	}
+	dataGenerator := func() chan Entry {
+		c := make(chan Entry, 2)
+		go func() {
+			defer close(c)
+			for _, val := range data {
+				c <- val
+			}
+		}()
+		return c
+	}
+
+	type fields struct {
+		stream chan Entry
+	}
+	type args struct {
+		n uint64
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   []Entry
+	}{
+		{
+			name: "Should not change the stream if n < 1",
+			fields: fields{
+				stream: dataGenerator(),
+			},
+			args: args{
+				n: 0,
+			},
+			want: data,
+		},
+		{
+			name: "Should drop all elements when n > number of elements in the stream",
+			fields: fields{
+				stream: dataGenerator(),
+			},
+			args: args{
+				n: 100,
+			},
+			want: []Entry{},
+		},
+		{
+			name: "Should drop the first n elements when n < number of elements in the stream",
+			fields: fields{
+				stream: dataGenerator(),
+			},
+			args: args{
+				n: 2,
+			},
+			want: data[2:],
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := NewStream(tt.fields.stream)
+			gotStream := s.Drop(tt.args.n)
+			got := []Entry{}
+			for val := range gotStream.stream {
+				got = append(got, val)
+			}
+			assert.EqualValues(t, tt.want, got)
+		})
+	}
+}
+
+func TestStream_DropWhile(t *testing.T) {
+	data := []Entry{
+		EntryString("a"),
+		EntryBool(false),
+		EntryString("b"),
+		EntryInt(-17),
+		EntryString("c"),
+	}
+	dataGenerator := func() chan Entry {
+		c := make(chan Entry, 2)
+		go func() {
+			defer close(c)
+			for _, val := range data {
+				c <- val
+			}
+		}()
+		return c
+	}
+
+	type fields struct {
+		stream chan Entry
+	}
+	type args struct {
+		p Predicate
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   []Entry
+	}{
+		{
+			name: "Should not change the stream if predicate never satisfies",
+			fields: fields{
+				stream: dataGenerator(),
+			},
+			args: args{
+				p: False,
+			},
+			want: data,
+		},
+		{
+			name: "Should drop the first few elements that satisfy the predicate",
+			fields: fields{
+				stream: dataGenerator(),
+			},
+			args: args{
+				p: func(e Entry) bool {
+					return e.Equal(EntryString("a")) || e.Equal(EntryBool(false))
+				},
+			},
+			want: data[2:],
+		},
+		{
+			name: "Should drop all elements when the predicate always satisfies",
+			fields: fields{
+				stream: dataGenerator(),
+			},
+			args: args{
+				p: True,
+			},
+			want: []Entry{},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := NewStream(tt.fields.stream)
+			gotStream := s.DropWhile(tt.args.p)
+			got := []Entry{}
+			for val := range gotStream.stream {
+				got = append(got, val)
+			}
+			assert.EqualValues(t, tt.want, got)
+		})
+	}
+}
