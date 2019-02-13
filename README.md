@@ -151,6 +151,8 @@ type ToIntFunction func(e Entry) EntryInt
 
 A Stream is a wrapper over a Go channel.
 
+Note that 'nil' channels are prohibited.
+
 **NOTE:**
 
 Concurrent streams are challenging to implement owing to ordering issues in parallel processing. At the moment, the view is that the most sensible approach is to delegate control to users. Multiple fuego streams can be created and data distributed across as desired. This empowers users of fuego to implement the desired behaviour of their pipelines.
@@ -327,9 +329,16 @@ Drops the first elements of the stream while the predicate satisfies.
 
 A Stream of EntryInt.
 
-It contains all of the methods Stream exposes and additional methods that pertain to an `EntryInt` stream such as aggregate functions (`Sum()`, `Average()`, etc).
+It contains all of the methods `Stream` exposes and additional methods that pertain to an `EntryInt` stream such as aggregate functions (`Sum()`, `Average()`, etc).
 
-The current implementation is based on `Stream` and an intermediary channel that converts incoming `EntryInt` elements to `Entry`. This approach offers programming conciseness but the use of an intermediary channel likely decreases performance.
+Note that 'nil' channels are prohibited.
+
+**NOTE:**
+The current implementation is based on `Stream` and an intermediary channel that converts incoming `EntryInt` elements to `Entry`. This approach offers programming conciseness but the use of an intermediary channel likely decreases performance. This also means that type checking is weak on methods "borrowed" from `Stream` that expect `Entry` (instead of `EntryInt`).
+
+#### Stream methods
+
+All methods that pertain to `Stream` are available to `IntStream`.
 
 #### Max
 
@@ -351,9 +360,32 @@ Returns the average of all elements in the stream.
 
 A Stream of `EntryFloat`. It is akin to `IntStream` but for `EntryFloat`'s.
 
-It contains all of the methods Stream exposes and additional methods that pertain to an `EntryFloat` stream such as aggregate functions (`Sum()`, `Average()`, etc). For a description of all specific methods, see `IntStream`.
+Note that 'nil' channels are prohibited.
 
-The current implementation is based on `Stream` and an intermediary channel that converts incoming `EntryFloat` elements to `Entry`. This approach offers programming conciseness but the use of an intermediary channel likely decreases performance.
+It contains all of the methods `Stream` exposes and additional methods that pertain to an `EntryFloat` stream such as aggregate functions (`Sum()`, `Average()`, etc).
+
+**NOTE:**
+The current implementation is based on `Stream` and an intermediary channel that converts incoming `EntryFloat` elements to `Entry`. This approach offers programming conciseness but the use of an intermediary channel likely decreases performance. This also means that type checking is weak on methods "borrowed" from `Stream` that expect `Entry` (instead of `EntryFloat`).
+
+#### Stream methods
+
+All methods that pertain to `Stream` are available to `FloatStream`.
+
+#### Max
+
+Returns the greatest element in the stream.
+
+#### Min
+
+Returns the smallest element in the stream.
+
+#### Sum
+
+Returns the sum of all elements in the stream.
+
+#### Average
+
+Returns the average of all elements in the stream.
 
 ### Predicates
 
