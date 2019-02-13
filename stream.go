@@ -285,7 +285,7 @@ func (s Stream) NoneMatch(p Predicate) bool {
 
 // Drop the first 'n' elements of this stream.
 func (s Stream) Drop(n uint64) Stream {
-	if n >= 1 {
+	if n >= 1 && s.stream != nil {
 		i := uint64(1)
 		for range s.stream {
 			if i >= n {
