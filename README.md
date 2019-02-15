@@ -325,6 +325,36 @@ Drops the first elements of the stream while the predicate satisfies.
 // Stream of EntryString("two") and EntryString("fourth")
 ```
 
+#### Last
+
+Returns the last element of the stream.
+
+This is a special case of LastN(1) which returns a single `Entry`.
+
+```go
+ƒ.NewStreamFromSlice([]Entry{
+    EntryString("three"),
+    EntryString("two"),
+    EntryString("fourth"),
+}, 1e3).
+    Last()
+// EntryString("fourth")
+```
+
+#### LastN
+
+Return a slice of the last N elements of the stream.
+
+```go
+ƒ.NewStreamFromSlice([]Entry{
+    EntryString("three"),
+    EntryString("two"),
+    EntryString("fourth"),
+}, 1e3).
+    LastN(2)
+// []Entry{EntryString("two"), EntryString("fourth")}
+```
+
 ### IntStream
 
 A Stream of EntryInt.

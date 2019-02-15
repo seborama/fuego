@@ -327,3 +327,45 @@ func (s Stream) DropWhile(p Predicate) Stream {
 
 	return NewStream(outstream)
 }
+
+// Last returns the last element in this stream.
+func (s Stream) Last() Entry {
+	return s.LastN(1)[0]
+}
+
+// LastN returns the last n elements in this stream.
+func (s Stream) LastN(n uint64) []Entry {
+	if s.stream == nil {
+		panic(PanicMissingChannel)
+	}
+
+	if n < 1 {
+		panic(PanicNoSuchElement)
+	}
+
+	val, ok := <-s.stream
+	if !ok {
+		panic(PanicNoSuchElement)
+	}
+
+	result := []Entry{val}
+
+	count := uint64(0)
+	flushTrigger := uint64(100)
+	if n > flushTrigger {
+		flushTrigger = n
+	}
+
+	for val = range s.stream {
+		result = append(result, val)
+		if count++; count > flushTrigger {
+			result = result[uint64(len(result))-n:]
+			count = 0
+		}
+	}
+
+	if uint64(len(result)) > n {
+		return result[uint64(len(result))-n:]
+	}
+	return result
+}

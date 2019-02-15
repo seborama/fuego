@@ -902,6 +902,10 @@ func TestStream_AllMatch(t *testing.T) {
 }
 
 func TestStream_Drop(t *testing.T) {
+	data1 := []Entry{
+		EntryInt(1),
+	}
+
 	data := []Entry{
 		EntryString("a"),
 		EntryBool(false),
@@ -909,11 +913,12 @@ func TestStream_Drop(t *testing.T) {
 		EntryInt(-17),
 		EntryString("c"),
 	}
-	dataGenerator := func() chan Entry {
+
+	dataGenerator := func(slice []Entry) chan Entry {
 		c := make(chan Entry, 2)
 		go func() {
 			defer close(c)
-			for _, val := range data {
+			for _, val := range slice {
 				c <- val
 			}
 		}()
@@ -935,7 +940,7 @@ func TestStream_Drop(t *testing.T) {
 		{
 			name: "Should not change the stream if n < 1",
 			fields: fields{
-				stream: dataGenerator(),
+				stream: dataGenerator(data),
 			},
 			args: args{
 				n: 0,
@@ -945,7 +950,7 @@ func TestStream_Drop(t *testing.T) {
 		{
 			name: "Should drop all elements when n > number of elements in the stream",
 			fields: fields{
-				stream: dataGenerator(),
+				stream: dataGenerator(data),
 			},
 			args: args{
 				n: 100,
@@ -955,12 +960,22 @@ func TestStream_Drop(t *testing.T) {
 		{
 			name: "Should drop the first n elements when n < number of elements in the stream",
 			fields: fields{
-				stream: dataGenerator(),
+				stream: dataGenerator(data),
 			},
 			args: args{
 				n: 2,
 			},
 			want: data[2:],
+		},
+		{
+			name: "Should drop the only element in the stream",
+			fields: fields{
+				stream: dataGenerator(data1),
+			},
+			args: args{
+				n: 1,
+			},
+			want: []Entry{},
 		},
 	}
 	for _, tt := range tests {
@@ -1008,6 +1023,16 @@ func TestStream_DropWhile(t *testing.T) {
 		want   []Entry
 	}{
 		{
+			name: "Should return empty out-stream when nil in-stream",
+			fields: fields{
+				stream: nil,
+			},
+			args: args{
+				p: False,
+			},
+			want: []Entry{},
+		},
+		{
 			name: "Should not change the stream if predicate never satisfies",
 			fields: fields{
 				stream: dataGenerator(),
@@ -1042,12 +1067,116 @@ func TestStream_DropWhile(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := NewStream(tt.fields.stream)
+			s := Stream{stream: tt.fields.stream}
 			gotStream := s.DropWhile(tt.args.p)
 			got := []Entry{}
 			for val := range gotStream.stream {
 				got = append(got, val)
 			}
+			assert.EqualValues(t, tt.want, got)
+		})
+	}
+}
+
+func TestStream_LastX_PanicsWhenNilChannel(t *testing.T) {
+	assert.PanicsWithValue(t, PanicMissingChannel, func() { Stream{nil}.LastN(1) })
+	assert.PanicsWithValue(t, PanicMissingChannel, func() { Stream{nil}.Last() })
+}
+
+func TestStream_LastX_PanicsWhenEmptyChannel(t *testing.T) {
+	emptyStream := func() chan Entry {
+		c := make(chan Entry)
+		go func() {
+			defer close(c)
+		}()
+		return c
+	}
+
+	assert.PanicsWithValue(t, PanicNoSuchElement, func() { NewStream(emptyStream()).LastN(1) })
+	assert.PanicsWithValue(t, PanicNoSuchElement, func() { NewStream(emptyStream()).Last() })
+}
+
+func TestStream_LastNWithInvalidArgumentPanics(t *testing.T) {
+	populatedStream := func() chan Entry {
+		c := make(chan Entry)
+		go func() {
+			defer close(c)
+			c <- EntryString("joy")
+		}()
+		return c
+	}
+
+	assert.PanicsWithValue(t, PanicNoSuchElement, func() { NewStream(populatedStream()).LastN(0) })
+}
+
+func TestStream_LastN(t *testing.T) {
+	data := []Entry{
+		EntryString("one"),
+		EntryString("two"),
+		EntryString("thee"),
+		EntryString("four"),
+		EntryString("five"),
+	}
+
+	largeData := []Entry{}
+	for i := 1; i < 1e5; i++ {
+		largeData = append(largeData, EntryInt(i))
+	}
+
+	populatedStream := func(slice []Entry) chan Entry {
+		c := make(chan Entry)
+		go func() {
+			defer close(c)
+			for _, val := range slice {
+				c <- val
+			}
+		}()
+		return c
+	}
+
+	type fields struct {
+		stream chan Entry
+	}
+	type args struct {
+		n uint64
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   []Entry
+	}{
+		{
+			name: "Should return the last n elements when the stream is longer",
+			fields: fields{
+				stream: populatedStream(data),
+			},
+			args: args{2},
+			want: data[3:],
+		},
+		{
+			name: "Should return all the elements when the stream is shorter",
+			fields: fields{
+				stream: populatedStream(data),
+			},
+			args: args{2e3},
+			want: data,
+		},
+		{
+			name: "Should return the last n elements when the stream is significantly larger",
+			fields: fields{
+				stream: populatedStream(largeData),
+			},
+			args: args{2e3},
+			want: largeData[len(largeData)-2e3:],
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := Stream{
+				stream: tt.fields.stream,
+			}
+			got := s.LastN(tt.args.n)
 			assert.EqualValues(t, tt.want, got)
 		})
 	}
