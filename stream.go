@@ -359,6 +359,8 @@ func (s Stream) LastN(n uint64) []Entry {
 	for val = range s.stream {
 		result = append(result, val)
 		if count++; count > flushTrigger {
+			// this is simply to reduce the number of
+			// slice resizing operations
 			result = result[uint64(len(result))-n:]
 			count = 0
 		}

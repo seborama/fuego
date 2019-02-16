@@ -938,6 +938,16 @@ func TestStream_Drop(t *testing.T) {
 		want   []Entry
 	}{
 		{
+			name: "Should not change the stream when nil channel",
+			fields: fields{
+				stream: nil,
+			},
+			args: args{
+				n: 1,
+			},
+			want: nil,
+		},
+		{
 			name: "Should not change the stream if n < 1",
 			fields: fields{
 				stream: dataGenerator(data),
@@ -980,8 +990,12 @@ func TestStream_Drop(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := NewStream(tt.fields.stream)
+			s := Stream{stream: tt.fields.stream}
 			gotStream := s.Drop(tt.args.n)
+			if tt.want == nil {
+				assert.Nil(t, gotStream.stream)
+				return
+			}
 			got := []Entry{}
 			for val := range gotStream.stream {
 				got = append(got, val)
@@ -1097,6 +1111,23 @@ func TestStream_LastX_PanicsWhenEmptyChannel(t *testing.T) {
 }
 
 func TestStream_LastNWithInvalidArgumentPanics(t *testing.T) {
+	tests := []struct {
+		name      string
+		n         uint64
+		wantPanic bool
+	}{
+		{
+			name:      "Should panic when N is less than 1",
+			n:         0,
+			wantPanic: true,
+		},
+		{
+			name:      "Should not panic when N is 1",
+			n:         1,
+			wantPanic: false,
+		},
+	}
+
 	populatedStream := func() chan Entry {
 		c := make(chan Entry)
 		go func() {
@@ -1106,7 +1137,18 @@ func TestStream_LastNWithInvalidArgumentPanics(t *testing.T) {
 		return c
 	}
 
-	assert.PanicsWithValue(t, PanicNoSuchElement, func() { NewStream(populatedStream()).LastN(0) })
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := Stream{
+				stream: populatedStream(),
+			}
+			if tt.wantPanic {
+				assert.PanicsWithValue(t, PanicNoSuchElement, func() { s.LastN(tt.n) })
+			} else {
+				assert.NotPanics(t, func() { s.LastN(tt.n) })
+			}
+		})
+	}
 }
 
 func TestStream_LastN(t *testing.T) {
