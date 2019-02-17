@@ -963,7 +963,7 @@ func TestStream_Drop(t *testing.T) {
 				stream: dataGenerator(data),
 			},
 			args: args{
-				n: 100,
+				n: uint64(len(data) + 10),
 			},
 			want: []Entry{},
 		},
@@ -978,7 +978,7 @@ func TestStream_Drop(t *testing.T) {
 			want: data[2:],
 		},
 		{
-			name: "Should drop the only element in the stream",
+			name: "Should drop the sole element in the stream",
 			fields: fields{
 				stream: dataGenerator(data1),
 			},
@@ -1042,7 +1042,7 @@ func TestStream_DropWhile(t *testing.T) {
 				stream: nil,
 			},
 			args: args{
-				p: False,
+				p: True,
 			},
 			want: []Entry{},
 		},
@@ -1083,6 +1083,97 @@ func TestStream_DropWhile(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			s := Stream{stream: tt.fields.stream}
 			gotStream := s.DropWhile(tt.args.p)
+			got := []Entry{}
+			for val := range gotStream.stream {
+				got = append(got, val)
+			}
+			assert.EqualValues(t, tt.want, got)
+		})
+	}
+}
+
+func TestStream_DropUntil(t *testing.T) {
+	data := []Entry{
+		EntryString("a"),
+		EntryBool(false),
+		EntryString("b"),
+		EntryInt(-17),
+		EntryString("c"),
+	}
+	dataGenerator := func() chan Entry {
+		c := make(chan Entry, 2)
+		go func() {
+			defer close(c)
+			for _, val := range data {
+				c <- val
+			}
+		}()
+		return c
+	}
+
+	type fields struct {
+		stream chan Entry
+	}
+	type args struct {
+		p Predicate
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   []Entry
+	}{
+		{
+			name: "Should return empty out-stream when nil in-stream",
+			fields: fields{
+				stream: nil,
+			},
+			args: args{
+				p: True,
+			},
+			want: []Entry{},
+		},
+		{
+			name: "Should return empty stream if predicate never satisfies",
+			fields: fields{
+				stream: dataGenerator(),
+			},
+			args: args{
+				p: False,
+			},
+			want: []Entry{},
+		},
+		{
+			name: "Should drop the first few elements that satisfy the predicate",
+			fields: fields{
+				stream: dataGenerator(),
+			},
+			args: args{
+				p: func(e Entry) bool {
+					return e.Equal(EntryString("b"))
+				},
+			},
+			want: []Entry{
+				EntryString("b"),
+				EntryInt(-17),
+				EntryString("c"),
+			},
+		},
+		{
+			name: "Should not drop any element when the predicate always satisfies",
+			fields: fields{
+				stream: dataGenerator(),
+			},
+			args: args{
+				p: True,
+			},
+			want: data,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := Stream{stream: tt.fields.stream}
+			gotStream := s.DropUntil(tt.args.p)
 			got := []Entry{}
 			for val := range gotStream.stream {
 				got = append(got, val)
@@ -1201,7 +1292,7 @@ func TestStream_LastN(t *testing.T) {
 			fields: fields{
 				stream: populatedStream(data),
 			},
-			args: args{2e3},
+			args: args{uint64(len(data) + 10)},
 			want: data,
 		},
 		{
@@ -1538,6 +1629,287 @@ func TestStream_StartsWith(t *testing.T) {
 				stream: tt.fields.stream,
 			}
 			assert.Equal(t, tt.want, s.StartsWith(tt.args.slice))
+		})
+	}
+}
+
+func TestStream_Take(t *testing.T) {
+	data1 := []Entry{
+		EntryInt(1),
+	}
+
+	data := []Entry{
+		EntryString("a"),
+		EntryBool(false),
+		EntryString("b"),
+		EntryInt(-17),
+		EntryString("c"),
+	}
+
+	dataGenerator := func(slice []Entry) chan Entry {
+		c := make(chan Entry, 2)
+		go func() {
+			defer close(c)
+			for _, val := range slice {
+				c <- val
+			}
+		}()
+		return c
+	}
+
+	type fields struct {
+		stream chan Entry
+	}
+	type args struct {
+		n uint64
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   []Entry
+	}{
+		{
+			name: "Should return empty stream when nil channel",
+			fields: fields{
+				stream: nil,
+			},
+			args: args{
+				n: 1,
+			},
+			want: []Entry{},
+		},
+		{
+			name: "Should return empty stream when n < 1",
+			fields: fields{
+				stream: dataGenerator(data),
+			},
+			args: args{
+				n: 0,
+			},
+			want: []Entry{},
+		},
+		{
+			name: "Should return all elements when n > number of elements in the stream",
+			fields: fields{
+				stream: dataGenerator(data),
+			},
+			args: args{
+				n: uint64(len(data) + 10),
+			},
+			want: data,
+		},
+		{
+			name: "Should return the first n elements when n < number of elements in the stream",
+			fields: fields{
+				stream: dataGenerator(data),
+			},
+			args: args{
+				n: 2,
+			},
+			want: data[:2],
+		},
+		{
+			name: "Should return the sole element in the stream",
+			fields: fields{
+				stream: dataGenerator(data1),
+			},
+			args: args{
+				n: 1,
+			},
+			want: data1,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := Stream{stream: tt.fields.stream}
+			gotStream := s.Take(tt.args.n)
+			if tt.want == nil {
+				assert.Nil(t, gotStream.stream)
+				return
+			}
+			got := []Entry{}
+			for val := range gotStream.stream {
+				got = append(got, val)
+			}
+			assert.EqualValues(t, tt.want, got)
+		})
+	}
+}
+
+func TestStream_TakeWhile(t *testing.T) {
+	data := []Entry{
+		EntryString("a"),
+		EntryBool(false),
+		EntryString("b"),
+		EntryInt(-17),
+		EntryString("c"),
+	}
+	dataGenerator := func() chan Entry {
+		c := make(chan Entry, 2)
+		go func() {
+			defer close(c)
+			for _, val := range data {
+				c <- val
+			}
+		}()
+		return c
+	}
+
+	type fields struct {
+		stream chan Entry
+	}
+	type args struct {
+		p Predicate
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   []Entry
+	}{
+		{
+			name: "Should return empty out-stream when nil in-stream",
+			fields: fields{
+				stream: nil,
+			},
+			args: args{
+				p: True,
+			},
+			want: []Entry{},
+		},
+		{
+			name: "Should return empty stream if predicate never satisfies",
+			fields: fields{
+				stream: dataGenerator(),
+			},
+			args: args{
+				p: False,
+			},
+			want: []Entry{},
+		},
+		{
+			name: "Should take the first few elements that satisfy the predicate",
+			fields: fields{
+				stream: dataGenerator(),
+			},
+			args: args{
+				p: func(e Entry) bool {
+					return e.Equal(EntryString("a")) || e.Equal(EntryBool(false))
+				},
+			},
+			want: data[:2],
+		},
+		{
+			name: "Should take all elements when the predicate always satisfies",
+			fields: fields{
+				stream: dataGenerator(),
+			},
+			args: args{
+				p: True,
+			},
+			want: data,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := Stream{stream: tt.fields.stream}
+			gotStream := s.TakeWhile(tt.args.p)
+			got := []Entry{}
+			for val := range gotStream.stream {
+				got = append(got, val)
+			}
+			assert.EqualValues(t, tt.want, got)
+		})
+	}
+}
+
+func TestStream_TakeUntil(t *testing.T) {
+	data := []Entry{
+		EntryString("a"),
+		EntryBool(false),
+		EntryString("b"),
+		EntryInt(-17),
+		EntryString("c"),
+	}
+	dataGenerator := func() chan Entry {
+		c := make(chan Entry, 2)
+		go func() {
+			defer close(c)
+			for _, val := range data {
+				c <- val
+			}
+		}()
+		return c
+	}
+
+	type fields struct {
+		stream chan Entry
+	}
+	type args struct {
+		p Predicate
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   []Entry
+	}{
+		{
+			name: "Should return empty out-stream when nil in-stream",
+			fields: fields{
+				stream: nil,
+			},
+			args: args{
+				p: True,
+			},
+			want: []Entry{},
+		},
+		{
+			name: "Should return whole stream if predicate never satisfies",
+			fields: fields{
+				stream: dataGenerator(),
+			},
+			args: args{
+				p: False,
+			},
+			want: data,
+		},
+		{
+			name: "Should take the first few elements until predicate satisfies",
+			fields: fields{
+				stream: dataGenerator(),
+			},
+			args: args{
+				p: func(e Entry) bool {
+					return e.Equal(EntryString("b"))
+				},
+			},
+			want: []Entry{
+				EntryString("a"),
+				EntryBool(false),
+			},
+		},
+		{
+			name: "Should return empty stream when the predicate always satisfies",
+			fields: fields{
+				stream: dataGenerator(),
+			},
+			args: args{
+				p: True,
+			},
+			want: []Entry{},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := Stream{stream: tt.fields.stream}
+			gotStream := s.TakeUntil(tt.args.p)
+			got := []Entry{}
+			for val := range gotStream.stream {
+				got = append(got, val)
+			}
+			assert.EqualValues(t, tt.want, got)
 		})
 	}
 }

@@ -13,7 +13,6 @@ package fuego
 // FlatMap
 // FlatMapToXXX (Int, Uint, etc) => is this the same as FlatMap().MapToXXX()?
 // **Sorted(Comparator)
-// TakeWhile - see DropXXX()?
 // ToSlice
 // Collect
 // Contains
@@ -279,7 +278,7 @@ func (s Stream) NoneMatch(p Predicate) bool {
 	return !s.AnyMatch(p)
 }
 
-// Drop the first 'n' elements of this stream.
+// Drop the first 'n' elements of this stream and returns a new stream.
 func (s Stream) Drop(n uint64) Stream {
 	if n >= 1 && s.stream != nil {
 		i := uint64(1)
@@ -294,7 +293,7 @@ func (s Stream) Drop(n uint64) Stream {
 }
 
 // DropWhile drops the first elements of this stream while the predicate
-// is satisfied.
+// is satisfied and returns a new stream.
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 func (s Stream) DropWhile(p Predicate) Stream {
@@ -311,7 +310,7 @@ func (s Stream) DropWhile(p Predicate) Stream {
 			if p(val) {
 				continue
 			}
-			outstream <- val // this one belongs!
+			outstream <- val // this element belongs!
 			break
 		}
 
@@ -324,12 +323,20 @@ func (s Stream) DropWhile(p Predicate) Stream {
 	return NewStream(outstream)
 }
 
-// Last returns the last element in this stream.
+// DropUntil drops the first elements of this stream until the predicate
+// is satisfied and returns a new stream.
+// This function streams continuously until the in-stream is closed at
+// which point the out-stream will be closed too.
+func (s Stream) DropUntil(p Predicate) Stream {
+	return s.DropWhile(p.Negate())
+}
+
+// Last returns the last Entry in this stream.
 func (s Stream) Last() Entry {
 	return s.LastN(1)[0]
 }
 
-// LastN returns the last n elements in this stream.
+// LastN returns a slice of the last n elements in this stream.
 func (s Stream) LastN(n uint64) []Entry {
 	if s.stream == nil {
 		panic(PanicMissingChannel)
@@ -368,12 +375,12 @@ func (s Stream) LastN(n uint64) []Entry {
 	return result
 }
 
-// Head returns the first element in this stream.
+// Head returns the first Entry in this stream.
 func (s Stream) Head() Entry {
 	return s.HeadN(1)[0]
 }
 
-// HeadN returns the first n elements in this stream.
+// HeadN returns a slice of the first n elements in this stream.
 func (s Stream) HeadN(n uint64) []Entry {
 	if s.stream == nil {
 		panic(PanicMissingChannel)
@@ -442,4 +449,62 @@ func (s Stream) StartsWith(slice []Entry) bool {
 	}
 
 	return true
+}
+
+// Take returns a stream of the first 'n' elements of this stream.
+// This function streams continuously until the 'n' elements are picked
+// or the in-stream  is closed at which point the out-stream
+// will be closed too.
+func (s Stream) Take(n uint64) Stream {
+	outstream := make(chan Entry, cap(s.stream))
+
+	go func() {
+		defer close(outstream) // TODO: add test to confirm the stream gets closed
+		if s.stream == nil {
+			return
+		}
+
+		count := uint64(0)
+
+		for val := range s.stream {
+			if count++; count > n {
+				return
+			}
+			outstream <- val
+		}
+	}()
+
+	return NewStream(outstream)
+}
+
+// TakeWhile returns a stream of the first elements of this
+// stream while the predicate is satisfied.
+// This function streams continuously until the in-stream is closed at
+// which point the out-stream will be closed too.
+func (s Stream) TakeWhile(p Predicate) Stream {
+	outstream := make(chan Entry, cap(s.stream))
+
+	go func() {
+		defer close(outstream) // TODO: add test to confirm the stream gets closed
+		if s.stream == nil {
+			return
+		}
+
+		for val := range s.stream {
+			if !p(val) {
+				return
+			}
+			outstream <- val
+		}
+	}()
+
+	return NewStream(outstream)
+}
+
+// TakeUntil returns a stream of the first elements
+// of this stream until the predicate is satisfied.
+// This function streams continuously until the in-stream is closed at
+// which point the out-stream will be closed too.
+func (s Stream) TakeUntil(p Predicate) Stream {
+	return s.TakeWhile(p.Negate())
 }

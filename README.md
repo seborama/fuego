@@ -164,18 +164,18 @@ When providing a Go channel to create a Stream, beware that until you close the 
 Streams created from a slice do not suffer from this issue because they are closed when the slice content is fully pushed to the Stream.
 
 ```go
-ƒ.NewStreamFromSlice([]Entry{
-    EntryInt(1),
-    EntryInt(2),
-    EntryInt(3),
+ƒ.NewStreamFromSlice([]ƒ.Entry{
+    ƒ.EntryInt(1),
+    ƒ.EntryInt(2),
+    ƒ.EntryInt(3),
 }, 1e3)
 // or if you already have a channel of Entry:
-c := make(chan Entry) // you could add a buffer size as a second arg, if desired
+c := make(chan ƒ.Entry) // you could add a buffer size as a second arg, if desired
 go func() {
     defer close(c)
-    c <- EntryString("one")
-    c <- EntryString("two")
-    c <- EntryString("three")
+    c <- ƒ.EntryString("one")
+    c <- ƒ.EntryString("two")
+    c <- ƒ.EntryString("three")
     // c <- ...
 }()
 NewStream(c)
@@ -185,34 +185,34 @@ NewStream(c)
 
 ```go
 // See helpers_test.go for "newEntryIntEqualsTo()"
-s := ƒ.NewStreamFromSlice([]Entry{
-    EntryInt(1),
-    EntryInt(2),
-    EntryInt(3),
+s := ƒ.NewStreamFromSlice([]ƒ.Entry{
+    ƒ.EntryInt(1),
+    ƒ.EntryInt(2),
+    ƒ.EntryInt(3),
 }, 0)
 
 s.Filter(
-        FunctionPredicate(entryIntEqualsTo(EntryInt(1))).
+        FunctionPredicate(entryIntEqualsTo(ƒ.EntryInt(1))).
             Or(
-                FunctionPredicate(entryIntEqualsTo(EntryInt(3)))),
+                FunctionPredicate(entryIntEqualsTo(ƒ.EntryInt(3)))),
 )
 
-// returns []EntryInt{1,3}
+// returns []ƒ.EntryInt{1,3}
 ```
 
 #### Reduce / LeftReduce
 
 ```go
 // See helpers_test.go for "concatenateStringsBiFunc()"
-ƒ.NewStreamFromSlice([]Entry{
-    EntryString("four"),
-    EntryString("twelve)",
-    EntryString("one"),
-    EntryString("six"),
-    EntryString("three"),
+ƒ.NewStreamFromSlice([]ƒ.Entry{
+    ƒ.EntryString("four"),
+    ƒ.EntryString("twelve)",
+    ƒ.EntryString("one"),
+    ƒ.EntryString("six"),
+    ƒ.EntryString("three"),
 }, 1e3).
     Reduce(concatenateStringsBiFunc)
-// returns EntryString("four-twelve-one-six-three")
+// returns ƒ.EntryString("four-twelve-one-six-three")
 ```
 
 #### ForEach
@@ -220,14 +220,14 @@ s.Filter(
 ```go
 total := 0
 
-computeSumTotal := func(value interface{}) {
-    total += int(value.(EntryInt).Value())
+computeSumTotal := func(value ƒ.Entry) {
+    total += int(value.(ƒ.EntryInt).Value())
 }
 
-s := ƒ.NewStreamFromSlice([]Entry{
-    EntryInt(1),
-    EntryInt(2),
-    EntryInt(3),
+s := ƒ.NewStreamFromSlice([]ƒ.Entry{
+    ƒ.EntryInt(1),
+    ƒ.EntryInt(2),
+    ƒ.EntryInt(3),
 }, 0).
     ForEach(calculateSumTotal)
 // total == 6
@@ -236,12 +236,12 @@ s := ƒ.NewStreamFromSlice([]Entry{
 #### Intersperse
 
 ```go
-ƒ.NewStreamFromSlice([]Entry{
-    EntryString("three"),
-    EntryString("two"),
-    EntryString("four"),
+ƒ.NewStreamFromSlice([]ƒ.Entry{
+    ƒ.EntryString("three"),
+    ƒ.EntryString("two"),
+    ƒ.EntryString("four"),
 }, 1e3).
-    Intersperse(EntryString(" - "))
+    Intersperse(ƒ.EntryString(" - "))
 // "three - two - four"
 ```
 
@@ -258,12 +258,14 @@ Counts the number of elements in the Stream.
 Returns true if any of the elements in the stream satisfies the Predicate argument.
 
 ```go
-ƒ.NewStreamFromSlice([]Entry{
-    EntryString("three"),
-    EntryString("two"),
-    EntryString("four"),
+ƒ.NewStreamFromSlice([]ƒ.Entry{
+    ƒ.EntryString("three"),
+    ƒ.EntryString("two"),
+    ƒ.EntryString("four"),
 }, 1e3).
-    AnyMatch(func(e Entry) bool { return e.Equal(EntryString("three")) })
+    AnyMatch(func(e ƒ.Entry) bool {
+        return e.Equal(ƒ.EntryString("three"))
+    })
 // true
 ```
 
@@ -272,12 +274,12 @@ Returns true if any of the elements in the stream satisfies the Predicate argume
 Returns true if none of the elements in the stream satisfies the Predicate argument.
 
 ```go
-ƒ.NewStreamFromSlice([]Entry{
-    EntryString("three"),
-    EntryString("two"),
-    EntryString("four"),
+ƒ.NewStreamFromSlice([]ƒ.Entry{
+    ƒ.EntryString("three"),
+    ƒ.EntryString("two"),
+    ƒ.EntryString("four"),
 }, 1e3).
-    NoneMatch(func(e Entry) bool { return e.Equal(EntryString("nothing like this")) })
+    NoneMatch(func(e ƒ.Entry) bool { return e.Equal(ƒ.EntryString("nothing like this")) })
 // true
 ```
 
@@ -286,43 +288,61 @@ Returns true if none of the elements in the stream satisfies the Predicate argum
 Returns true if every element in the stream satisfies the Predicate argument.
 
 ```go
-ƒ.NewStreamFromSlice([]Entry{
-    EntryString("three"),
-    EntryString("two"),
-    EntryString("fourth"),
+ƒ.NewStreamFromSlice([]ƒ.Entry{
+    ƒ.EntryString("three"),
+    ƒ.EntryString("two"),
+    ƒ.EntryString("fourth"),
 }, 1e3).
-    AllMatch(func(e Entry) bool { return strings.Contains(string(e), "t") })
+    AllMatch(func(e ƒ.Entry) bool {
+        return strings.Contains(string(e.(ƒ.EntryString)), "t")
+    })
 // true
 ```
 
 #### Drop
 
-Drops the first 'n' elements of the stream.
+Drops the first 'n' elements of the stream and returns a new stream.
 
 ```go
-ƒ.NewStreamFromSlice([]Entry{
-    EntryString("three"),
-    EntryString("two"),
-    EntryString("fourth"),
+ƒ.NewStreamFromSlice([]ƒ.Entry{
+    ƒ.EntryString("three"),
+    ƒ.EntryString("two"),
+    ƒ.EntryString("fourth"),
 }, 1e3).
     Drop(2)
-// Stream of EntryString("fourth")
+// Stream of ƒ.EntryString("fourth")
 ```
 
 #### DropWhile
 
-Drops the first elements of the stream while the predicate satisfies.
+Drops the first elements of the stream while the predicate satisfies and returns a new stream.
 
 ```go
-ƒ.NewStreamFromSlice([]Entry{
-    EntryString("three"),
-    EntryString("two"),
-    EntryString("fourth"),
+ƒ.NewStreamFromSlice([]ƒ.Entry{
+    ƒ.EntryString("three"),
+    ƒ.EntryString("two"),
+    ƒ.EntryString("fourth"),
 }, 1e3).
-    Drop(func(e Entry) bool {
-        return e.Equal(EntryString("three"))
+    DropWhile(func(e ƒ.Entry) bool {
+        return e.Equal(ƒ.EntryString("three"))
     })
-// Stream of EntryString("two") and EntryString("fourth")
+// Stream of ƒ.EntryString("two") and ƒ.EntryString("fourth")
+```
+
+#### DropUntil
+
+Drops the first elements of the stream until the predicate satisfies and returns a new stream.
+
+```go
+ƒ.NewStreamFromSlice([]ƒ.Entry{
+    ƒ.EntryString("three"),
+    ƒ.EntryString("two"),
+    ƒ.EntryString("fourth"),
+}, 1e3).
+    DropUntil(func(e ƒ.Entry) bool {
+        return e.Equal(ƒ.EntryString("fourth"))
+    })
+// Stream of ƒ.EntryString("three") and ƒ.EntryString("two")
 ```
 
 #### Last
@@ -332,13 +352,13 @@ Returns the last element of the stream.
 This is a special case of LastN(1) which returns a single `Entry`.
 
 ```go
-ƒ.NewStreamFromSlice([]Entry{
-    EntryString("three"),
-    EntryString("two"),
-    EntryString("fourth"),
+ƒ.NewStreamFromSlice([]ƒ.Entry{
+    ƒ.EntryString("three"),
+    ƒ.EntryString("two"),
+    ƒ.EntryString("fourth"),
 }, 1e3).
     Last()
-// EntryString("fourth")
+// ƒ.EntryString("fourth")
 ```
 
 #### LastN
@@ -346,13 +366,13 @@ This is a special case of LastN(1) which returns a single `Entry`.
 Return a slice of the last N elements of the stream.
 
 ```go
-ƒ.NewStreamFromSlice([]Entry{
-    EntryString("three"),
-    EntryString("two"),
-    EntryString("fourth"),
+ƒ.NewStreamFromSlice([]ƒ.Entry{
+    ƒ.EntryString("three"),
+    ƒ.EntryString("two"),
+    ƒ.EntryString("fourth"),
 }, 1e3).
     LastN(2)
-// []Entry{EntryString("two"), EntryString("fourth")}
+// []ƒ.Entry{ƒ.EntryString("two"), ƒ.EntryString("fourth")}
 ```
 
 #### EndsWith
@@ -360,29 +380,29 @@ Return a slice of the last N elements of the stream.
 Return true if the stream ends with the supplied slice of elements.
 
 ```go
-ƒ.NewStreamFromSlice([]Entry{
-    EntryString("three"),
-    EntryString("two"),
-    EntryString("fourth"),
+ƒ.NewStreamFromSlice([]ƒ.Entry{
+    ƒ.EntryString("three"),
+    ƒ.EntryString("two"),
+    ƒ.EntryString("fourth"),
 }, 1e3).
-    EndsWith([]Entry{EntryString("two"), EntryString("fourth")})
+    EndsWith([]ƒ.Entry{ƒ.EntryString("two"), ƒ.EntryString("fourth")})
 // true
 ```
 
 #### Head
 
-Returns the first element of the stream.
+Returns the first `Entry` of the stream.
 
-This is a special case of LastN(1) which returns a single `Entry`.
+This is a special case of HeadN(1) which returns a single `Entry`.
 
 ```go
-ƒ.NewStreamFromSlice([]Entry{
-    EntryString("three"),
-    EntryString("two"),
-    EntryString("fourth"),
+ƒ.NewStreamFromSlice([]ƒ.Entry{
+    ƒ.EntryString("three"),
+    ƒ.EntryString("two"),
+    ƒ.EntryString("fourth"),
 }, 1e3).
     Head()
-// EntryString("three")
+// ƒ.EntryString("three")
 ```
 
 #### HeadN
@@ -390,13 +410,13 @@ This is a special case of LastN(1) which returns a single `Entry`.
 Return a slice of the first N elements of the stream.
 
 ```go
-ƒ.NewStreamFromSlice([]Entry{
-    EntryString("three"),
-    EntryString("two"),
-    EntryString("fourth"),
+ƒ.NewStreamFromSlice([]ƒ.Entry{
+    ƒ.EntryString("three"),
+    ƒ.EntryString("two"),
+    ƒ.EntryString("fourth"),
 }, 1e3).
     HeadN(2)
-// []Entry{EntryString("three"), EntryString("two")}
+// []ƒ.Entry{ƒ.EntryString("three"), ƒ.EntryString("two")}
 ```
 
 #### StartsWith
@@ -404,13 +424,59 @@ Return a slice of the first N elements of the stream.
 Return true if the stream starts with the supplied slice of elements.
 
 ```go
-ƒ.NewStreamFromSlice([]Entry{
-    EntryString("three"),
-    EntryString("two"),
-    EntryString("fourth"),
+ƒ.NewStreamFromSlice([]ƒ.Entry{
+    ƒ.EntryString("three"),
+    ƒ.EntryString("two"),
+    ƒ.EntryString("fourth"),
 }, 1e3).
-    StartsWith([]Entry{EntryString("three"), EntryString("two")})
+    StartsWith([]ƒ.Entry{ƒ.EntryString("three"), ƒ.EntryString("two")})
 // true
+```
+
+#### Take
+
+Takes the first 'n' elements of the stream and returns a new stream.
+
+```go
+ƒ.NewStreamFromSlice([]ƒ.Entry{
+    ƒ.EntryString("three"),
+    ƒ.EntryString("two"),
+    ƒ.EntryString("fourth"),
+}, 1e3).
+    Take(2)
+// Stream of []ƒ.Entry{ƒ.EntryString("three"), ƒ.EntryString("two")}
+```
+
+#### TakeWhile
+
+Takes the first elements of the stream while the predicate satisfies and returns a new stream.
+
+```go
+ƒ.NewStreamFromSlice([]ƒ.Entry{
+    ƒ.EntryString("three"),
+    ƒ.EntryString("two"),
+    ƒ.EntryString("fourth"),
+}, 1e3).
+    TakeWhile(func(e ƒ.Entry) bool {
+        return strings.HasPrefix(string(e.(ƒ.EntryString)), "t")
+    })
+// Stream of []ƒ.Entry{ƒ.EntryString("three"), ƒ.EntryString("two")}
+```
+
+#### TakeUntil
+
+Takes the first elements of the stream until the predicate satisfies and returns a new stream.
+
+```go
+ƒ.NewStreamFromSlice([]ƒ.Entry{
+    ƒ.EntryString("three"),
+    ƒ.EntryString("two"),
+    ƒ.EntryString("fourth"),
+}, 1e3).
+    TakeUntil(func(e ƒ.Entry) bool {
+        return e.Equal(ƒ.EntryString("fourth"))
+    })
+// Stream of []ƒ.Entry{ƒ.EntryString("three"), ƒ.EntryString("two")}
 ```
 
 ### IntStream
