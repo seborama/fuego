@@ -1223,3 +1223,309 @@ func TestStream_LastN(t *testing.T) {
 		})
 	}
 }
+
+func TestStream_EndsWith(t *testing.T) {
+	data0 := []Entry{}
+	data1 := []Entry{EntryInt(16)}
+	data4 := []Entry{
+		EntryBool(true),
+		EntryInt(1),
+		EntryInt(4),
+		EntryString("two"),
+	}
+	data5 := []Entry{
+		EntryInt(1),
+		EntryString("two"),
+		EntryBool(true),
+		EntryInt(4),
+		EntryString("five"),
+	}
+
+	generateStream := func(data []Entry) chan Entry {
+		c := make(chan Entry)
+		go func() {
+			defer close(c)
+			for _, e := range data {
+				c <- e
+			}
+		}()
+		return c
+	}
+
+	type fields struct {
+		stream chan Entry
+	}
+	type args struct {
+		slice []Entry
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   bool
+	}{
+		{
+			name:   "Should not match with a nil channel",
+			fields: fields{stream: nil},
+			args:   args{slice: data1},
+			want:   false,
+		},
+		{
+			name:   "Should not match with an empty stream",
+			fields: fields{stream: generateStream(data0)},
+			args:   args{slice: data1},
+			want:   false,
+		},
+		{
+			name:   "Should not match with an empty stream",
+			fields: fields{stream: generateStream(data0)},
+			args:   args{slice: data0},
+			want:   false,
+		},
+		{
+			name:   "Should not match when stream size is less than slice to compare even when the elements match",
+			fields: fields{stream: generateStream(data5[:3])},
+			args:   args{slice: data5},
+			want:   false,
+		},
+		{
+			name:   "Should match when stream size and data matches slice to compare",
+			fields: fields{stream: generateStream(data5)},
+			args:   args{slice: data5},
+			want:   true,
+		},
+		{
+			name:   "Should not match when stream does not end with slice to compare",
+			fields: fields{stream: generateStream(data5)},
+			args:   args{slice: data4},
+			want:   false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := Stream{
+				stream: tt.fields.stream,
+			}
+			assert.Equal(t, tt.want, s.EndsWith(tt.args.slice))
+		})
+	}
+}
+
+func TestStream_HeadX_PanicsWhenNilChannel(t *testing.T) {
+	assert.PanicsWithValue(t, PanicMissingChannel, func() { Stream{nil}.HeadN(1) })
+	assert.PanicsWithValue(t, PanicMissingChannel, func() { Stream{nil}.Head() })
+}
+
+func TestStream_HeadX_PanicsWhenEmptyChannel(t *testing.T) {
+	emptyStream := func() chan Entry {
+		c := make(chan Entry)
+		go func() {
+			defer close(c)
+		}()
+		return c
+	}
+
+	assert.PanicsWithValue(t, PanicNoSuchElement, func() { NewStream(emptyStream()).HeadN(1) })
+	assert.PanicsWithValue(t, PanicNoSuchElement, func() { NewStream(emptyStream()).Head() })
+}
+
+func TestStream_HeadNWithInvalidArgumentPanics(t *testing.T) {
+	tests := []struct {
+		name      string
+		n         uint64
+		wantPanic bool
+	}{
+		{
+			name:      "Should panic when N is less than 1",
+			n:         0,
+			wantPanic: true,
+		},
+		{
+			name:      "Should not panic when N is 1",
+			n:         1,
+			wantPanic: false,
+		},
+	}
+
+	populatedStream := func() chan Entry {
+		c := make(chan Entry)
+		go func() {
+			defer close(c)
+			c <- EntryString("joy")
+		}()
+		return c
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := Stream{
+				stream: populatedStream(),
+			}
+			if tt.wantPanic {
+				assert.PanicsWithValue(t, PanicNoSuchElement, func() { s.HeadN(tt.n) })
+			} else {
+				assert.NotPanics(t, func() { s.HeadN(tt.n) })
+			}
+		})
+	}
+}
+
+func TestStream_HeadN(t *testing.T) {
+	data := []Entry{
+		EntryString("one"),
+		EntryString("two"),
+		EntryString("thee"),
+		EntryString("four"),
+		EntryString("five"),
+	}
+
+	largeData := []Entry{}
+	for i := 1; i < 1e5; i++ {
+		largeData = append(largeData, EntryInt(i))
+	}
+
+	populatedStream := func(slice []Entry) chan Entry {
+		c := make(chan Entry)
+		go func() {
+			defer close(c)
+			for _, val := range slice {
+				c <- val
+			}
+		}()
+		return c
+	}
+
+	type fields struct {
+		stream chan Entry
+	}
+	type args struct {
+		n uint64
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   []Entry
+	}{
+		{
+			name: "Should return the first n elements when the stream is longer",
+			fields: fields{
+				stream: populatedStream(data),
+			},
+			args: args{2},
+			want: data[:2],
+		},
+		{
+			name: "Should return all the elements when the stream is shorter",
+			fields: fields{
+				stream: populatedStream(data),
+			},
+			args: args{2e3},
+			want: data,
+		},
+		{
+			name: "Should return the first n elements when the stream is significantly larger",
+			fields: fields{
+				stream: populatedStream(largeData),
+			},
+			args: args{2e3},
+			want: largeData[:2e3],
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := Stream{
+				stream: tt.fields.stream,
+			}
+			got := s.HeadN(tt.args.n)
+			assert.EqualValues(t, tt.want, got)
+		})
+	}
+}
+
+func TestStream_StartsWith(t *testing.T) {
+	data0 := []Entry{}
+	data1 := []Entry{EntryInt(16)}
+	data4 := []Entry{
+		EntryBool(true),
+		EntryInt(1),
+		EntryInt(4),
+		EntryString("two"),
+	}
+	data5 := []Entry{
+		EntryInt(1),
+		EntryString("two"),
+		EntryBool(true),
+		EntryInt(4),
+		EntryString("five"),
+	}
+
+	generateStream := func(data []Entry) chan Entry {
+		c := make(chan Entry)
+		go func() {
+			defer close(c)
+			for _, e := range data {
+				c <- e
+			}
+		}()
+		return c
+	}
+
+	type fields struct {
+		stream chan Entry
+	}
+	type args struct {
+		slice []Entry
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   bool
+	}{
+		{
+			name:   "Should not match with a nil channel",
+			fields: fields{stream: nil},
+			args:   args{slice: data1},
+			want:   false,
+		},
+		{
+			name:   "Should not match with an empty stream",
+			fields: fields{stream: generateStream(data0)},
+			args:   args{slice: data1},
+			want:   false,
+		},
+		{
+			name:   "Should not match with an empty stream",
+			fields: fields{stream: generateStream(data0)},
+			args:   args{slice: data0},
+			want:   false,
+		},
+		{
+			name:   "Should not match when stream size is less than slice to compare even when the elements match",
+			fields: fields{stream: generateStream(data5[:3])},
+			args:   args{slice: data5},
+			want:   false,
+		},
+		{
+			name:   "Should match when stream size and data matches slice to compare",
+			fields: fields{stream: generateStream(data5)},
+			args:   args{slice: data5},
+			want:   true,
+		},
+		{
+			name:   "Should not match when stream does not end with slice to compare",
+			fields: fields{stream: generateStream(data5)},
+			args:   args{slice: data4},
+			want:   false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := Stream{
+				stream: tt.fields.stream,
+			}
+			assert.Equal(t, tt.want, s.StartsWith(tt.args.slice))
+		})
+	}
+}

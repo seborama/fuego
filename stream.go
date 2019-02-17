@@ -173,7 +173,6 @@ func (s Stream) GroupBy(classifier Function) EntryMap {
 // **Distinct()
 // **DropRight(uint64) - drops the last n elements of the Stream. Only meaningful if the Stream is closed.
 // FilterNot(Predicate) - <=> to Filter(Not(Predicate))
-// **EndsWith([]Entry) - Tests whether this Stream ends with the []Entry
 // Peek(Consumer) - Like ForEach but returns Stream as it was at the point of Peek
 // Limit(uint64) - Returns a Stream consisting of at most n elements.
 // MapToString(ToStringFunction)
@@ -185,8 +184,6 @@ func (s Stream) GroupBy(classifier Function) EntryMap {
 // Collect
 // Contains
 // ContainsAll
-// Head
-// Last
 // Tail
 // Count (as a map reduction operation - is that different to the Count() already implemented?)
 // Fold / FoldLeft
@@ -350,7 +347,7 @@ func (s Stream) LastN(n uint64) []Entry {
 
 	result := []Entry{val}
 
-	count := uint64(0)
+	count := uint64(len(result))
 	flushTrigger := uint64(100)
 	if n > flushTrigger {
 		flushTrigger = n
@@ -370,4 +367,80 @@ func (s Stream) LastN(n uint64) []Entry {
 		return result[uint64(len(result))-n:]
 	}
 	return result
+}
+
+// Head returns the first element in this stream.
+func (s Stream) Head() Entry {
+	return s.HeadN(1)[0]
+}
+
+// HeadN returns the first n elements in this stream.
+func (s Stream) HeadN(n uint64) []Entry {
+	if s.stream == nil {
+		panic(PanicMissingChannel)
+	}
+
+	if n < 1 {
+		panic(PanicNoSuchElement)
+	}
+
+	val, ok := <-s.stream
+	if !ok {
+		panic(PanicNoSuchElement)
+	}
+
+	result := []Entry{val}
+
+	count := uint64(len(result))
+
+	for val = range s.stream {
+		result = append(result, val)
+		if count++; count >= n {
+			break
+		}
+	}
+
+	return result
+}
+
+// EndsWith returns true when this stream ends
+// with the supplied elements.
+func (s Stream) EndsWith(slice []Entry) bool {
+	defer func() {
+		_ = recover()
+	}()
+
+	endElements := s.LastN(uint64(len(slice)))
+	if len(endElements) != len(slice) {
+		return false
+	}
+
+	for idx, el := range slice {
+		if !el.Equal(endElements[idx]) {
+			return false
+		}
+	}
+
+	return true
+}
+
+// StartsWith returns true when this stream starts
+// with the elements in the supplied slice.
+func (s Stream) StartsWith(slice []Entry) bool {
+	defer func() {
+		_ = recover()
+	}()
+
+	startElements := s.HeadN(uint64(len(slice)))
+	if len(startElements) != len(slice) {
+		return false
+	}
+
+	for idx, el := range slice {
+		if !el.Equal(startElements[idx]) {
+			return false
+		}
+	}
+
+	return true
 }

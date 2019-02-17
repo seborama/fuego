@@ -355,6 +355,64 @@ Return a slice of the last N elements of the stream.
 // []Entry{EntryString("two"), EntryString("fourth")}
 ```
 
+#### EndsWith
+
+Return true if the stream ends with the supplied slice of elements.
+
+```go
+ƒ.NewStreamFromSlice([]Entry{
+    EntryString("three"),
+    EntryString("two"),
+    EntryString("fourth"),
+}, 1e3).
+    EndsWith([]Entry{EntryString("two"), EntryString("fourth")})
+// true
+```
+
+#### Head
+
+Returns the first element of the stream.
+
+This is a special case of LastN(1) which returns a single `Entry`.
+
+```go
+ƒ.NewStreamFromSlice([]Entry{
+    EntryString("three"),
+    EntryString("two"),
+    EntryString("fourth"),
+}, 1e3).
+    Head()
+// EntryString("three")
+```
+
+#### HeadN
+
+Return a slice of the first N elements of the stream.
+
+```go
+ƒ.NewStreamFromSlice([]Entry{
+    EntryString("three"),
+    EntryString("two"),
+    EntryString("fourth"),
+}, 1e3).
+    HeadN(2)
+// []Entry{EntryString("three"), EntryString("two")}
+```
+
+#### StartsWith
+
+Return true if the stream starts with the supplied slice of elements.
+
+```go
+ƒ.NewStreamFromSlice([]Entry{
+    EntryString("three"),
+    EntryString("two"),
+    EntryString("fourth"),
+}, 1e3).
+    StartsWith([]Entry{EntryString("three"), EntryString("two")})
+// true
+```
+
 ### IntStream
 
 A Stream of EntryInt.
