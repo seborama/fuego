@@ -28,6 +28,20 @@ func (p Predicate) Or(other Predicate) Predicate {
 	}
 }
 
+// Xor is a composed predicate that represents a short-circuiting logical
+// XOR of two predicates.
+func (p Predicate) Xor(other Predicate) Predicate {
+	return func(t Entry) bool {
+		if p == nil {
+			p = False
+		}
+		if other == nil {
+			other = False
+		}
+		return p.Or(other).And(p.And(other).Negate())(t)
+	}
+}
+
 // Negate is an alias for Not().
 func (p Predicate) Negate() Predicate {
 	return p.Not()

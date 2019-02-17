@@ -2,6 +2,32 @@ package fuego
 
 // TODO: consider two types of streams: CStreams (channel based as shown here) and SStreams (slice based). The former allows for infinite streams and thinner memory usage within the CStream object but lacks performance when the operation requires to deal with the end of the steam (it has to consume all the elements of the steam sequentially). SStreams require the entire data to be stored internally from the onset. However,  slices are seekable and can read from the end or be consumed backwards easily.
 
+// TODO list:
+// Methods with ** require the Stream to be finite and closed (or use a Future, perhaps Future.Stream()?)
+// **Distinct()
+// **DropRight(uint64) - drops the last n elements of the Stream. Only meaningful if the Stream is closed.
+// FilterNot(Predicate) - <=> to Filter(Not(Predicate))
+// Peek(Consumer) - Like ForEach but returns Stream as it was at the point of Peek
+// Limit(uint64) - Returns a Stream consisting of at most n elements.
+// MapToString(ToStringFunction)
+// FlatMap
+// FlatMapToXXX (Int, Uint, etc) => is this the same as FlatMap().MapToXXX()?
+// **Sorted(Comparator)
+// TakeWhile - see DropXXX()?
+// ToSlice
+// Collect
+// Contains
+// ContainsAll
+// Tail
+// Fold / FoldLeft
+// Find / FindLast
+// Zip / Unzip
+// Concat?
+// Range(from, toExclusive)?
+// RangeBy(from,toExclusive, step)?
+// Unfold()
+// Fold()?
+
 // PanicMissingChannel signifies that the Stream is missing a channel.
 const PanicMissingChannel = "stream creation requires a channel"
 
@@ -167,33 +193,6 @@ func (s Stream) GroupBy(classifier Function) EntryMap {
 
 	return resultMap
 }
-
-// TODO list:
-// Methods with ** require the Stream to be finite and closed (or use a Future, perhaps Future.Stream()?)
-// **Distinct()
-// **DropRight(uint64) - drops the last n elements of the Stream. Only meaningful if the Stream is closed.
-// FilterNot(Predicate) - <=> to Filter(Not(Predicate))
-// Peek(Consumer) - Like ForEach but returns Stream as it was at the point of Peek
-// Limit(uint64) - Returns a Stream consisting of at most n elements.
-// MapToString(ToStringFunction)
-// FlatMap
-// FlatMapToXXX (Int, Uint, etc) => is this the same as FlatMap().MapToXXX()?
-// **Sorted(Comparator)
-// TakeWhile - see DropXXX()?
-// ToSlice
-// Collect
-// Contains
-// ContainsAll
-// Tail
-// Count (as a map reduction operation - is that different to the Count() already implemented?)
-// Fold / FoldLeft
-// Find / FindLast
-// Zip / Unzip
-// Concat?
-// Range(from, toExclusive)?
-// RangeBy(from,toExclusive, step)?
-// Unfold()
-// Fold()?
 
 // MapToInt produces an EntryInt stream.
 // This function streams continuously until the in-stream is closed at

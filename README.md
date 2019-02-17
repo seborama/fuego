@@ -488,6 +488,7 @@ A `Predicate` has convenient pre-defined methods:
 - Or
 - And
 - Not
+- Xor
 
 Several pre-defined `Predicate`'s exist too:
 

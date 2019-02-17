@@ -392,3 +392,105 @@ func TestFunctionPredicate(t *testing.T) {
 		})
 	}
 }
+
+func TestXorPredicate(t *testing.T) {
+	type args struct {
+		p1 Predicate
+		p2 Predicate
+		t  Entry
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "Should return false for: true XOR true",
+			args: args{
+				p1: True,
+				p2: True,
+				t:  EntryInt(1),
+			},
+			want: false,
+		},
+		{
+			name: "Should return true for: true XOR false",
+			args: args{
+				p1: True,
+				p2: False,
+				t:  EntryInt(1),
+			},
+			want: true,
+		},
+		{
+			name: "Should return true for: false XOR true",
+			args: args{
+				p1: False,
+				p2: True,
+				t:  EntryInt(1),
+			},
+			want: true,
+		},
+		{
+			name: "Should return false for: false XOR false",
+			args: args{
+				p1: False,
+				p2: False,
+				t:  EntryInt(1),
+			},
+			want: false,
+		},
+		{
+			name: "Should return true for: nil XOR true",
+			args: args{
+				p1: nil,
+				p2: True,
+				t:  EntryInt(1),
+			},
+			want: true,
+		},
+		{
+			name: "Should return true for: true XOR nil",
+			args: args{
+				p1: True,
+				p2: nil,
+				t:  EntryInt(1),
+			},
+			want: true,
+		},
+		{
+			name: "Should return false for: nil XOR false",
+			args: args{
+				p1: nil,
+				p2: False,
+				t:  EntryInt(1),
+			},
+			want: false,
+		},
+		{
+			name: "Should return false for: false XOR nil",
+			args: args{
+				p1: False,
+				p2: nil,
+				t:  EntryInt(1),
+			},
+			want: false,
+		},
+		{
+			name: "Should return false for: nil XOR nil",
+			args: args{
+				p1: nil,
+				p2: nil,
+				t:  EntryInt(1),
+			},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.args.p1.Xor(tt.args.p2)(tt.args.t); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Xor() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
