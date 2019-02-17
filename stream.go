@@ -280,16 +280,13 @@ func (s Stream) NoneMatch(p Predicate) bool {
 
 // Drop the first 'n' elements of this stream and returns a new stream.
 func (s Stream) Drop(n uint64) Stream {
-	if n >= 1 && s.stream != nil {
-		i := uint64(1)
-		for range s.stream {
-			if i >= n {
-				break
-			}
-			i++
+	return s.DropWhile(func() func(e Entry) bool {
+		count := uint64(0)
+		return func(e Entry) bool {
+			count++
+			return count <= n
 		}
-	}
-	return s
+	}())
 }
 
 // DropWhile drops the first elements of this stream while the predicate

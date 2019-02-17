@@ -938,14 +938,14 @@ func TestStream_Drop(t *testing.T) {
 		want   []Entry
 	}{
 		{
-			name: "Should not change the stream when nil channel",
+			name: "Should return an empty stream when nil channel",
 			fields: fields{
 				stream: nil,
 			},
 			args: args{
 				n: 1,
 			},
-			want: nil,
+			want: []Entry{},
 		},
 		{
 			name: "Should not change the stream if n < 1",
