@@ -1295,6 +1295,12 @@ func TestStream_EndsWith(t *testing.T) {
 			want:   true,
 		},
 		{
+			name:   "Should match when the stream ends with the slice to compare",
+			fields: fields{stream: generateStream(data5)},
+			args:   args{slice: data5[3:]},
+			want:   true,
+		},
+		{
 			name:   "Should not match when stream does not end with slice to compare",
 			fields: fields{stream: generateStream(data5)},
 			args:   args{slice: data4},
@@ -1511,6 +1517,12 @@ func TestStream_StartsWith(t *testing.T) {
 			name:   "Should match when stream size and data matches slice to compare",
 			fields: fields{stream: generateStream(data5)},
 			args:   args{slice: data5},
+			want:   true,
+		},
+		{
+			name:   "Should match when stream starts with the slice to compare",
+			fields: fields{stream: generateStream(data5)},
+			args:   args{slice: data5[:3]},
 			want:   true,
 		},
 		{
