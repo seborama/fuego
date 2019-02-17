@@ -67,6 +67,8 @@ Several Entry implementations are provided:
 
 - EntryBool
 - EntryInt
+- EntryFloat
+- EntryString
 - EntryMap
 - EntrySlice
 
