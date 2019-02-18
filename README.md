@@ -72,6 +72,8 @@ Several Entry implementations are provided:
 - EntryMap
 - EntrySlice
 
+Check the code for additional methods each of these may provide.
+
 #### EntryMap
 
 This is a map of `Entry` defined as:
@@ -80,7 +82,9 @@ This is a map of `Entry` defined as:
 type EntryMap map[Entry]EntrySlice
 ```
 
-GroupBy methods use an `EntryMap` to return data.
+Stream.GroupBy use an `EntryMap` to return data.
+
+Note that Collector.GroupingBy offers more flexibility and can be used with `ToEntryMap` or `ToEntrySlice` for example.
 
 It is important to remember that maps are **not** ordered.
 
@@ -582,6 +586,58 @@ func intGreaterThanPredicate(rhs int) ƒ.Predicate {
     }
 }
 ```
+
+### Collector
+
+A `Collector` is a mutable reduction operation, optionally transforming the accumulated result.
+
+Collectors can be combined to express complex operations in a concise manner.
+
+Example:
+
+```go
+    strs := []Entry{
+        EntryString("a"),
+        EntryString("bb"),
+        EntryString("cc"),
+        EntryString("ddd"),
+    }
+
+    NewStreamFromSlice(strs, 1e3).
+        Collect(
+            GroupingBy(
+                stringLength,
+                Mapping(
+                    stringToUpper,
+                    ToEntryMap())))
+// map[1:[A] 2:[BB CC] 3:[DDD]]
+```
+
+#### Available collectors
+
+- GroupingBy:
+
+  ```go
+  GroupingBy(classifier Function, collector Collector) Collector
+  ```
+
+- Mapping:
+
+  ```go
+  Mapping(mapper Function, collector Collector) Collector
+  ```
+
+- ToEntryMap:
+
+  ```go
+  ToEntryMap() Collector
+  ```
+
+- ToEntrySlice:
+
+  ```go
+  ToEntrySlice() Collector
+  ```
 
 ## Known limitations
 

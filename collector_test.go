@@ -30,24 +30,28 @@ func TestNewCollector(t *testing.T) {
 			log.Printf("DEBUG - ForEach: %+v\n", e) // {1=[], 2=[BB, CC], 3=[DDD]}
 		})
 
+	stringLength := func(e Entry) Entry {
+		t2 := Tuple2{
+			E1: e.(EntryString).Len(),
+			E2: e,
+		}
+		return t2
+	}
+
+	stringToUpper := func(e Entry) Entry {
+		return Tuple2{
+			E1: e.(Tuple2).E1,
+			E2: e.(Tuple2).E2.(EntryString).ToUpper(),
+		}
+	}
+
 	result := NewStreamFromSlice(strs, 1e3).
-		Collect(GroupingBy(
-			func(e Entry) Entry {
-				t2 := Tuple2{
-					E1: e.(EntryString).Len(),
-					E2: e,
-				}
-				return t2
-			},
-			Mapping(
-				func(e Entry) Entry {
-					return Tuple2{
-						E1: e.(Tuple2).E1,
-						E2: e.(Tuple2).E2.(EntryString).ToUpper(),
-					}
-				},
-				ToEntryMap(),
-			)))
+		Collect(
+			GroupingBy(
+				stringLength,
+				Mapping(
+					stringToUpper,
+					ToEntryMap())))
 	log.Printf("DEBUG - result: %+v\n", result) // {1=[], 2=[BB, CC], 3=[DDD]}
 
 }
