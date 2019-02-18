@@ -259,6 +259,14 @@ Please refer to [stream_test.go](stream_test.go) for an example that groups numb
 
 Counts the number of elements in the Stream.
 
+#### MapToInt
+
+Maps this stream to an `IntStream`.
+
+#### MapToFloat
+
+Maps this stream to an `FloatStream`.
+
 #### AnyMatch
 
 Returns true if any of the elements in the stream satisfies the Predicate argument.
@@ -484,6 +492,12 @@ Takes the first elements of the stream until the predicate satisfies and returns
     })
 // Stream of []ƒ.Entry{ƒ.EntryString("three"), ƒ.EntryString("two")}
 ```
+
+#### Collect
+
+Applies a `Collector` to this Stream.
+
+It should be noted that this method returns an `interface{}` which enables it to return `Entry` as well as any other Go types.
 
 ### IntStream
 
