@@ -119,6 +119,7 @@ func TestEntrySliceEqual(t *testing.T) {
 }
 
 func TestEntrySlice_Append(t *testing.T) {
+	t.Fail() // TODO: finish these tests
 	type args struct {
 		e Entry
 	}

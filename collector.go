@@ -42,6 +42,21 @@ func Mapping(mapper Function, collector Collector) Collector {
 	return NewCollector(supplier, accumulator, finisher)
 }
 
+func Filtering(predicate Predicate, collector Collector) Collector {
+	supplier := collector.supplier
+
+	accumulator := func(supplier Entry, entry Entry) Entry {
+		if predicate(entry) {
+			return collector.accumulator(supplier, entry)
+		}
+		return supplier
+	}
+
+	finisher := collector.finisher
+
+	return NewCollector(supplier, accumulator, finisher)
+}
+
 func ToEntryMap() Collector {
 	var supplier = func() Entry { // TODO: use chan Entry instead?
 		return EntryMap{}

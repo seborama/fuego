@@ -1,8 +1,9 @@
 package fuego
 
 import (
-	"log"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNewCollector(t *testing.T) {
@@ -12,23 +13,6 @@ func TestNewCollector(t *testing.T) {
 		EntryString("cc"),
 		EntryString("ddd"),
 	}
-
-	NewStreamFromSlice(strs, 1e3).
-		Map(func(e Entry) Entry {
-			return e.(EntryString).ToUpper()
-		}).
-		Filter(func(e Entry) bool {
-			return e.(EntryString).Len() > 1
-		}).
-		GroupBy(
-			func(e Entry) Entry {
-				return e.(EntryString).Len()
-			},
-		).
-		Stream(1e3).
-		ForEach(func(e Entry) {
-			log.Printf("DEBUG - ForEach: %+v\n", e) // {1=[], 2=[BB, CC], 3=[DDD]}
-		})
 
 	stringLength := func(e Entry) Entry {
 		t2 := Tuple2{
@@ -45,13 +29,30 @@ func TestNewCollector(t *testing.T) {
 		}
 	}
 
-	result := NewStreamFromSlice(strs, 1e3).
+	stringLengthGreaterThan := func(i int) Predicate {
+		return func(e Entry) bool {
+			return int(e.(Tuple2).E2.(EntryString).Len()) > i
+		}
+	}
+
+	got := NewStreamFromSlice(strs, 1e3).
 		Collect(
 			GroupingBy(
 				stringLength,
 				Mapping(
 					stringToUpper,
-					ToEntryMap())))
-	log.Printf("DEBUG - result: %+v\n", result) // {1=[], 2=[BB, CC], 3=[DDD]}
+					Filtering(
+						stringLengthGreaterThan(1),
+						ToEntryMap()))))
 
+	expected := EntryMap{
+		EntryInt(1): EntrySlice{},
+		EntryInt(2): EntrySlice{
+			EntryString("BB"),
+			EntryString("CC")},
+		EntryInt(3): EntrySlice{
+			EntryString("DDD")},
+	}
+
+	assert.EqualValues(t, expected, got)
 }

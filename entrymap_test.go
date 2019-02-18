@@ -209,6 +209,7 @@ func TestEntryMap_Stream(t *testing.T) {
 }
 
 func TestEntryMap_Append(t *testing.T) {
+	t.Fail() // TODO: finish these tests
 	type args struct {
 		kv Tuple2
 	}

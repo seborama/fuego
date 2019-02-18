@@ -1913,3 +1913,31 @@ func TestStream_TakeUntil(t *testing.T) {
 		})
 	}
 }
+
+func TestStream_Collect(t *testing.T) {
+	t.Fail() // TODO: finish these tests
+	type fields struct {
+		stream chan Entry
+	}
+	type args struct {
+		c Collector
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   interface{}
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := Stream{
+				stream: tt.fields.stream,
+			}
+			if got := s.Collect(tt.args.c); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Stream.Collect() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
