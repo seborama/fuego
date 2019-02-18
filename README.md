@@ -82,7 +82,7 @@ This is a map of `Entry` defined as:
 type EntryMap map[Entry]EntrySlice
 ```
 
-Stream.GroupBy use an `EntryMap` to return data.
+Stream.GroupBy uses an `EntryMap` to return data.
 
 Note that Collector.GroupingBy offers more flexibility and can be used with `ToEntryMap` or `ToEntrySlice` for example.
 
