@@ -730,6 +730,100 @@ func TestStream_MapToInt(t *testing.T) {
 	}
 }
 
+func TestStream_MapToFloat(t *testing.T) {
+	entryToFloat := func(e Entry) EntryFloat {
+		switch j := e.(type) {
+		case EntryFloat:
+			return j
+		case EntryString:
+			return EntryFloat(j[0])
+		default:
+			return EntryFloat(0xdeadbeef)
+		}
+	}
+
+	type fields struct {
+		stream chan Entry
+	}
+	type args struct {
+		toFloat ToFloatFunction
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   FloatStream
+	}{
+		{
+			name:   "Should map a nil stream to an empty stream of EntryFloat's",
+			fields: fields{stream: nil},
+			args: args{
+				toFloat: entryToFloat,
+			},
+			want: NewFloatStreamFromSlice([]EntryFloat{}, 0),
+		},
+		{
+			name: "Should map a stream of Entry's to a stream of EntryFloat's",
+			fields: fields{stream: func() chan Entry {
+				c := make(chan Entry, 2)
+				go func() {
+					defer close(c)
+					c <- EntryString("a")
+					c <- EntryBool(false)
+					c <- EntryString("b")
+					c <- EntryFloat(-17)
+					c <- EntryString("c")
+				}()
+				return c
+			}()},
+			args: args{
+				toFloat: func(e Entry) EntryFloat {
+					switch j := e.(type) {
+					case EntryFloat:
+						return j
+					case EntryString:
+						return EntryFloat(j[0])
+					default:
+						return EntryFloat(0xdeadbeef)
+					}
+				},
+			},
+			want: NewFloatStreamFromSlice([]EntryFloat{
+				EntryFloat(97),
+				EntryFloat(0xdeadbeef),
+				EntryFloat(98),
+				EntryFloat(-17),
+				EntryFloat(99),
+			}, 0),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := Stream{
+				stream: tt.fields.stream,
+			}
+			gotFloatStream := s.MapToFloat(tt.args.toFloat)
+
+			if !assert.IsType(t, FloatStream{}, gotFloatStream) {
+				t.Errorf("Stream.MapToFloat() did not return type = %T, want FloatStream", gotFloatStream)
+			}
+
+			wantStr := ""
+			for v := range tt.want.stream {
+				wantStr += fmt.Sprintf("%v ", v)
+			}
+			gotStr := ""
+			for v := range gotFloatStream.stream {
+				gotStr += fmt.Sprintf("%v ", v)
+			}
+			if !assert.Equal(t, wantStr, gotStr) {
+				t.Errorf("Stream.MapToFloat() = %v, want %v", gotStr, wantStr)
+			}
+		})
+	}
+}
+
 func TestStream_AnyMatch(t *testing.T) {
 	dataGenerator := func() chan Entry {
 		c := make(chan Entry, 2)

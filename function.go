@@ -14,3 +14,6 @@ type BiFunction func(e1, e2 Entry) Entry
 
 // ToIntFunction that accepts one argument and produces an EntryInt result.
 type ToIntFunction func(e Entry) EntryInt
+
+// ToFloatFunction that accepts one argument and produces an EntryFloat result.
+type ToFloatFunction func(e Entry) EntryFloat

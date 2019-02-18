@@ -212,6 +212,25 @@ func (s Stream) MapToInt(toInt ToIntFunction) IntStream {
 	return NewIntStream(outstream)
 }
 
+// MapToFloat produces an EntryFloat stream.
+// This function streams continuously until the in-stream is closed at
+// which point the out-stream will be closed too.
+func (s Stream) MapToFloat(toFloat ToFloatFunction) FloatStream {
+	outstream := make(chan EntryFloat, cap(s.stream))
+
+	go func() {
+		defer close(outstream) // TODO: add test to confirm the stream gets closed
+		if s.stream == nil {
+			return
+		}
+		for val := range s.stream {
+			outstream <- toFloat(val)
+		}
+	}()
+
+	return NewFloatStream(outstream)
+}
+
 // Count the number of elements in the stream.
 // This is a special case of a reduction and is equivalent to:
 //   s.MapToInt(func(Entry) { return EntryInt(1) }).Sum()
