@@ -1,6 +1,7 @@
 package fuego
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -202,6 +203,38 @@ func TestEntryMap_Stream(t *testing.T) {
 
 			if !assert.ElementsMatch(t, got, tt.want) {
 				t.Errorf("EntryMap.Stream() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestEntryMap_Append(t *testing.T) {
+	type args struct {
+		kv Tuple2
+	}
+	tests := []struct {
+		name string
+		em   EntryMap
+		args args
+		want EntryMap
+	}{
+		{
+			name: "Should do something when map is nil", // TODO: what?
+		},
+		{
+			name: "Should append Tuple2 to map when Tuple2 does not exist and should not modify original map", // TODO: finish
+		},
+		{
+			name: "Should append Tuple2 to map when Tuple2.E1 exists and should not modify original map", // TODO: finish
+		},
+		{
+			name: "Should append Tuple2 to map when Tuple2.E1 does not exist and should not modify original map", // TODO: finish
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.em.Append(tt.args.kv); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("EntryMap.Append() = %v, want %v", got, tt.want)
 			}
 		})
 	}

@@ -61,6 +61,7 @@ func (em EntryMap) Equal(e Entry) bool {
 	return em.Hash() == e.Hash()
 }
 
+// Append a Tuple2 to this EntryMap.
 func (em EntryMap) Append(kv Tuple2) EntryMap {
 	em2 := EntryMap{}
 	for k, v := range em {

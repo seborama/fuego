@@ -1,6 +1,7 @@
 package fuego
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -113,6 +114,35 @@ func TestEntrySliceEqual(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			assert.Equal(t, tt.want, tt.fields.slice1.Equal(tt.fields.slice2))
+		})
+	}
+}
+
+func TestEntrySlice_Append(t *testing.T) {
+	type args struct {
+		e Entry
+	}
+	tests := []struct {
+		name string
+		es   EntrySlice
+		args args
+		want EntrySlice
+	}{
+		{
+			name: "Should do something when map is nil", // TODO: what?
+		},
+		{
+			name: "Should append Entry to slice when Entry does not exist and should not modify original slice", // TODO: finish
+		},
+		{
+			name: "Should append Entry to slice when Entry exists and should not modify original slice", // TODO: finish
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.es.Append(tt.args.e); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("EntrySlice.Append() = %v, want %v", got, tt.want)
+			}
 		})
 	}
 }
