@@ -60,3 +60,13 @@ func (em EntryMap) Equal(e Entry) bool {
 
 	return em.Hash() == e.Hash()
 }
+
+func (em EntryMap) Append(kv Tuple2) EntryMap {
+	em2 := EntryMap{}
+	for k, v := range em {
+		em2[k] = make(EntrySlice, len(v))
+		copy(em2[k], v)
+	}
+	em2[kv.E1] = em2[kv.E1].Append(kv.E2)
+	return em2
+}

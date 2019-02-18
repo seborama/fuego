@@ -505,3 +505,12 @@ func (s Stream) TakeWhile(p Predicate) Stream {
 func (s Stream) TakeUntil(p Predicate) Stream {
 	return s.TakeWhile(p.Negate())
 }
+
+func (s Stream) Collect(c Collector) interface{} {
+	supplier := c.supplier()
+	for e := range s.stream {
+		supplier = c.accumulator(supplier, e)
+	}
+	// TODO add call to finisher, if != nil
+	return supplier
+}
