@@ -4,7 +4,7 @@ package fuego
 type Collector struct {
 	supplier    Getter     // TODO: rename to "Supplier" with a method of "supply"
 	accumulator BiFunction // TODO: this should be a BiConsumer but is it against pure functional design?
-	// combiner BiFunction // this is for joining paralle collectors
+	// combiner BiFunction/BiOperator // this is for joining paralle collectors
 	finisher Function
 }
 

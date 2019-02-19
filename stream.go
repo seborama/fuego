@@ -14,7 +14,6 @@ package fuego
 // FlatMapToXXX (Int, Uint, etc) => is this the same as FlatMap().MapToXXX()?
 // **Sorted(Comparator)
 // ToSlice
-// Collect
 // Contains
 // ContainsAll
 // Tail
@@ -506,6 +505,10 @@ func (s Stream) TakeUntil(p Predicate) Stream {
 	return s.TakeWhile(p.Negate())
 }
 
+// Collect reduces and optionally mutates the stream with the supplied Collector
+// This is a continuous terminal operation and hence expects
+// the producer to close the stream in order to complete (or
+// it will block).
 func (s Stream) Collect(c Collector) interface{} {
 	supplier := c.supplier()
 	for e := range s.stream {
