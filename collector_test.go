@@ -23,15 +23,12 @@ func TestNewCollector(t *testing.T) {
 	}
 
 	stringToUpper := func(e Entry) Entry {
-		return Tuple2{
-			E1: e.(Tuple2).E1,
-			E2: e.(Tuple2).E2.(EntryString).ToUpper(),
-		}
+		return e.(EntryString).ToUpper()
 	}
 
 	stringLengthGreaterThan := func(i int) Predicate {
 		return func(e Entry) bool {
-			return int(e.(Tuple2).E2.(EntryString).Len()) > i
+			return int(e.(EntryString).Len()) > i
 		}
 	}
 

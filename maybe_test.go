@@ -12,7 +12,7 @@ func TestMaybeOf_Nil(t *testing.T) {
 	assert.Exactly(t, MaybeNone(), none)
 }
 
-// entryNil is an Entry for '*int'.
+// entryNil is an Entry for an empty struct.
 type entryNil struct{}
 
 // Hash returns a hash for 'i'.
