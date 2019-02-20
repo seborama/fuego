@@ -22,7 +22,7 @@ func NewCollector(supplier Supplier, accumulator BiFunction, finisher Function) 
 // type Collecting func(MutationCollector) MutationCollector
 
 func GroupingBy(classifier Function, collector Collector) Collector {
-	// resultMap := EntryMap{}
+	resultMap := EntryMap{}
 
 	supplier := collector.supplier
 
@@ -31,7 +31,11 @@ func GroupingBy(classifier Function, collector Collector) Collector {
 		k := classifier(entry)
 		container := collector.accumulator(supplier, entry)
 		log.Printf("DEBUG - GroupingBy - k=%+v - container=%+v\n", k, container)
-		return container
+		resultMap = resultMap.Append(Tuple2{
+			E1: k,
+			E2: container,
+		})
+		return resultMap
 	}
 
 	finisher := collector.finisher
@@ -50,19 +54,6 @@ func Mapping(mapper Function, collector Collector) Collector {
 	finisher := collector.finisher
 
 	return NewCollector(supplier, accumulator, finisher)
-}
-
-// entryNone is an Entry for an empty struct.
-type entryNone struct{}
-
-// Hash returns a hash for 'i'.
-func (i entryNone) Hash() uint32 {
-	return 0
-}
-
-// Equal returns true if 'e' and 'i' are equal.
-func (i entryNone) Equal(e Entry) bool {
-	return e == entryNone{}
 }
 
 func Filtering(predicate Predicate, collector Collector) Collector {
