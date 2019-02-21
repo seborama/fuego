@@ -26,8 +26,6 @@ go get gopkg.in/seborama/fuego.v7
 
 Contributions and feedback are welcome.
 
-As this project is still in early stages, large portions of the code get crafted and thrown away.
-
 For contributions, you must develop in TDD fashion and ideally provide Go testable examples (if meaningful).
 
 ## The Golden rules of the game
@@ -308,6 +306,12 @@ Maps this stream to an `IntStream`.
 #### MapToFloat
 
 Maps this stream to an `FloatStream`.
+
+#### Distinct
+
+Streams the distinct values of this `Stream`.
+
+This operation is costly, both in memory and processing time. Use it sparingly and with buffered channels.
 
 #### AnyMatch
 

@@ -1,25 +1,24 @@
 package fuego
 
+import "fmt"
+
 // TODO: consider two types of streams: CStreams (channel based as shown here) and SStreams (slice based). The former allows for infinite streams and thinner memory usage within the CStream object but lacks performance when the operation requires to deal with the end of the steam (it has to consume all the elements of the steam sequentially). SStreams require the entire data to be stored internally from the onset. However,  slices are seekable and can read from the end or be consumed backwards easily.
 
 // TODO: a stream should probably be marked as invalid after most (or all?) operations on it because the channel will have likely changed state.
 
 // TODO list:
 // Methods with ** require the Stream to be finite and closed (or use a Future, perhaps Future.Stream()?)
-// **Distinct()
 // **DropRight(uint64) - drops the last n elements of the Stream. Only meaningful if the Stream is closed.
 // FilterNot(Predicate) - <=> to Filter(Not(Predicate))
 // Peek(Consumer) - Like ForEach but returns Stream as it was at the point of Peek
 // Limit(uint64) - Returns a Stream consisting of at most n elements.
 // MapToString(ToStringFunction)
-// FindAny / FindFirst?
 // FlatMapToXXX (Int, Uint, etc) => is this the same as FlatMap().MapToXXX()?
 // **Sorted(Comparator)
 // Contains
 // ContainsAll
 // Tail
 // Fold / FoldLeft
-// Find / FindLast
 // Zip / Unzip
 // Concat?
 // Range(from, toExclusive)?
@@ -563,4 +562,35 @@ func (s Stream) ToSlice() EntrySlice {
 		}
 	}
 	return result
+}
+
+// Distinct returns a stream of the distinct elements of
+// this stream.
+// This operation is costly both in time and in memory. It is
+// strongly recommended to use buffered channels for this operation.
+// This function streams continuously until the in-stream is closed at
+// which point the out-stream will be closed too.
+func (s Stream) Distinct() Stream {
+	if s.stream == nil {
+		panic(PanicMissingChannel)
+	}
+
+	outstream := make(chan Entry, cap(s.stream))
+
+	go func() {
+		defer close(outstream) // TODO: add test to confirm the stream gets closed
+
+		unique := map[uint32]string{}
+
+		for val := range s.stream {
+			hash := val.Hash()
+			valType := fmt.Sprintf("%T", val)[6:] // remove "fuego." prefix
+			if eType, isset := unique[hash]; !isset || (isset && eType != valType) {
+				unique[hash] = valType
+				outstream <- val
+			}
+		}
+	}()
+
+	return NewStream(outstream)
 }

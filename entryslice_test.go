@@ -7,7 +7,7 @@ import (
 )
 
 func TestEntrySlice(t *testing.T) {
-	t.Log(EntrySlice(EntrySlice{}))
+	t.Log(EntrySlice{})
 }
 
 func TestEntrySliceHash(t *testing.T) {

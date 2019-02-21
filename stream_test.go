@@ -2245,3 +2245,81 @@ func TestStream_ToSlice(t *testing.T) {
 		})
 	}
 }
+
+func TestStream_DistinctPanicsWhenNilChannel(t *testing.T) {
+	assert.PanicsWithValue(t, PanicMissingChannel, func() { Stream{nil}.Distinct() })
+}
+
+func TestStream_Distinct(t *testing.T) {
+	data5 := EntrySlice{
+		EntryInt(1),
+		EntryString("two"),
+		EntryBool(true),
+		EntryInt(4),
+		EntryString("five"),
+	}
+
+	data10 := EntrySlice{
+		EntryInt(1),
+		EntryString("five"),
+		EntryString("two"),
+		EntryInt(1),
+		EntryString("five"),
+		EntryString("five"),
+		EntryBool(true),
+		EntryInt(4),
+		EntryBool(false),
+		EntryString("five"),
+	}
+
+	generateStream := func(data EntrySlice) chan Entry {
+		c := make(chan Entry, 200)
+		go func() {
+			defer close(c)
+			for _, e := range data {
+				c <- e
+			}
+		}()
+		return c
+	}
+
+	type fields struct {
+		stream chan Entry
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   Stream
+	}{
+		{
+			name: "Should return same values when the in-stream has distinct values",
+			fields: fields{
+				stream: generateStream(data5),
+			},
+			want: NewStreamFromSlice(data5, 0),
+		},
+		{
+			name: "Should return distinct values when the in-stream has repeat values",
+			fields: fields{
+				stream: generateStream(data10),
+			},
+			want: NewStreamFromSlice(EntrySlice{
+				EntryInt(1),
+				EntryString("five"),
+				EntryString("two"),
+				EntryBool(true),
+				EntryInt(4),
+				EntryBool(false),
+			}, 0),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := Stream{
+				stream: tt.fields.stream,
+			}
+			got := s.Distinct().ToSlice()
+			assert.EqualValues(t, tt.want.ToSlice(), got)
+		})
+	}
+}
