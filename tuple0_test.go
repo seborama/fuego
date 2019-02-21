@@ -84,12 +84,12 @@ func TestTuple0_ToSlice(t *testing.T) {
 	tests := []struct {
 		name string
 		t    Tuple0
-		want []Entry
+		want EntrySlice
 	}{
 		{
 			name: "Should return empty set for Tuple0",
 			t:    Tuple0{},
-			want: []Entry{},
+			want: EntrySlice{},
 		},
 	}
 	for _, tt := range tests {

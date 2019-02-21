@@ -231,7 +231,7 @@ func TestTuple2_ToSlice(t *testing.T) {
 	tests := []struct {
 		name   string
 		fields fields
-		want   []Entry
+		want   EntrySlice
 	}{
 		{
 			name: "Should return 2-set with value",
@@ -239,7 +239,7 @@ func TestTuple2_ToSlice(t *testing.T) {
 				E1: EntryString("hi"),
 				E2: EntryString("bye"),
 			},
-			want: []Entry{
+			want: EntrySlice{
 				EntryString("hi"),
 				EntryString("bye")},
 		},

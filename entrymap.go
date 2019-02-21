@@ -4,8 +4,8 @@ import (
 	"sort"
 )
 
-// EntryMap is an Entry for 'map[Entry]EntrySlice'.
-type EntryMap map[Entry]EntrySlice
+// EntryMap is an Entry for 'map[Entry]Entry'.
+type EntryMap map[Entry]Entry
 
 // Stream returns a stream of tuples the elements of the EntryMap.
 func (em EntryMap) Stream(bufsize int) Stream {
@@ -59,4 +59,9 @@ func (em EntryMap) Equal(e Entry) bool {
 	}
 
 	return em.Hash() == e.Hash()
+}
+
+// Len returns the number of Entries in this EntryMap.
+func (em EntryMap) Len() int {
+	return len(em)
 }

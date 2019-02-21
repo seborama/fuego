@@ -91,3 +91,65 @@ func TestEntryString_Len(t *testing.T) {
 		})
 	}
 }
+
+func TestEntryString_Equal(t *testing.T) {
+	type args struct {
+		e Entry
+	}
+	tests := []struct {
+		name string
+		es   EntryString
+		args args
+		want bool
+	}{
+		{
+			name: "Should return true when string is empty and other string is nil",
+			es:   EntryString(""),
+			args: args{e: nil},
+			want: false,
+		},
+		{
+			name: "Should return true when string is not empty and other string is nil",
+			es:   EntryString("hi"),
+			args: args{e: nil},
+			want: false,
+		},
+		{
+			name: "Should return true when both strings are empty",
+			es:   EntryString(""),
+			args: args{e: EntryString("")},
+			want: true,
+		},
+		{
+			name: "Should return false when one string is not empty",
+			es:   EntryString(""),
+			args: args{e: EntryString("one")},
+			want: false,
+		},
+		{
+			name: "Should return false when other string is not empty",
+			es:   EntryString("one"),
+			args: args{e: EntryString("")},
+			want: false,
+		},
+		{
+			name: "Should return true when both strings are non empty and equal",
+			es:   EntryString("one"),
+			args: args{e: EntryString("one")},
+			want: true,
+		},
+		{
+			name: "Should return false when both strings are non empty and differ",
+			es:   EntryString("one"),
+			args: args{e: EntryString("two")},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.es.Equal(tt.args.e); got != tt.want {
+				t.Errorf("EntryString.Equal() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

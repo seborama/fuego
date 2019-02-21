@@ -35,18 +35,6 @@ func TestEntryStringKey(t *testing.T) {
 	assert.Equal(t, uint32(0x4a17b156), EntryString("Hello World").Hash())
 }
 
-// isEvenNumber is a Predicate for even numbers.
-// func isEvenNumber(t ƒ.Entry) bool {
-// 	k := (t.(ƒ.MapEntry)).K
-// 	return int(k.(EntryInt))&1 == 0
-// }
-
-// isOddNumber is a Predicate for odd numbers.
-// func isOddNumber(t ƒ.Entry) bool {
-// 	v := t.(EntryInt)
-// 	return v&1 == 0
-// }
-
 // concatenateStringsBiFunc returns a ƒ.BiFunction that
 // joins 'i' and 'j' together with a '-' in between.
 func concatenateStringsBiFunc(i, j ƒ.Entry) ƒ.Entry {

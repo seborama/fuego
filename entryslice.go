@@ -32,3 +32,13 @@ func (es EntrySlice) Equal(e Entry) bool {
 
 	return es.Hash() == e.Hash()
 }
+
+// Append an Entry to this EntrySlice
+func (es EntrySlice) Append(e Entry) EntrySlice {
+	return EntrySlice(append(es, e))
+}
+
+// Len returns the number of Entries in this EntrySlice.
+func (es EntrySlice) Len() int {
+	return len(es)
+}

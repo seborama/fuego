@@ -146,12 +146,12 @@ func TestTuple1_ToSlice(t *testing.T) {
 	tests := []struct {
 		name   string
 		fields fields
-		want   []Entry
+		want   EntrySlice
 	}{
 		{
 			name:   "Should return 1-set with value",
 			fields: fields{E1: EntryString("hi")},
-			want:   []Entry{EntryString("hi")},
+			want:   EntrySlice{EntryString("hi")},
 		},
 	}
 	for _, tt := range tests {

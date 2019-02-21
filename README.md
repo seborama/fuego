@@ -32,7 +32,7 @@ For contributions, you must develop in TDD fashion and ideally provide Go testab
 
 ## The Golden rules of the game
 
-1- Producers close their channel. In other words, when you create a channel, you are responsible for closing it. Similarly, whenever fuego creates a channel, it is responsible for closing it.
+1- Producers close their channel. In other words, when you create a channel, you are responsible for closing it. Similarly, whenever **fuego** creates a channel, it is responsible for closing it.
 
 2- Consumers do not close channels.
 
@@ -72,6 +72,8 @@ Several Entry implementations are provided:
 - EntryMap
 - EntrySlice
 
+Check the code for additional methods each of these may provide.
+
 #### EntryMap
 
 This is a map of `Entry` defined as:
@@ -80,7 +82,9 @@ This is a map of `Entry` defined as:
 type EntryMap map[Entry]EntrySlice
 ```
 
-GroupBy methods use an `EntryMap` to return data.
+Stream.GroupBy uses an `EntryMap` to return data.
+
+Note that Collector.GroupingBy offers more flexibility and can be used with `ToEntryMap` or `ToEntrySlice` for example.
 
 It is important to remember that maps are **not** ordered.
 
@@ -102,13 +106,13 @@ When the value is `nil`, `Maybe` is considered empty unless it was created with 
 
 ### Tuple
 
-fuego provides these `Tuple`'s:
+**fuego** provides these `Tuple`'s:
 
 - Tuple0
 - Tuple1
 - Tuple2
 
-The values of fuego `Tuples` are  of type `Entry`.
+The values of **fuego** `Tuples` are  of type `Entry`.
 
 ### Consumer
 
@@ -157,7 +161,7 @@ Note that 'nil' channels are prohibited.
 
 **NOTE:**
 
-Concurrent streams are challenging to implement owing to ordering issues in parallel processing. At the moment, the view is that the most sensible approach is to delegate control to users. Multiple fuego streams can be created and data distributed across as desired. This empowers users of fuego to implement the desired behaviour of their pipelines.
+Concurrent streams are challenging to implement owing to ordering issues in parallel processing. At the moment, the view is that the most sensible approach is to delegate control to users. Multiple **fuego** streams can be created and data distributed across as desired. This empowers users of **fuego** to implement the desired behaviour of their pipelines.
 
 #### Creation
 
@@ -254,6 +258,14 @@ Please refer to [stream_test.go](stream_test.go) for an example that groups numb
 #### Count
 
 Counts the number of elements in the Stream.
+
+#### MapToInt
+
+Maps this stream to an `IntStream`.
+
+#### MapToFloat
+
+Maps this stream to an `FloatStream`.
 
 #### AnyMatch
 
@@ -481,6 +493,34 @@ Takes the first elements of the stream until the predicate satisfies and returns
 // Stream of []ƒ.Entry{ƒ.EntryString("three"), ƒ.EntryString("two")}
 ```
 
+#### Collect
+
+Applies a `Collector` to this Stream.
+
+It should be noted that this method returns an `interface{}` which enables it to return `Entry` as well as any other Go types.
+
+Example:
+
+```go
+    strs := EntrySlice{
+        EntryString("a"),
+        EntryString("bb"),
+        EntryString("cc"),
+        EntryString("ddd"),
+    }
+
+    NewStreamFromSlice(strs, 1e3).
+        Collect(
+            GroupingBy(
+                stringLength,
+                Mapping(
+                    stringToUpper,
+                    Filtering(
+                        stringLengthGreaterThan(1),
+                        ToEntrySlice()))))
+    // map[1:[] 2:[BB CC] 3:[DDD]]
+```
+
 ### IntStream
 
 A Stream of EntryInt.
@@ -582,6 +622,68 @@ func intGreaterThanPredicate(rhs int) ƒ.Predicate {
     }
 }
 ```
+
+### Collector
+
+A `Collector` is a mutable reduction operation, optionally transforming the accumulated result.
+
+Collectors can be combined to express complex operations in a concise manner.
+
+In other words, a collector allows creating custom actions on a Stream. **fuego** comes shipped with a number of methods such as `MapToInt`, `Head`, `LastN`, `Filter`, etc, and Collectors also provide a few additional methods. But what if you need something else? And it is straighforward or readable when combining the existing methods **fuego** offers? Enters `Collector`: implement you own requirement functionally! Focus on `what` needs to be done in your streams (and delegate the details of the `how` to the implementation of your `Collector`).
+
+It should be noted that the `finisher` function is optional (i.e. it may acceptably be `nil`).
+
+Example:
+
+```go
+    strs := EntrySlice{
+        EntryString("a"),
+        EntryString("bb"),
+        EntryString("cc"),
+        EntryString("ddd"),
+    }
+
+    NewStreamFromSlice(strs, 1e3).
+        Collect(
+            GroupingBy(
+                stringLength,
+                Mapping(
+                    stringToUpper,
+                    ToEntryMap())))
+// map[1:[A] 2:[BB CC] 3:[DDD]]
+```
+
+#### Available collectors
+
+- GroupingBy:
+
+  ```go
+  GroupingBy(classifier Function, collector Collector) Collector
+  ```
+
+- Mapping:
+
+  ```go
+  Mapping(mapper Function, collector Collector) Collector
+  ```
+
+- Filtering:
+
+  ```go
+  Mapping(mapper Function, collector Collector) Collector
+  ```
+
+- ToEntrySlice:
+
+  ```go
+  ToEntrySlice() Collector
+  ```
+
+#### Available finishers
+
+- IdentityFinisher
+
+  This is a basic finisher that returns its input unchanged.
 
 ## Known limitations
 
