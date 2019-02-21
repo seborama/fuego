@@ -499,7 +499,7 @@ Applies a `Collector` to this Stream.
 
 It should be noted that this method returns an `interface{}` which enables it to return `Entry` as well as any other Go types.
 
-Examnple:
+Example:
 
 ```go
     strs := EntrySlice{
