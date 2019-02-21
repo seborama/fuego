@@ -1,7 +1,9 @@
 package fuego
 
 // NOTICE:
-// The code in this file was inspired by Java Collectors, Vavr and somewhat Scala.
+// The code in this file was inspired by Java Collectors,
+// Vavr and somewhat Scala.
+// Many thanks to those great projects!
 
 // TODO: evolve towards a go-style decorator pattern?
 type Collector struct {
