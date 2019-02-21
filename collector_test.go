@@ -6,8 +6,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNewCollector(t *testing.T) {
-	strs := []Entry{
+func TestCollector_GroupingBy_Mapping_Filtering_ToEntrySlice(t *testing.T) {
+	strs := EntrySlice{
 		EntryString("a"),
 		EntryString("bb"),
 		EntryString("cc"),
@@ -15,11 +15,7 @@ func TestNewCollector(t *testing.T) {
 	}
 
 	stringLength := func(e Entry) Entry {
-		t2 := Tuple2{
-			E1: e.(EntryString).Len(),
-			E2: e,
-		}
-		return t2
+		return e.(EntryString).Len()
 	}
 
 	stringToUpper := func(e Entry) Entry {
@@ -40,7 +36,7 @@ func TestNewCollector(t *testing.T) {
 					stringToUpper,
 					Filtering(
 						stringLengthGreaterThan(1),
-						ToEntryMap()))))
+						ToEntrySlice()))))
 
 	expected := EntryMap{
 		EntryInt(1): EntrySlice{},

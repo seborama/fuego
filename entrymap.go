@@ -4,8 +4,8 @@ import (
 	"sort"
 )
 
-// EntryMap is an Entry for 'map[Entry]EntrySlice'.
-type EntryMap map[Entry]EntrySlice
+// EntryMap is an Entry for 'map[Entry]Entry'.
+type EntryMap map[Entry]Entry
 
 // Stream returns a stream of tuples the elements of the EntryMap.
 func (em EntryMap) Stream(bufsize int) Stream {
@@ -61,13 +61,7 @@ func (em EntryMap) Equal(e Entry) bool {
 	return em.Hash() == e.Hash()
 }
 
-// Append a Tuple2 to this EntryMap.
-func (em EntryMap) Append(kv Tuple2) EntryMap {
-	em2 := EntryMap{}
-	for k, v := range em {
-		em2[k] = make(EntrySlice, len(v))
-		copy(em2[k], v)
-	}
-	em2[kv.E1] = em2[kv.E1].Append(kv.E2)
-	return em2
+// Len returns the number of Entries in this EntryMap.
+func (em EntryMap) Len() int {
+	return len(em)
 }

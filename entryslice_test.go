@@ -1,14 +1,13 @@
 package fuego
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestEntrySlice(t *testing.T) {
-	t.Log(EntrySlice([]Entry{}))
+	t.Log(EntrySlice(EntrySlice{}))
 }
 
 func TestEntrySliceHash(t *testing.T) {
@@ -119,7 +118,6 @@ func TestEntrySliceEqual(t *testing.T) {
 }
 
 func TestEntrySlice_Append(t *testing.T) {
-	t.Fail() // TODO: finish these tests
 	type args struct {
 		e Entry
 	}
@@ -130,19 +128,94 @@ func TestEntrySlice_Append(t *testing.T) {
 		want EntrySlice
 	}{
 		{
-			name: "Should do something when map is nil", // TODO: what?
+			name: "Should append entry when slice is nil",
+			es:   nil,
+			args: args{
+				e: EntryInt(1),
+			},
+			want: EntrySlice{EntryInt(1)},
 		},
 		{
-			name: "Should append Entry to slice when Entry does not exist and should not modify original slice", // TODO: finish
+			name: "Should append Entry to slice when Entry does not exist and should not modify original slice",
+			es: EntrySlice{
+				EntryInt(2),
+				EntryInt(3),
+			},
+			args: args{
+				e: EntryInt(1),
+			},
+			want: EntrySlice{
+				EntryInt(2),
+				EntryInt(3),
+				EntryInt(1),
+			},
 		},
 		{
-			name: "Should append Entry to slice when Entry exists and should not modify original slice", // TODO: finish
+			name: "Should append Entry to slice when Entry exists and should not modify original slice",
+			es: EntrySlice{
+				EntryInt(2),
+				EntryInt(3),
+			},
+			args: args{
+				e: EntryInt(3),
+			},
+			want: EntrySlice{
+				EntryInt(2),
+				EntryInt(3),
+				EntryInt(3),
+			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.es.Append(tt.args.e); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("EntrySlice.Append() = %v, want %v", got, tt.want)
+			original := make(EntrySlice, tt.es.Len())
+			if tt.es == nil {
+				original = nil
+			} else {
+				copy(original, tt.es)
+			}
+			got := tt.es.Append(tt.args.e)
+			assert.EqualValues(t, tt.want, got, "unexpected Append() behaviour")
+			assert.EqualValues(t, original, tt.es, "original slice was not preserved")
+		})
+	}
+}
+
+func TestEntrySlice_Len(t *testing.T) {
+	tests := []struct {
+		name string
+		es   EntrySlice
+		want int
+	}{
+		{
+			name: "Should return 0 for nil slice",
+			es:   nil,
+			want: 0,
+		},
+		{
+			name: "Should return 0 for empty slice",
+			es:   EntrySlice{},
+			want: 0,
+		},
+		{
+			name: "Should return 1 for slice of 1 Entry",
+			es:   EntrySlice{EntryInt(123)},
+			want: 1,
+		},
+		{
+			name: "Should return 3 for slice of 3 Entries",
+			es: EntrySlice{
+				EntryInt(123),
+				EntryInt(12),
+				EntryInt(3),
+			},
+			want: 3,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.es.Len(); got != tt.want {
+				t.Errorf("EntrySlice.Len() = %v, want %v", got, tt.want)
 			}
 		})
 	}

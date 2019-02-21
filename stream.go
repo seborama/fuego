@@ -2,6 +2,8 @@ package fuego
 
 // TODO: consider two types of streams: CStreams (channel based as shown here) and SStreams (slice based). The former allows for infinite streams and thinner memory usage within the CStream object but lacks performance when the operation requires to deal with the end of the steam (it has to consume all the elements of the steam sequentially). SStreams require the entire data to be stored internally from the onset. However,  slices are seekable and can read from the end or be consumed backwards easily.
 
+// TODO: a stream should probably be marked as invalid after most (or all?) operations on it because the channel will have likely changed state.
+
 // TODO list:
 // Methods with ** require the Stream to be finite and closed (or use a Future, perhaps Future.Stream()?)
 // **Distinct()
@@ -10,6 +12,7 @@ package fuego
 // Peek(Consumer) - Like ForEach but returns Stream as it was at the point of Peek
 // Limit(uint64) - Returns a Stream consisting of at most n elements.
 // MapToString(ToStringFunction)
+// FindAny / FindFirst?
 // FlatMap
 // FlatMapToXXX (Int, Uint, etc) => is this the same as FlatMap().MapToXXX()?
 // **Sorted(Comparator)
@@ -50,7 +53,7 @@ func NewStream(c chan Entry) Stream {
 // NewStreamFromSlice creates a new Stream from a Go slice.
 // The slice data is published to the stream after which the
 // stream is closed.
-func NewStreamFromSlice(slice []Entry, bufsize int) Stream {
+func NewStreamFromSlice(slice EntrySlice, bufsize int) Stream {
 	c := make(chan Entry, bufsize)
 
 	go func() {
@@ -185,7 +188,11 @@ func (s Stream) GroupBy(classifier Function) EntryMap {
 	if s.stream != nil {
 		for val := range s.stream {
 			k := classifier(val)
-			resultMap[k] = append(resultMap[k], val)
+			if resultMap[k] == nil {
+				resultMap[k] = EntrySlice{}
+			}
+			resultMap[k] = append(resultMap[k].(EntrySlice), val)
+			// TODO?: resultMap = resultMap.Append(Tuple2{k, val})
 		}
 	}
 
@@ -333,7 +340,7 @@ func (s Stream) Last() Entry {
 }
 
 // LastN returns a slice of the last n elements in this stream.
-func (s Stream) LastN(n uint64) []Entry {
+func (s Stream) LastN(n uint64) EntrySlice {
 	if s.stream == nil {
 		panic(PanicMissingChannel)
 	}
@@ -347,7 +354,7 @@ func (s Stream) LastN(n uint64) []Entry {
 		panic(PanicNoSuchElement)
 	}
 
-	result := []Entry{val}
+	result := EntrySlice{val}
 
 	count := uint64(len(result))
 	flushTrigger := uint64(100)
@@ -373,42 +380,32 @@ func (s Stream) LastN(n uint64) []Entry {
 
 // Head returns the first Entry in this stream.
 func (s Stream) Head() Entry {
-	return s.HeadN(1)[0]
+	head := s.HeadN(1)
+	if len(head) != 1 {
+		panic(PanicNoSuchElement)
+	}
+	return head[0]
 }
 
 // HeadN returns a slice of the first n elements in this stream.
-func (s Stream) HeadN(n uint64) []Entry {
+func (s Stream) HeadN(n uint64) EntrySlice {
 	if s.stream == nil {
 		panic(PanicMissingChannel)
 	}
 
-	if n < 1 {
-		panic(PanicNoSuchElement)
-	}
-
-	val, ok := <-s.stream
-	if !ok {
-		panic(PanicNoSuchElement)
-	}
-
-	result := []Entry{val}
-
-	count := uint64(len(result))
-
-	for val = range s.stream {
-		result = append(result, val)
-		if count++; count >= n {
-			break
-		}
-	}
-
-	return result
+	return s.Take(n).Collect(
+		NewCollector(
+			func() Entry { return EntrySlice{} },
+			func(e1, e2 Entry) Entry { return e1.(EntrySlice).Append(e2) },
+			nil,
+		)).(EntrySlice)
 }
 
 // EndsWith returns true when this stream ends
 // with the supplied elements.
-func (s Stream) EndsWith(slice []Entry) bool {
+func (s Stream) EndsWith(slice EntrySlice) bool {
 	defer func() {
+		// TODO: this doesn't look great... Need to re-write LastN like HeadN as a collect of TakeRight (to be implemented)
 		_ = recover()
 	}()
 
@@ -428,13 +425,9 @@ func (s Stream) EndsWith(slice []Entry) bool {
 
 // StartsWith returns true when this stream starts
 // with the elements in the supplied slice.
-func (s Stream) StartsWith(slice []Entry) bool {
-	defer func() {
-		_ = recover()
-	}()
-
-	startElements := s.HeadN(uint64(len(slice)))
-	if len(startElements) != len(slice) {
+func (s Stream) StartsWith(slice EntrySlice) bool {
+	startElements := s.HeadN(uint64(slice.Len()))
+	if slice.Len() == 0 || startElements.Len() != slice.Len() {
 		return false
 	}
 
@@ -452,25 +445,14 @@ func (s Stream) StartsWith(slice []Entry) bool {
 // or the in-stream  is closed at which point the out-stream
 // will be closed too.
 func (s Stream) Take(n uint64) Stream {
-	outstream := make(chan Entry, cap(s.stream))
-
-	go func() {
-		defer close(outstream) // TODO: add test to confirm the stream gets closed
-		if s.stream == nil {
-			return
+	counterIsLessThanOrEqualTo := func(maxCount uint64) Predicate {
+		counter := uint64(0)
+		return func(t Entry) bool {
+			counter++
+			return counter <= maxCount
 		}
-
-		count := uint64(0)
-
-		for val := range s.stream {
-			if count++; count > n {
-				return
-			}
-			outstream <- val
-		}
-	}()
-
-	return NewStream(outstream)
+	}
+	return s.TakeWhile(counterIsLessThanOrEqualTo(n))
 }
 
 // TakeWhile returns a stream of the first elements of this
@@ -478,13 +460,14 @@ func (s Stream) Take(n uint64) Stream {
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 func (s Stream) TakeWhile(p Predicate) Stream {
+	if s.stream == nil {
+		panic(PanicMissingChannel)
+	}
+
 	outstream := make(chan Entry, cap(s.stream))
 
 	go func() {
 		defer close(outstream) // TODO: add test to confirm the stream gets closed
-		if s.stream == nil {
-			return
-		}
 
 		for val := range s.stream {
 			if !p(val) {
@@ -505,15 +488,22 @@ func (s Stream) TakeUntil(p Predicate) Stream {
 	return s.TakeWhile(p.Negate())
 }
 
-// Collect reduces and optionally mutates the stream with the supplied Collector
+// Collect reduces and optionally mutates the stream with
+// the supplied Collector.
 // This is a continuous terminal operation and hence expects
 // the producer to close the stream in order to complete (or
 // it will block).
 func (s Stream) Collect(c Collector) interface{} {
-	supplier := c.supplier()
-	for e := range s.stream {
-		supplier = c.accumulator(supplier, e)
+	if s.stream == nil {
+		panic(PanicMissingChannel)
 	}
-	// TODO add call to finisher, if != nil
-	return supplier
+
+	result := c.supplier()
+	for e := range s.stream {
+		result = c.accumulator(result, e)
+	}
+	if c.finisher != nil {
+		result = c.finisher(result)
+	}
+	return result
 }

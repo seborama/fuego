@@ -499,6 +499,28 @@ Applies a `Collector` to this Stream.
 
 It should be noted that this method returns an `interface{}` which enables it to return `Entry` as well as any other Go types.
 
+Examnple:
+
+```go
+    strs := EntrySlice{
+        EntryString("a"),
+        EntryString("bb"),
+        EntryString("cc"),
+        EntryString("ddd"),
+    }
+
+    NewStreamFromSlice(strs, 1e3).
+        Collect(
+            GroupingBy(
+                stringLength,
+                Mapping(
+                    stringToUpper,
+                    Filtering(
+                        stringLengthGreaterThan(1),
+                        ToEntrySlice()))))
+    // map[1:[] 2:[BB CC] 3:[DDD]]
+```
+
 ### IntStream
 
 A Stream of EntryInt.
@@ -607,10 +629,12 @@ A `Collector` is a mutable reduction operation, optionally transforming the accu
 
 Collectors can be combined to express complex operations in a concise manner.
 
+It should be noted that the `finisher` function is optional (i.e. it may acceptably be `nil`).
+
 Example:
 
 ```go
-    strs := []Entry{
+    strs := EntrySlice{
         EntryString("a"),
         EntryString("bb"),
         EntryString("cc"),
@@ -641,10 +665,10 @@ Example:
   Mapping(mapper Function, collector Collector) Collector
   ```
 
-- ToEntryMap:
+- Filtering:
 
   ```go
-  ToEntryMap() Collector
+  Mapping(mapper Function, collector Collector) Collector
   ```
 
 - ToEntrySlice:
@@ -652,6 +676,12 @@ Example:
   ```go
   ToEntrySlice() Collector
   ```
+
+#### Available finishers
+
+- IdentityFinisher
+
+  This is a basic finisher that returns its input unchanged.
 
 ## Known limitations
 

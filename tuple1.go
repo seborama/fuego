@@ -27,6 +27,6 @@ func (t Tuple1) Arity() int {
 }
 
 // ToSlice returns the elements of this tuple as a Go slice.
-func (t Tuple1) ToSlice() []Entry {
-	return []Entry{t.E1}
+func (t Tuple1) ToSlice() EntrySlice {
+	return EntrySlice{t.E1}
 }

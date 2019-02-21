@@ -1,7 +1,6 @@
 package fuego
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -155,7 +154,7 @@ func TestEntryMap_Stream(t *testing.T) {
 	tests := []struct {
 		name string
 		em   EntryMap
-		want []Entry
+		want EntrySlice
 	}{
 		{
 			name: "Should create a Stream with a nil channel",
@@ -165,7 +164,7 @@ func TestEntryMap_Stream(t *testing.T) {
 		{
 			name: "Should create an empty Stream with an empty channel",
 			em:   EntryMap{},
-			want: []Entry{},
+			want: EntrySlice{},
 		},
 		{
 			name: "Should create a Stream with a populated channel",
@@ -174,7 +173,7 @@ func TestEntryMap_Stream(t *testing.T) {
 				EntryInt(13): EntrySlice{EntryString("thirteen")},
 				EntryInt(28): EntrySlice{EntryString("twenty eight")},
 			},
-			want: []Entry{
+			want: EntrySlice{
 				Tuple2{
 					EntryInt(7),
 					EntrySlice{EntryString("seven"), EntryInt(7)},
@@ -193,9 +192,9 @@ func TestEntryMap_Stream(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var got []Entry
+			var got EntrySlice
 			if gotStream := tt.em.Stream(0).stream; gotStream != nil {
-				got = []Entry{}
+				got = EntrySlice{}
 				for val := range gotStream {
 					got = append(got, val)
 				}
@@ -208,34 +207,44 @@ func TestEntryMap_Stream(t *testing.T) {
 	}
 }
 
-func TestEntryMap_Append(t *testing.T) {
-	t.Fail() // TODO: finish these tests
-	type args struct {
-		kv Tuple2
-	}
+func TestEntryMap_Len(t *testing.T) {
 	tests := []struct {
 		name string
 		em   EntryMap
-		args args
-		want EntryMap
+		want int
 	}{
 		{
-			name: "Should do something when map is nil", // TODO: what?
+			name: "Should return 0 for nil slice",
+			em:   nil,
+			want: 0,
 		},
 		{
-			name: "Should append Tuple2 to map when Tuple2 does not exist and should not modify original map", // TODO: finish
+			name: "Should return 0 for empty slice",
+			em:   EntryMap{},
+			want: 0,
 		},
 		{
-			name: "Should append Tuple2 to map when Tuple2.E1 exists and should not modify original map", // TODO: finish
+			name: "Should return 1 for slice of 1 Entry",
+			em:   EntryMap{EntryInt(1): EntryInt(123)},
+			want: 1,
 		},
 		{
-			name: "Should append Tuple2 to map when Tuple2.E1 does not exist and should not modify original map", // TODO: finish
+			name: "Should return 3 for slice of 3 Entries",
+			em: EntryMap{
+				EntryInt(1): EntrySlice{
+					EntryInt(123),
+					EntryInt(12),
+				},
+				EntryInt(2): EntryInt(3),
+				EntryInt(3): EntryInt(4),
+			},
+			want: 3,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.em.Append(tt.args.kv); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("EntryMap.Append() = %v, want %v", got, tt.want)
+			if got := tt.em.Len(); got != tt.want {
+				t.Errorf("EntryMap.Len() = %v, want %v", got, tt.want)
 			}
 		})
 	}
