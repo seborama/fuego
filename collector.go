@@ -6,6 +6,8 @@ package fuego
 // Many thanks to those great projects!
 
 // TODO: evolve towards a go-style decorator pattern?
+
+// Collector is a reduction with optional mutation.
 type Collector struct {
 	supplier    Supplier
 	accumulator BiFunction // TODO: this should be a BiConsumer but is it against pure functional design?
@@ -13,6 +15,7 @@ type Collector struct {
 	finisher Function
 }
 
+// NewCollector creates a new Collector.
 func NewCollector(supplier Supplier, accumulator BiFunction, finisher Function) Collector {
 	return Collector{
 		supplier:    supplier,
@@ -24,6 +27,8 @@ func NewCollector(supplier Supplier, accumulator BiFunction, finisher Function) 
 // type MutationCollector func(Function, Collector) Collector
 // type Collecting func(MutationCollector) MutationCollector
 
+// GroupingBy groups the elements of the downstream Collector
+// by classifying them with the provided classifier function.
 func GroupingBy(classifier Function, downstream Collector) Collector {
 	supplier := func() Entry { return EntryMap{} }
 
@@ -43,6 +48,7 @@ func GroupingBy(classifier Function, downstream Collector) Collector {
 	return NewCollector(supplier, accumulator, finisher)
 }
 
+// Mapping adapts the Entries a Collector accepts to another type.
 func Mapping(mapper Function, collector Collector) Collector {
 	supplier := collector.supplier
 
@@ -55,6 +61,8 @@ func Mapping(mapper Function, collector Collector) Collector {
 	return NewCollector(supplier, accumulator, finisher)
 }
 
+// Filtering adapts the Entries a Collector accepts to a subset
+// that satisfy the given predicate.
 func Filtering(predicate Predicate, collector Collector) Collector {
 	supplier := collector.supplier
 
@@ -85,6 +93,8 @@ func Filtering(predicate Predicate, collector Collector) Collector {
 // 	return NewCollector(supplier, accumulator, finisher)
 // }
 
+// ToEntrySlice returns a collector that accumulates the input
+// entries into an EntrySlice.
 func ToEntrySlice() Collector {
 	var supplier = func() Entry { // TODO: use chan Entry instead?
 		return EntrySlice{}

@@ -69,7 +69,7 @@ func NewStreamFromSlice(slice EntrySlice, bufsize int) Stream {
 
 // TODO: implement NewStreamFromMap -> Stream of Keys / Stream of Values?
 
-// Map returns a slice of channel of Set consisting of the results of
+// Map returns a Stream consisting of the results of
 // applying the given function to the elements of this stream.
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
@@ -83,6 +83,30 @@ func (s Stream) Map(mapper Function) Stream {
 		}
 		for val := range s.stream {
 			outstream <- mapper(val)
+		}
+	}()
+
+	return Stream{
+		stream: outstream,
+	}
+}
+
+// FlatMap takes a StreamFunction to flatten the entries
+// in this stream and produce a new stream.
+// This function streams continuously until the in-stream is closed at
+// which point the out-stream will be closed too.
+func (s Stream) FlatMap(mapper StreamFunction) Stream {
+	outstream := make(chan Entry, cap(s.stream))
+
+	go func() {
+		defer close(outstream) // TODO: add test to confirm the stream gets closed
+		if s.stream == nil {
+			return
+		}
+		for val := range s.stream {
+			mapper(val).ForEach(func(e Entry) {
+				outstream <- e
+			})
 		}
 	}()
 
@@ -523,6 +547,22 @@ func (s Stream) Collect(c Collector) interface{} {
 	}
 	if c.finisher != nil {
 		result = c.finisher(result)
+	}
+	return result
+}
+
+// ToSlice extracts the elements of the stream into
+// an EntrySlice.
+// This is a special case of a reduction.
+// This is a continuous terminal operation and hence expects
+// the producer to close the stream in order to complete (or
+// it will block).
+func (s Stream) ToSlice() EntrySlice {
+	result := EntrySlice{}
+	if s.stream != nil {
+		for val := range s.stream {
+			result = append(result, val)
+		}
 	}
 	return result
 }

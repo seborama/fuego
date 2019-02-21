@@ -2,7 +2,8 @@ package fuego_test
 
 import (
 	"fmt"
-	ƒ "github.com/seborama/fuego"
+
+	. "github.com/seborama/fuego"
 )
 
 // ExampleFunction shows how to use Function's.
@@ -10,7 +11,7 @@ import (
 // Search for `Function` or the Function signature.
 func ExampleFunction() {
 	timesTwoFunction := timesTwo()
-	res := timesTwoFunction(ƒ.EntryInt(7))
+	res := timesTwoFunction(EntryInt(7))
 	fmt.Printf("res = %+v\n", res)
 
 	// Output:
@@ -21,14 +22,14 @@ func ExampleFunction() {
 // There are more interesting examples through the code.
 // Search for `BiFunction` or the BiFunction signature.
 func ExampleBiFunction() {
-	data := []ƒ.Entry{
+	data := []Entry{
 		EntryString("four"),
 		EntryString("twelve"),
 		EntryString("one"),
 		EntryString("six"),
 		EntryString("three")}
 
-	res := ƒ.NewStreamFromSlice(data, 0).
+	res := NewStreamFromSlice(data, 0).
 		Reduce(concatenateStringsBiFunc)
 
 	fmt.Printf("res = %+v\n", res)

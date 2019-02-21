@@ -2111,3 +2111,137 @@ func TestStream_Collect(t *testing.T) {
 		})
 	}
 }
+
+func TestStream_FlatMap(t *testing.T) {
+	type fields struct {
+		stream chan Entry
+	}
+	type args struct {
+		mapper StreamFunction
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   Stream
+	}{
+		{
+			name: "Should produce an empty stream when in-stream is nil",
+			fields: fields{
+				stream: nil,
+			},
+			args: args{
+				mapper: func(Entry) Stream { return NewStreamFromSlice(EntrySlice{}, 0) },
+			},
+			want: NewStreamFromSlice(EntrySlice{}, 0),
+		},
+		{
+			name: "Should produce an empty stream when in-stream is empty",
+			fields: fields{
+				stream: func() chan Entry {
+					c := make(chan Entry)
+					go func() { defer close(c) }()
+					return c
+				}(),
+			},
+			args: args{
+				mapper: func(Entry) Stream { return NewStreamFromSlice(EntrySlice{}, 0) },
+			},
+			want: NewStreamFromSlice(EntrySlice{}, 0),
+		},
+		{
+			name: "Should produce a flat stream when in-stream is not empty",
+			fields: fields{
+				stream: func() chan Entry {
+					c := make(chan Entry)
+					go func() {
+						defer close(c)
+						c <- EntryInt(1)
+						c <- EntryInt(2)
+						c <- EntryInt(3)
+					}()
+					return c
+				}(),
+			},
+			args: args{
+				mapper: func(e Entry) Stream {
+					return NewStreamFromSlice(EntrySlice{e}, 0)
+				},
+			},
+			want: NewStreamFromSlice(EntrySlice{
+				EntryInt(1),
+				EntryInt(2),
+				EntryInt(3),
+			}, 0),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := Stream{
+				stream: tt.fields.stream,
+			}
+			got := s.FlatMap(tt.args.mapper).ToSlice()
+			expected := tt.want.ToSlice()
+			assert.EqualValues(t, expected, got)
+		})
+	}
+}
+
+func TestStream_ToSlice(t *testing.T) {
+	type fields struct {
+		stream chan Entry
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   EntrySlice
+	}{
+		{
+			name: "Should produce an empty stream when in-stream is nil",
+			fields: fields{
+				stream: nil,
+			},
+			want: EntrySlice{},
+		},
+		{
+			name: "Should produce an empty stream when in-stream is empty",
+			fields: fields{
+				stream: func() chan Entry {
+					c := make(chan Entry)
+					go func() { defer close(c) }()
+					return c
+				}(),
+			},
+			want: EntrySlice{},
+		},
+		{
+			name: "Should produce a flat stream when in-stream is not empty",
+			fields: fields{
+				stream: func() chan Entry {
+					c := make(chan Entry)
+					go func() {
+						defer close(c)
+						c <- EntryInt(1)
+						c <- EntryInt(2)
+						c <- EntryInt(3)
+					}()
+					return c
+				}(),
+			},
+			want: EntrySlice{
+				EntryInt(1),
+				EntryInt(2),
+				EntryInt(3),
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := Stream{
+				stream: tt.fields.stream,
+			}
+			got := s.ToSlice()
+			assert.EqualValues(t, tt.want, got)
+		})
+	}
+}

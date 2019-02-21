@@ -3,6 +3,11 @@ package fuego
 // Function that accepts one argument and produces a result.
 type Function func(e Entry) Entry
 
+// StreamFunction that accepts on argument and produces a stream.
+// This effectively is a one to many operation, such as exploding
+// the individual values of an EntrySlice into a Stream.
+type StreamFunction func(e Entry) Stream
+
 // BiFunction that accepts two arguments and produces a result.
 type BiFunction func(e1, e2 Entry) Entry
 
