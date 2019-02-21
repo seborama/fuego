@@ -135,6 +135,16 @@ A `Function` is a normal Go function which signature is:
 func(i Entry) Entry
 ```
 
+#### StreamFunction
+
+`StreamFunction` accepts one argument and produces a stream.
+
+This effectively is a one to many operation, such as exploding the individual values of an EntrySlice into a Stream.
+
+##### FlattenEntrySliceToEntry
+
+FlattenEntrySliceToEntry is an example of `StreamFunction` which flattens an `EntrySlice` to a `Stream` of its elements.
+
 #### BiFunction
 
 A `BiFunction` is a normal Go function which signature is:
@@ -188,6 +198,8 @@ NewStream(c)
 ```
 
 #### Filter
+
+Filter returns a stream consisting of the elements of this stream that match the given predicate.
 
 ```go
 // See helpers_test.go for "newEntryIntEqualsTo()"
@@ -258,6 +270,36 @@ Please refer to [stream_test.go](stream_test.go) for an example that groups numb
 #### Count
 
 Counts the number of elements in the Stream.
+
+#### Map
+
+Map returns a `Stream` consisting of the result of applying the given function to the elements of this stream.
+
+#### FlatMap
+
+FlatMap takes a `StreamFunction` to flatten the entries in this stream and produce a new stream.
+
+Example:
+
+```go
+    a := EntrySlice{EntryInt(1), EntryInt(2), EntryInt(3)}
+    b := EntrySlice{EntryInt(4), EntryInt(5)}
+    c := EntrySlice{EntryInt(6), EntryInt(7), EntryInt(8)}
+
+    sliceOfEntrySlicesOfEntryInts := EntrySlice{a, b, c}
+
+    fmt.Printf("Before flattening: %+v\n", sliceOfEntrySlicesOfEntryInts)
+
+    sliceOfEntryInts := NewStreamFromSlice(sliceOfEntrySlicesOfEntryInts, 0).
+        FlatMap(FlattenEntrySliceToEntry(0)).
+        Collect(ToEntrySlice())
+
+    fmt.Printf("After flattening: %+v\n", sliceOfEntryInts)
+
+    // Output:
+    // Before flattening: [[1 2 3] [4 5] [6 7 8]]
+    // After flattening: [1 2 3 4 5 6 7 8]
+```
 
 #### MapToInt
 
@@ -520,6 +562,10 @@ Example:
                         ToEntrySlice()))))
     // map[1:[] 2:[BB CC] 3:[DDD]]
 ```
+
+#### ToSlice
+
+ToSlice extracts the elements of the stream into an EntrySlice.
 
 ### IntStream
 

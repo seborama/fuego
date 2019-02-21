@@ -48,9 +48,7 @@ func ExampleStream_FlatMap() {
 	fmt.Printf("Before flattening: %+v\n", sliceOfEntrySlicesOfEntryInts)
 
 	sliceOfEntryInts := NewStreamFromSlice(sliceOfEntrySlicesOfEntryInts, 0).
-		FlatMap(func(e Entry) Stream {
-			return NewStreamFromSlice(e.(EntrySlice), 0)
-		}).
+		FlatMap(FlattenEntrySliceToEntry(0)).
 		Collect(ToEntrySlice())
 
 	fmt.Printf("After flattening: %+v\n", sliceOfEntryInts)

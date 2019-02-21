@@ -3,7 +3,7 @@ package fuego
 // Function that accepts one argument and produces a result.
 type Function func(e Entry) Entry
 
-// StreamFunction that accepts on argument and produces a stream.
+// StreamFunction that accepts one argument and produces a stream.
 // This effectively is a one to many operation, such as exploding
 // the individual values of an EntrySlice into a Stream.
 type StreamFunction func(e Entry) Stream
@@ -22,3 +22,11 @@ type ToIntFunction func(e Entry) EntryInt
 
 // ToFloatFunction that accepts one argument and produces an EntryFloat result.
 type ToFloatFunction func(e Entry) EntryFloat
+
+// FlattenEntrySliceToEntry is a StreamFunction that flattens
+// an EntrySlice to a Stream of its elements.
+func FlattenEntrySliceToEntry(bufsize int) StreamFunction {
+	return func(e Entry) Stream {
+		return NewStreamFromSlice(e.(EntrySlice), bufsize)
+	}
+}

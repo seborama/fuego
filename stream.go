@@ -13,10 +13,8 @@ package fuego
 // Limit(uint64) - Returns a Stream consisting of at most n elements.
 // MapToString(ToStringFunction)
 // FindAny / FindFirst?
-// FlatMap
 // FlatMapToXXX (Int, Uint, etc) => is this the same as FlatMap().MapToXXX()?
 // **Sorted(Comparator)
-// ToSlice
 // Contains
 // ContainsAll
 // Tail
@@ -69,7 +67,7 @@ func NewStreamFromSlice(slice EntrySlice, bufsize int) Stream {
 
 // TODO: implement NewStreamFromMap -> Stream of Keys / Stream of Values?
 
-// Map returns a Stream consisting of the results of
+// Map returns a Stream consisting of the result of
 // applying the given function to the elements of this stream.
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
