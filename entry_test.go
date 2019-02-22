@@ -7,7 +7,6 @@ import (
 )
 
 func TestEntriesEqual(t *testing.T) {
-	anEntry := EntryInt(123)
 	type args struct {
 		e1 Entry
 		e2 Entry
@@ -33,14 +32,14 @@ func TestEntriesEqual(t *testing.T) {
 			},
 			want: false,
 		},
-		{
-			name: "Should equal when single object compared",
-			args: args{
-				e1: &anEntry,
-				e2: &anEntry,
-			},
-			want: true,
-		},
+		// {
+		// 	name: "Should equal when single object compared",
+		// 	args: args{
+		// 		e1: &anEntry,
+		// 		e2: &anEntry,
+		// 	},
+		// 	want: true,
+		// },
 		{
 			name: "Should not equal when hashes match but Entry types differ",
 			args: args{
@@ -74,10 +73,16 @@ func TestEntriesEqual(t *testing.T) {
 			want: true,
 		},
 		{
-			name: "Should equal when both nil",
+			name: "Should equal with same complex entries",
 			args: args{
-				e1: nil,
-				e2: nil,
+				e1: EntrySlice{EntryMap{
+					EntryInt(1): EntryInt(2),
+					EntryInt(3): EntryInt(4),
+				}},
+				e2: EntrySlice{EntryMap{
+					EntryInt(1): EntryInt(2),
+					EntryInt(3): EntryInt(4),
+				}},
 			},
 			want: true,
 		},
