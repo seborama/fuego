@@ -109,6 +109,7 @@ When the value is `nil`, `Maybe` is considered empty unless it was created with 
 - Tuple0
 - Tuple1
 - Tuple2
+- Tuple3
 
 The values of **fuego** `Tuples` are  of type `Entry`.
 

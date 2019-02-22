@@ -429,10 +429,6 @@ func (s Stream) Head() Entry {
 
 // HeadN returns a slice of the first n elements in this stream.
 func (s Stream) HeadN(n uint64) EntrySlice {
-	if s.stream == nil {
-		panic(PanicMissingChannel)
-	}
-
 	return s.Take(n).Collect(
 		NewCollector(
 			func() Entry { return EntrySlice{} },
@@ -580,13 +576,13 @@ func (s Stream) Distinct() Stream {
 	go func() {
 		defer close(outstream) // TODO: add test to confirm the stream gets closed
 
-		unique := map[uint32]string{}
+		unique := map[string]struct{}{}
 
 		for val := range s.stream {
 			hash := val.Hash()
-			valType := fmt.Sprintf("%T", val)[6:] // remove "fuego." prefix
-			if eType, isset := unique[hash]; !isset || (isset && eType != valType) {
-				unique[hash] = valType
+			uniqueHash := fmt.Sprintf("%T%d", val, hash)[6:] // remove "fuego." prefix
+			if _, isset := unique[uniqueHash]; !isset {
+				unique[uniqueHash] = struct{}{}
 				outstream <- val
 			}
 		}

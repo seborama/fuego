@@ -15,7 +15,7 @@ func TestTuple1_Hash(t *testing.T) {
 		want   uint32
 	}{
 		{
-			name:   "Should panic for nil value Tuple1",
+			name:   "Should return hash for Tuple1(nil)",
 			fields: fields{E1: nil},
 			want:   0,
 		},

@@ -24,11 +24,11 @@ func (t Tuple2) Hash() uint32 {
 
 // Equal returns true if 'o' and 't' are equal.
 func (t Tuple2) Equal(o Entry) bool {
-	oT, ok := o.(Tuple2)
-	return t == oT ||
-		(ok &&
-			(t.E1 != nil && t.E1.Equal(oT.E1)) &&
-			(t.E2 != nil && t.E2.Equal(oT.E2)))
+	if oT, ok := o.(Tuple2); ok {
+		return EntriesEqual(t.E1, oT.E1) &&
+			EntriesEqual(t.E2, oT.E2)
+	}
+	return false
 }
 
 // Arity is the number of elements in this tuple.

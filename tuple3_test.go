@@ -5,10 +5,11 @@ import (
 	"testing"
 )
 
-func TestTuple2_Hash(t *testing.T) {
+func TestTuple3_Hash(t *testing.T) {
 	type fields struct {
 		E1 Entry
 		E2 Entry
+		E3 Entry
 	}
 	tests := []struct {
 		name   string
@@ -16,55 +17,61 @@ func TestTuple2_Hash(t *testing.T) {
 		want   uint32
 	}{
 		{
-			name: "Should return hash for Tuple2(nil,nil)",
+			name: "Should return hash for Tuple3(nil,nil,nil)",
 			fields: fields{
 				E1: nil,
 				E2: nil,
+				E3: nil,
 			},
-			want: 961,
+			want: 29791,
 		},
 		{
-			name: `Should return hash for Tuple2(nil,hello)`,
+			name: `Should return hash for Tuple3(nil,hello,goodbye)`,
 			fields: fields{
 				E1: nil,
 				E2: EntryString("hello"),
+				E3: EntryString("goodbye"),
 			},
-			want: 907061831,
+			want: 2576643853,
 		},
 		{
-			name: `Should return hash for Tuple2(hello,nil)`,
+			name: `Should return hash for Tuple3(hello,nil,nil)`,
 			fields: fields{
 				E1: EntryString("hello"),
 				E2: nil,
+				E3: nil,
 			},
-			want: 2349084155,
+			want: 4102132069,
 		},
 		{
-			name: `Should return hash for Tuple2(hello,nil)`,
+			name: `Should return hash for Tuple3(hello,bye,the end)`,
 			fields: fields{
 				E1: EntryString("hello"),
 				E2: EntryString("bye"),
+				E3: EntryString("the end"),
 			},
-			want: 54247215,
+			want: 3555541634,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t2 := Tuple2{
+			t2 := Tuple3{
 				E1: tt.fields.E1,
 				E2: tt.fields.E2,
+				E3: tt.fields.E3,
 			}
 			if got := t2.Hash(); got != tt.want {
-				t.Errorf("Tuple2.Hash() = %v, want %v", got, tt.want)
+				t.Errorf("Tuple3.Hash() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestTuple2_Equal(t *testing.T) {
+func TestTuple3_Equal(t *testing.T) {
 	type fields struct {
 		E1 Entry
 		E2 Entry
+		E3 Entry
 	}
 	type args struct {
 		o Tuple
@@ -80,11 +87,15 @@ func TestTuple2_Equal(t *testing.T) {
 			fields: fields{
 				E1: EntryString("hi"),
 				E2: EntryString("bye"),
+				E3: EntryString("the end"),
 			},
 			args: args{
-				o: Tuple2{
+				o: Tuple3{
 					E1: EntryString("hi"),
-					E2: EntryString("bye")}},
+					E2: EntryString("bye"),
+					E3: EntryString("the end"),
+				},
+			},
 			want: true,
 		},
 		{
@@ -92,11 +103,15 @@ func TestTuple2_Equal(t *testing.T) {
 			fields: fields{
 				E1: EntryString("hi"),
 				E2: EntryString("bye"),
+				E3: EntryString("the end"),
 			},
 			args: args{
-				o: Tuple2{
+				o: Tuple3{
 					E1: EntryString("hi2"),
-					E2: EntryString("bye")}},
+					E2: EntryString("bye"),
+					E3: EntryString("the end"),
+				},
+			},
 			want: false,
 		},
 		{
@@ -104,43 +119,67 @@ func TestTuple2_Equal(t *testing.T) {
 			fields: fields{
 				E1: EntryString("hi"),
 				E2: EntryString("bye"),
+				E3: EntryString("the end"),
 			},
 			args: args{
-				o: Tuple2{
+				o: Tuple3{
 					E1: EntryString("hi"),
-					E2: EntryString("bye2")}},
+					E2: EntryString("bye2"),
+					E3: EntryString("the end"),
+				},
+			},
 			want: false,
 		},
 		{
-			name: "Should not equal Tuple2 and Tuple1",
+			name: "Should not equal on E3",
 			fields: fields{
 				E1: EntryString("hi"),
 				E2: EntryString("bye"),
+				E3: EntryString("the end"),
+			},
+			args: args{
+				o: Tuple3{
+					E1: EntryString("hi"),
+					E2: EntryString("bye"),
+					E3: EntryString("the end2"),
+				},
+			},
+			want: false,
+		},
+		{
+			name: "Should not equal Tuple3 and Tuple1",
+			fields: fields{
+				E1: EntryString("hi"),
+				E2: EntryString("bye"),
+				E3: EntryString("the end"),
 			},
 			args: args{
 				o: Tuple1{
 					E1: EntryString("hi"),
-				}},
+				},
+			},
 			want: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t2 := Tuple2{
+			t2 := Tuple3{
 				E1: tt.fields.E1,
 				E2: tt.fields.E2,
+				E3: tt.fields.E3,
 			}
 			if got := t2.Equal(tt.args.o); got != tt.want {
-				t.Errorf("Tuple2.Equal() = %v, want %v", got, tt.want)
+				t.Errorf("Tuple3.Equal() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestTuple2_Arity(t *testing.T) {
+func TestTuple3_Arity(t *testing.T) {
 	type fields struct {
 		E1 Entry
 		E2 Entry
+		E3 Entry
 	}
 	tests := []struct {
 		name   string
@@ -148,28 +187,30 @@ func TestTuple2_Arity(t *testing.T) {
 		want   int
 	}{
 		{
-			name:   "Should return 2 for Tuple2",
+			name:   "Should return 3 for Tuple3",
 			fields: fields{},
-			want:   2,
+			want:   3,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t2 := Tuple2{
+			t2 := Tuple3{
 				E1: tt.fields.E1,
 				E2: tt.fields.E2,
+				E3: tt.fields.E3,
 			}
 			if got := t2.Arity(); got != tt.want {
-				t.Errorf("Tuple2.Arity() = %v, want %v", got, tt.want)
+				t.Errorf("Tuple3.Arity() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestTuple2_ToSlice(t *testing.T) {
+func TestTuple3_ToSlice(t *testing.T) {
 	type fields struct {
 		E1 Entry
 		E2 Entry
+		E3 Entry
 	}
 	tests := []struct {
 		name   string
@@ -177,24 +218,28 @@ func TestTuple2_ToSlice(t *testing.T) {
 		want   EntrySlice
 	}{
 		{
-			name: "Should return 2-set with value",
+			name: "Should return 3-set with value",
 			fields: fields{
 				E1: EntryString("hi"),
 				E2: EntryString("bye"),
+				E3: EntryString("the end"),
 			},
 			want: EntrySlice{
 				EntryString("hi"),
-				EntryString("bye")},
+				EntryString("bye"),
+				EntryString("the end"),
+			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t2 := Tuple2{
+			t2 := Tuple3{
 				E1: tt.fields.E1,
 				E2: tt.fields.E2,
+				E3: tt.fields.E3,
 			}
 			if got := t2.ToSlice(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Tuple2.ToSlice() = %v, want %v", got, tt.want)
+				t.Errorf("Tuple3.ToSlice() = %v, want %v", got, tt.want)
 			}
 		})
 	}

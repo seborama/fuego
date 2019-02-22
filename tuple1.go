@@ -15,10 +15,10 @@ func (t Tuple1) Hash() uint32 {
 
 // Equal returns true if 'o' and 't' are equal.
 func (t Tuple1) Equal(o Entry) bool {
-	oT, ok := o.(Tuple1)
-	return t == o ||
-		(ok &&
-			(t.E1 != nil && t.E1.Equal(oT.E1)))
+	if oT, ok := o.(Tuple1); ok {
+		return EntriesEqual(t.E1, oT.E1)
+	}
+	return false
 }
 
 // Arity is the number of elements in this tuple.
