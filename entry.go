@@ -9,7 +9,6 @@ type Entry interface {
 
 // EntriesEqual checks the equality of 2 Entry objects.
 func EntriesEqual(e1, e2 Entry) bool {
-	return (e1 == nil && e2 == nil) ||
-		&e1 == &e2 ||
+	return e1 == e2 ||
 		(e1 != nil && e1.Equal(e2))
 }

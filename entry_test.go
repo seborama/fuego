@@ -42,6 +42,14 @@ func TestEntriesEqual(t *testing.T) {
 			want: true,
 		},
 		{
+			name: "Should not equal when hashes match but Entry types differ",
+			args: args{
+				e1: EntryBool(false), // hash == 0
+				e2: EntryInt(0),      // hash == 0
+			},
+			want: false,
+		},
+		{
 			name: "Should not equal when e1 is nil",
 			args: args{
 				e1: nil,
