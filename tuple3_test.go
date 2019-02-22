@@ -1,8 +1,11 @@
 package fuego
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestTuple3_Hash(t *testing.T) {
@@ -67,6 +70,33 @@ func TestTuple3_Hash(t *testing.T) {
 	}
 }
 
+func TestTuple3_EqualVariations(t *testing.T) {
+	for i := 0; i < 3; i++ {
+		t.Run(fmt.Sprintf("Should not equal when element %d differs", i), func(t *testing.T) {
+			tupleA := Tuple3{
+				E1: EntryString("hi"),
+				E2: EntryString("bye"),
+				E3: EntryString("the end"),
+			}
+
+			values := []EntryString{
+				EntryString("hi"),
+				EntryString("bye"),
+				EntryString("the end"),
+			}
+			values[i] += "-kludge"
+
+			tupleB := Tuple3{
+				E1: values[0],
+				E2: values[1],
+				E3: values[2],
+			}
+
+			assert.False(t, tupleA.Equal(tupleB))
+		})
+	}
+}
+
 func TestTuple3_Equal(t *testing.T) {
 	type fields struct {
 		E1 Entry
@@ -97,54 +127,6 @@ func TestTuple3_Equal(t *testing.T) {
 				},
 			},
 			want: true,
-		},
-		{
-			name: "Should not equal on E1",
-			fields: fields{
-				E1: EntryString("hi"),
-				E2: EntryString("bye"),
-				E3: EntryString("the end"),
-			},
-			args: args{
-				o: Tuple3{
-					E1: EntryString("hi2"),
-					E2: EntryString("bye"),
-					E3: EntryString("the end"),
-				},
-			},
-			want: false,
-		},
-		{
-			name: "Should not equal on E2",
-			fields: fields{
-				E1: EntryString("hi"),
-				E2: EntryString("bye"),
-				E3: EntryString("the end"),
-			},
-			args: args{
-				o: Tuple3{
-					E1: EntryString("hi"),
-					E2: EntryString("bye2"),
-					E3: EntryString("the end"),
-				},
-			},
-			want: false,
-		},
-		{
-			name: "Should not equal on E3",
-			fields: fields{
-				E1: EntryString("hi"),
-				E2: EntryString("bye"),
-				E3: EntryString("the end"),
-			},
-			args: args{
-				o: Tuple3{
-					E1: EntryString("hi"),
-					E2: EntryString("bye"),
-					E3: EntryString("the end2"),
-				},
-			},
-			want: false,
 		},
 		{
 			name: "Should not equal Tuple3 and Tuple1",
