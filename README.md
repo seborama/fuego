@@ -40,7 +40,7 @@ For contributions, you must develop in TDD fashion and ideally provide Go testab
 
 Go channels support buffering that affects the behaviour when combining channels in a pipeline.
 
-When a consumer Stream's channel buffer is full, the producer will not be able to send more data through to it. This protects downstream operations from overloading.
+When the buffer of a Stream's channel of a consumer  is full, the producer will not be able to send more data through to it. This protects downstream operations from overloading.
 
 Presently, a Go channel cannot dynamically change its buffer size. This prevents from adapting the stream flexibly. Constructs that use 'select' on channels on the producer side can offer opportunities for mitigation.
 
@@ -56,7 +56,7 @@ Have fun!!
 
 ### Entry
 
-`Entry` is inspired by `hamt.Entry`. This is an elegant solution from [Yota Toyama](https://github.com/raviqqe): the type can be anything so long as it respects the simple behaviour of `hamt.Entry`. This provides an abstraction of types yet with known behaviour:
+`Entry` is inspired by `hamt.Entry`. This is an elegant solution from [Yota Toyama](https://github.com/raviqqe): the type can be anything so long as it respects the simple behaviour of the`Entry` interface. This provides an abstraction of types yet with known behaviour:
 
 - Hash(): identifies an Entry Uniquely.
 - Equal(): defines equality for a type of `Entry`. `Equal()` is expected to be based on `Hash()`.
