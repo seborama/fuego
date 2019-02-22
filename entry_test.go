@@ -1,8 +1,13 @@
 package fuego
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
 
 func TestEntriesEqual(t *testing.T) {
+	anEntry := EntryInt(123)
 	type args struct {
 		e1 Entry
 		e2 Entry
@@ -29,6 +34,14 @@ func TestEntriesEqual(t *testing.T) {
 			want: false,
 		},
 		{
+			name: "Should equal when single object compared",
+			args: args{
+				e1: &anEntry,
+				e2: &anEntry,
+			},
+			want: true,
+		},
+		{
 			name: "Should not equal when e1 is nil",
 			args: args{
 				e1: nil,
@@ -52,12 +65,19 @@ func TestEntriesEqual(t *testing.T) {
 			},
 			want: true,
 		},
+		{
+			name: "Should equal when both nil",
+			args: args{
+				e1: nil,
+				e2: nil,
+			},
+			want: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := EntriesEqual(tt.args.e1, tt.args.e2); got != tt.want {
-				t.Errorf("EntriesEqual() = %v, want %v", got, tt.want)
-			}
+			got := EntriesEqual(tt.args.e1, tt.args.e2)
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }
