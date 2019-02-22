@@ -38,7 +38,7 @@ For contributions, you must develop in TDD fashion and ideally provide Go testab
 
 ## Pressure
 
-Go channels support buffering that affect the behaviour when combining channels in a pipeline.
+Go channels support buffering that affects the behaviour when combining channels in a pipeline.
 
 When a consumer Stream's channel buffer is full, the producer will not be able to send more data through to it. This protects downstream operations from overloading.
 
