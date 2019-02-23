@@ -102,6 +102,14 @@ When the value is `nil`, `Maybe` is considered empty unless it was created with 
 
 `MaybeNone()` always produces an empty optional.
 
+Methods:
+
+- IsEmpty
+- Get
+- GetOrElse
+- OrElse
+- Filter
+
 ### Tuple
 
 **fuego** provides these `Tuple`'s:
@@ -110,6 +118,13 @@ When the value is `nil`, `Maybe` is considered empty unless it was created with 
 - Tuple1
 - Tuple2
 - Tuple3
+
+Methods:
+
+- Hash
+- Equal
+- Arity
+- ToSlice
 
 The values of **fuego** `Tuples` are  of type `Entry`.
 
