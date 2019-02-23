@@ -1,6 +1,8 @@
 package fuego
 
 // TODO: (see Vavr) FlatMap, Map, GetOrElseThrow, Peek, Collect, When
+// TODO: (see Java) Stream
+// TODO: (see Entry) Equal, Hash (this will be useful if implementing Java's Optional.Stream)
 
 // PanicNoSuchElement signifies that the requested element is not present.
 const PanicNoSuchElement = "no such element"
