@@ -265,6 +265,12 @@ s := ƒ.NewStreamFromSlice([]ƒ.Entry{
 // total == 6
 ```
 
+#### Peek
+
+`Peek` is akin to ForEach but returns the Stream.
+
+This is useful e.g. for debugging.
+
 #### Intersperse
 
 ```go
