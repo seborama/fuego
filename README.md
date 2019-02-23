@@ -509,9 +509,11 @@ Return true if the stream starts with the supplied slice of elements.
 // true
 ```
 
-#### Take
+#### Take / Limit
 
 Takes the first 'n' elements of the stream and returns a new stream.
+
+`Take` and `Limit` are synonyms.
 
 ```go
 ƒ.NewStreamFromSlice([]ƒ.Entry{

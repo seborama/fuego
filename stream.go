@@ -10,21 +10,19 @@ import "fmt"
 // Methods with ** require the Stream to be finite and closed (or use a Future, perhaps Future.Stream()?)
 // **DropRight(uint64) - drops the last n elements of the Stream. Only meaningful if the Stream is closed.
 // FilterNot(Predicate) - <=> to Filter(Not(Predicate))
-// Peek(Consumer) - Like ForEach but returns Stream as it was at the point of Peek
-// Limit(uint64) - Returns a Stream consisting of at most n elements.
 // MapToString(ToStringFunction)
 // FlatMapToXXX (Int, Uint, etc) => is this the same as FlatMap().MapToXXX()?
 // **Sorted(Comparator)
 // Contains
 // ContainsAll
 // Tail
-// Fold / FoldLeft
 // Zip / Unzip
 // Concat?
 // Range(from, toExclusive)?
 // RangeBy(from,toExclusive, step)?
 // Unfold()
 // Fold()?
+// Fold / FoldLeft
 
 // PanicMissingChannel signifies that the Stream is missing a channel.
 const PanicMissingChannel = "stream creation requires a channel"
@@ -147,6 +145,26 @@ func (s Stream) ForEach(consumer Consumer) {
 
 	for val := range s.stream {
 		consumer(val)
+	}
+}
+
+// Peek is akin to ForEach but returns the Stream.
+// This is useful for debugging.
+// This function streams continuously until the in-stream is closed at
+// which point the out-stream will be closed too.
+func (s Stream) Peek(consumer Consumer) Stream {
+	outstream := make(chan Entry, cap(s.stream))
+
+	go func() {
+		defer close(outstream) // TODO: add test to confirm the stream gets closed
+		s.ForEach(func(e Entry) {
+			consumer(e)
+			outstream <- e
+		})
+	}()
+
+	return Stream{
+		stream: outstream,
 	}
 }
 
@@ -489,6 +507,11 @@ func (s Stream) Take(n uint64) Stream {
 		}
 	}
 	return s.TakeWhile(counterIsLessThanOrEqualTo(n))
+}
+
+// Limit is a synonym for Take.
+func (s Stream) Limit(n uint64) Stream {
+	return s.Take(n)
 }
 
 // TakeWhile returns a stream of the first elements of this

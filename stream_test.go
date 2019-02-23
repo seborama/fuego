@@ -1758,14 +1758,14 @@ func TestStream_StartsWith(t *testing.T) {
 	}
 }
 
-func TestStream_TakeXPanicsWithNilChannel(t *testing.T) {
+func TestStream_TakeX_LimitPanicWithNilChannel(t *testing.T) {
 	s := Stream{stream: nil}
-	assert.PanicsWithValue(t, PanicMissingChannel, func() { s.Take(1) })
+	assert.PanicsWithValue(t, PanicMissingChannel, func() { s.Limit(1) })
 	assert.PanicsWithValue(t, PanicMissingChannel, func() { s.TakeUntil(False) })
 	assert.PanicsWithValue(t, PanicMissingChannel, func() { s.TakeWhile(True) })
 }
 
-func TestStream_Take(t *testing.T) {
+func TestStream_Take_Limit(t *testing.T) {
 	data1 := EntrySlice{
 		EntryInt(1),
 	}
@@ -1845,7 +1845,7 @@ func TestStream_Take(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := Stream{stream: tt.fields.stream}
-			gotStream := s.Take(tt.args.n)
+			gotStream := s.Limit(tt.args.n)
 			if tt.want == nil {
 				assert.Nil(t, gotStream.stream)
 				return
@@ -2320,6 +2320,102 @@ func TestStream_Distinct(t *testing.T) {
 			}
 			got := s.Distinct().ToSlice()
 			assert.EqualValues(t, tt.want.ToSlice(), got)
+		})
+	}
+}
+
+func TestStream_Peek(t *testing.T) {
+	var callCount, total int
+	computeSumTotal := func(value Entry) {
+		callCount++
+		total += int(value.(EntryInt))
+	}
+
+	type fields struct {
+		stream chan Entry
+	}
+	type args struct {
+		consumer Consumer
+	}
+	tests := []struct {
+		name          string
+		fields        fields
+		args          args
+		want          Stream
+		wantTotal     int
+		wantCallCount int
+	}{
+		{
+			name: "Should peek and return empty stream when nil in-stream",
+			fields: fields{
+				stream: nil,
+			},
+			args: args{
+				consumer: computeSumTotal,
+			},
+			want:          NewStreamFromSlice(EntrySlice{}, 0),
+			wantTotal:     0,
+			wantCallCount: 0,
+		},
+		{
+			name: "Should peek and return empty stream when empty in-stream",
+			fields: fields{
+				stream: func() chan Entry {
+					c := make(chan Entry)
+					go func() {
+						defer close(c)
+					}()
+					return c
+				}(),
+			},
+			args: args{
+				consumer: computeSumTotal,
+			},
+			want:          NewStreamFromSlice(EntrySlice{}, 0),
+			wantTotal:     0,
+			wantCallCount: 0,
+		},
+		{
+			name: "Should peek and return stream when populated in-stream",
+			fields: fields{
+				stream: func() chan Entry {
+					c := make(chan Entry)
+					go func() {
+						defer close(c)
+						c <- EntryInt(1)
+						c <- EntryInt(2)
+						c <- EntryInt(3)
+						c <- EntryInt(5)
+						c <- EntryInt(8)
+					}()
+					return c
+				}(),
+			},
+			args: args{
+				consumer: computeSumTotal,
+			},
+			want: NewStreamFromSlice(
+				EntrySlice{
+					EntryInt(1),
+					EntryInt(2),
+					EntryInt(3),
+					EntryInt(5),
+					EntryInt(8),
+				}, 0),
+			wantTotal:     19,
+			wantCallCount: 5,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			callCount, total = 0, 0
+			s := Stream{
+				stream: tt.fields.stream,
+			}
+			got := s.Peek(tt.args.consumer)
+			assert.EqualValues(t, tt.want.ToSlice(), got.ToSlice())
+			assert.Equal(t, tt.wantTotal, total)
+			assert.Equal(t, tt.wantCallCount, callCount)
 		})
 	}
 }
