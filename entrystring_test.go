@@ -153,3 +153,41 @@ func TestEntryString_Equal(t *testing.T) {
 		})
 	}
 }
+
+func TestEntryString_MapToEntryBytes(t *testing.T) {
+	type args struct {
+		bufsize int
+	}
+	tests := []struct {
+		name string
+		es   EntryString
+		args args
+		want Stream
+	}{
+		{
+			name: "Should return empty stream for empty input EntryString",
+			es:   EntryString(""),
+			args: args{bufsize: 0},
+			want: NewStreamFromSlice(EntrySlice{}, 0),
+		},
+		{
+			name: "Should return byte stream for non-empty input EntryString",
+			es:   EntryString("xyzå©ç"),
+			args: args{bufsize: 0},
+			want: NewStreamFromSlice(
+				func() EntrySlice {
+					expected := EntrySlice{}
+					for _, val := range []byte("xyzå©ç") {
+						expected = append(expected, EntryByte(val))
+					}
+					return expected
+				}(), 0),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.es.MapToEntryBytes(tt.args.bufsize)
+			assert.Equal(t, tt.want.ToSlice(), got.ToSlice())
+		})
+	}
+}

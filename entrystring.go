@@ -24,21 +24,31 @@ func (es EntryString) Equal(e Entry) bool {
 	return es == es2
 }
 
-// ToUpper transform the string to upper case.
+// ToUpper transforms this EntryString to upper case.
 func (es EntryString) ToUpper() EntryString {
 	return EntryString(
 		strings.ToUpper(string(es)),
 	)
 }
 
-// ToLower transform the string to lower case.
+// ToLower transforms this EntryString to lower case.
 func (es EntryString) ToLower() EntryString {
 	return EntryString(
 		strings.ToLower(string(es)),
 	)
 }
 
-// Len transform the string to lower case.
+// Len transforms this EntryString to lower case.
 func (es EntryString) Len() EntryInt {
 	return EntryInt(len(es))
+}
+
+// MapToEntryBytes transforms the bytes of this EntryString to
+// a Stream of EntryBytes.
+func (es EntryString) MapToEntryBytes(bufsize int) Stream {
+	ebs := []Entry{}
+	for _, b := range []byte(es) {
+		ebs = append(ebs, EntryByte(b))
+	}
+	return NewStreamFromSlice(ebs, bufsize)
 }
