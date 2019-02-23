@@ -1,6 +1,7 @@
 package fuego
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -109,4 +110,76 @@ func TestMaybeSome_OrElseWithNil(t *testing.T) {
 	some := MaybeSome(e)
 	other := MaybeSome(EntryInt(333))
 	assert.Exactly(t, some, some.OrElse(other))
+}
+
+func TestMaybe_Filter(t *testing.T) {
+	type fields struct {
+		value   Entry
+		isEmpty bool
+	}
+	type args struct {
+		predicate Predicate
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   Maybe
+	}{
+		{
+			name: "Should return None when empty",
+			fields: fields{
+				value:   nil,
+				isEmpty: true,
+			},
+			args: args{
+				predicate: True,
+			},
+			want: MaybeNone(),
+		},
+		{
+			name: "Should return None when not empty but predicate is not satisfied",
+			fields: fields{
+				value:   nil,
+				isEmpty: false,
+			},
+			args: args{
+				predicate: False,
+			},
+			want: MaybeNone(),
+		},
+		{
+			name: "Should return MaybeSome when not empty and predicate is satisfied",
+			fields: fields{
+				value:   EntryString("hello"),
+				isEmpty: false,
+			},
+			args: args{
+				predicate: True,
+			},
+			want: MaybeSome(EntryString("hello")),
+		},
+		{
+			name: "Should return MaybeSome(nil) when not empty and predicate is satisfied",
+			fields: fields{
+				value:   nil,
+				isEmpty: false,
+			},
+			args: args{
+				predicate: True,
+			},
+			want: MaybeSome(nil),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := Maybe{
+				value:   tt.fields.value,
+				isEmpty: tt.fields.isEmpty,
+			}
+			if got := m.Filter(tt.args.predicate); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Maybe.Filter() = %v, want %v", got, tt.want)
+			}
+		})
+	}
 }

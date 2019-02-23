@@ -1,5 +1,7 @@
 package fuego
 
+// TODO: (see Vavr) FlatMap, Map, GetOrElseThrow, Peek, Collect, When
+
 // PanicNoSuchElement signifies that the requested element is not present.
 const PanicNoSuchElement = "no such element"
 
@@ -40,10 +42,6 @@ func MaybeOf(i Entry) Maybe {
 // a value.
 func (m Maybe) IsEmpty() bool { return m.isEmpty }
 
-// Filter    \
-// Map        > TODO: can we use Stream for those?
-// FlatMap   /
-
 // Get the value of this Maybe or panic if none exists.
 func (m Maybe) Get() Entry {
 	if m.IsEmpty() {
@@ -53,17 +51,27 @@ func (m Maybe) Get() Entry {
 }
 
 // GetOrElse gets the value of this Maybe or the given Entry if none exists.
-func (m Maybe) GetOrElse(e Entry) Entry {
+func (m Maybe) GetOrElse(elseEntry Entry) Entry {
 	if m.IsEmpty() {
-		return e
+		return elseEntry
 	}
 	return m.value
 }
 
 // OrElse returns this Maybe or the given Maybe if this Maybe is empty.
-func (m Maybe) OrElse(other Maybe) Maybe {
+func (m Maybe) OrElse(elseMaybe Maybe) Maybe {
 	if m.IsEmpty() {
-		return other
+		return elseMaybe
 	}
 	return m
+}
+
+// Filter returns MaybeSome(value) if this is a MaybeSome
+// and the value satisfies the predicate otherwise returns
+// MaybeNone.
+func (m Maybe) Filter(predicate Predicate) Maybe {
+	if m.IsEmpty() || predicate(m.Get()) {
+		return m
+	}
+	return MaybeNone()
 }
