@@ -371,7 +371,7 @@ func (s Stream) DropWhile(p Predicate) Stream {
 			if p(val) {
 				continue
 			}
-			outstream <- val // this element belongs!
+			outstream <- val
 			break
 		}
 
