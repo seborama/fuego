@@ -395,12 +395,7 @@ func (s Stream) DropUntil(p Predicate) Stream {
 
 // Last returns the last Entry in this stream.
 func (s Stream) Last() Entry {
-	panic("must create tests fir when len != 1")
-	last := s.LastN(1)
-	if last.Len() != 1 {
-		panic(PanicNoSuchElement)
-	}
-	return last[0]
+	return s.LastN(1)[0]
 }
 
 // LastN returns a slice of the last n elements in this stream.
