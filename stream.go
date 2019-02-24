@@ -30,7 +30,8 @@ const PanicMissingChannel = "stream creation requires a channel"
 // Stream is a sequence of elements supporting sequential and
 // (in the future?) parallel operations.
 type Stream struct {
-	stream chan Entry
+	stream           chan Entry
+	concurrencyLevel uint
 }
 
 // NewStream creates a new Stream.
@@ -399,9 +400,7 @@ func (s Stream) Last() Entry {
 
 // LastN returns a slice of the last n elements in this stream.
 func (s Stream) LastN(n uint64) EntrySlice {
-	if s.stream == nil {
-		panic(PanicMissingChannel)
-	}
+	s.panicIfNilChannel()
 
 	if n < 1 {
 		panic(PanicNoSuchElement)
@@ -522,9 +521,7 @@ func (s Stream) Limit(n uint64) Stream {
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 func (s Stream) TakeWhile(p Predicate) Stream {
-	if s.stream == nil {
-		panic(PanicMissingChannel)
-	}
+	s.panicIfNilChannel()
 
 	outstream := make(chan Entry, cap(s.stream))
 
@@ -556,9 +553,7 @@ func (s Stream) TakeUntil(p Predicate) Stream {
 // the producer to close the stream in order to complete (or
 // it will block).
 func (s Stream) Collect(c Collector) interface{} {
-	if s.stream == nil {
-		panic(PanicMissingChannel)
-	}
+	s.panicIfNilChannel()
 
 	result := c.supplier()
 	for e := range s.stream {
@@ -593,9 +588,7 @@ func (s Stream) ToSlice() EntrySlice {
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 func (s Stream) Distinct() Stream {
-	if s.stream == nil {
-		panic(PanicMissingChannel)
-	}
+	s.panicIfNilChannel()
 
 	outstream := make(chan Entry, cap(s.stream))
 
@@ -615,4 +608,10 @@ func (s Stream) Distinct() Stream {
 	}()
 
 	return NewStream(outstream)
+}
+
+func (s Stream) panicIfNilChannel() {
+	if s.stream == nil {
+		panic(PanicMissingChannel)
+	}
 }

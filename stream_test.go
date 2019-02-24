@@ -1278,8 +1278,8 @@ func TestStream_DropUntil(t *testing.T) {
 }
 
 func TestStream_LastX_PanicsWhenNilChannel(t *testing.T) {
-	assert.PanicsWithValue(t, PanicMissingChannel, func() { Stream{nil}.LastN(1) })
-	assert.PanicsWithValue(t, PanicMissingChannel, func() { Stream{nil}.Last() })
+	assert.PanicsWithValue(t, PanicMissingChannel, func() { Stream{stream: nil}.LastN(1) })
+	assert.PanicsWithValue(t, PanicMissingChannel, func() { Stream{stream: nil}.Last() })
 }
 
 func TestStream_LastX_PanicsWhenEmptyChannel(t *testing.T) {
@@ -1509,8 +1509,8 @@ func TestStream_EndsWith(t *testing.T) {
 }
 
 func TestStream_HeadX_PanicsWhenNilChannel(t *testing.T) {
-	assert.PanicsWithValue(t, PanicMissingChannel, func() { Stream{nil}.HeadN(1) })
-	assert.PanicsWithValue(t, PanicMissingChannel, func() { Stream{nil}.Head() })
+	assert.PanicsWithValue(t, PanicMissingChannel, func() { Stream{stream: nil}.HeadN(1) })
+	assert.PanicsWithValue(t, PanicMissingChannel, func() { Stream{stream: nil}.Head() })
 }
 
 func TestStream_Head_PanicsWhenEmptyChannel(t *testing.T) {
@@ -2030,7 +2030,7 @@ func TestStream_CollectPanicsWhenStreamIsNil(t *testing.T) {
 		return e1.(EntrySlice).Append(e2)
 	}
 
-	s := Stream{nil}
+	s := Stream{stream: nil}
 	assert.PanicsWithValue(t, PanicMissingChannel, func() { s.Collect(NewCollector(supplier, accumulator, nil)) })
 }
 func TestStream_Collect(t *testing.T) {
@@ -2253,7 +2253,7 @@ func TestStream_ToSlice(t *testing.T) {
 }
 
 func TestStream_DistinctPanicsWhenNilChannel(t *testing.T) {
-	assert.PanicsWithValue(t, PanicMissingChannel, func() { Stream{nil}.Distinct() })
+	assert.PanicsWithValue(t, PanicMissingChannel, func() { Stream{stream: nil}.Distinct() })
 }
 
 func TestStream_Distinct(t *testing.T) {
