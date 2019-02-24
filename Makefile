@@ -1,8 +1,13 @@
+MACHINE := $(shell uname -m)
+ifneq ($(MACHINE),aarch64)
+	GORACE := -race
+endif
+
 deps:
 	go get -d -t -v ./...
 
 test: deps
-	go test -timeout 5s -cover -race -parallel 100
+	go test -timeout 5s -cover $(GORACE) -parallel 100
 
 lint: deps
 
