@@ -595,6 +595,25 @@ Example:
 
 ToSlice extracts the elements of the stream into an EntrySlice.
 
+#### Concurrent methods
+
+Concurrent methods run with the level of concurrency set by the last call to 'Concurrent'.
+
+These methods consumes concurrently from the stream's channel.
+
+Consumption is ordered by the stream's channel but output is unordered: a slow consumer will be "out-raced" by faster consumers.
+
+Channels are inherently expensive to use owing to their internal
+mutex lock.
+
+Benefits will ONLY be observed when the execution has a degree of latency (at the very least, several dozens of nanoseconds). The higher the latency, the better the gains from concurrency (even on a single CPU core).
+
+If latency is too low or none, using concurrency will likely be slower than without, particularly when no CPU core is available.
+
+Current list of concurrent methods:
+
+- ForEachC
+
 ### IntStream
 
 A Stream of EntryInt.
