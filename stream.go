@@ -458,13 +458,16 @@ func (s Stream) HeadN(n uint64) EntrySlice {
 // EndsWith returns true when this stream ends
 // with the supplied elements.
 func (s Stream) EndsWith(slice EntrySlice) bool {
-	defer func() {
-		// TODO: this doesn't look great... Need to re-write LastN like HeadN as a collect of TakeRight (to be implemented)
-		_ = recover()
+	endElements := func() EntrySlice {
+		defer func() {
+			// TODO: this doesn't look great... Need to re-write LastN like HeadN as a collect of TakeRight (to be implemented)
+			_ = recover()
+		}()
+
+		return s.LastN(uint64(len(slice)))
 	}()
 
-	endElements := s.LastN(uint64(len(slice)))
-	if len(endElements) != len(slice) {
+	if len(slice) == 0 || len(endElements) != len(slice) {
 		return false
 	}
 

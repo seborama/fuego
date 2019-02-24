@@ -1456,13 +1456,13 @@ func TestStream_EndsWith(t *testing.T) {
 			want:   false,
 		},
 		{
-			name:   "Should not match with an empty stream",
+			name:   "Should not match with an empty stream and with input",
 			fields: fields{stream: generateStream(data0)},
 			args:   args{slice: data1},
 			want:   false,
 		},
 		{
-			name:   "Should not match with an empty stream",
+			name:   "Should not match with an empty stream and with no input",
 			fields: fields{stream: generateStream(data0)},
 			args:   args{slice: data0},
 			want:   false,
@@ -1474,7 +1474,7 @@ func TestStream_EndsWith(t *testing.T) {
 			want:   false,
 		},
 		{
-			name:   "Should match when stream size and data matches slice to compare",
+			name:   "Should match when stream size and data match slice to compare",
 			fields: fields{stream: generateStream(data5)},
 			args:   args{slice: data5},
 			want:   true,
@@ -1489,6 +1489,12 @@ func TestStream_EndsWith(t *testing.T) {
 			name:   "Should not match when stream does not end with slice to compare",
 			fields: fields{stream: generateStream(data5)},
 			args:   args{slice: data4},
+			want:   false,
+		},
+		{
+			name:   "Should not match when stream is shorter than slice to compare",
+			fields: fields{stream: generateStream(data5[:2])},
+			args:   args{slice: data5},
 			want:   false,
 		},
 	}
