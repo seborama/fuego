@@ -395,7 +395,12 @@ func (s Stream) DropUntil(p Predicate) Stream {
 
 // Last returns the last Entry in this stream.
 func (s Stream) Last() Entry {
-	return s.LastN(1)[0]
+	panic("must create tests fir when len != 1")
+	last := s.LastN(1)
+	if last.Len() != 1 {
+		panic(PanicNoSuchElement)
+	}
+	return last[0]
 }
 
 // LastN returns a slice of the last n elements in this stream.
@@ -413,7 +418,7 @@ func (s Stream) LastN(n uint64) EntrySlice {
 
 	result := EntrySlice{val}
 
-	count := uint64(len(result))
+	count := uint64(result.Len())
 	flushTrigger := uint64(100)
 	if n > flushTrigger {
 		flushTrigger = n
@@ -424,13 +429,13 @@ func (s Stream) LastN(n uint64) EntrySlice {
 		if count++; count > flushTrigger {
 			// this is simply to reduce the number of
 			// slice resizing operations
-			result = result[uint64(len(result))-n:]
+			result = result[uint64(result.Len())-n:]
 			count = 0
 		}
 	}
 
-	if uint64(len(result)) > n {
-		return result[uint64(len(result))-n:]
+	if uint64(result.Len()) > n {
+		return result[uint64(result.Len())-n:]
 	}
 	return result
 }
@@ -438,7 +443,7 @@ func (s Stream) LastN(n uint64) EntrySlice {
 // Head returns the first Entry in this stream.
 func (s Stream) Head() Entry {
 	head := s.HeadN(1)
-	if len(head) != 1 {
+	if head.Len() != 1 {
 		panic(PanicNoSuchElement)
 	}
 	return head[0]
@@ -457,16 +462,20 @@ func (s Stream) HeadN(n uint64) EntrySlice {
 // EndsWith returns true when this stream ends
 // with the supplied elements.
 func (s Stream) EndsWith(slice EntrySlice) bool {
+	if slice.Len() == 0 {
+		return false
+	}
+
 	endElements := func() EntrySlice {
 		defer func() {
 			// TODO: this doesn't look great... Need to re-write LastN like HeadN as a collect of TakeRight (to be implemented)
 			_ = recover()
 		}()
 
-		return s.LastN(uint64(len(slice)))
+		return s.LastN(uint64(slice.Len()))
 	}()
 
-	if len(slice) == 0 || len(endElements) != len(slice) {
+	if endElements.Len() != slice.Len() {
 		return false
 	}
 
@@ -610,6 +619,7 @@ func (s Stream) Distinct() Stream {
 	return NewStream(outstream)
 }
 
+// panicIfNilChannel panics if s.stream is nil.
 func (s Stream) panicIfNilChannel() {
 	if s.stream == nil {
 		panic(PanicMissingChannel)
