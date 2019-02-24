@@ -1,5 +1,7 @@
 package fuego
 
+import "fmt"
+
 // NOTICE:
 // The code in this file was inspired by Java Collectors,
 // Vavr and somewhat Scala.
@@ -43,7 +45,18 @@ func GroupingBy(classifier Function, downstream Collector) Collector {
 		return supplierA
 	}
 
-	finisher := downstream.finisher
+	finisher := func(e Entry) Entry {
+		if downstream.finisher == nil ||
+			fmt.Sprintf("%p", downstream.finisher) == fmt.Sprintf("%p", IdentityFinisher) /* i.e. downstream.finisher is the IdentityFinisher */ {
+			return IdentityFinisher(e)
+		}
+
+		m := supplier()
+		for k, v := range e.(EntryMap) {
+			m.(EntryMap)[k] = downstream.finisher(v)
+		}
+		return m
+	}
 
 	return NewCollector(supplier, accumulator, finisher)
 }
@@ -61,8 +74,29 @@ func Mapping(mapper Function, collector Collector) Collector {
 	return NewCollector(supplier, accumulator, finisher)
 }
 
+// FlatMapping adapts the Entries a Collector accepts to another type
+// by applying a flat mapping function which maps input elements to a
+// `Stream`.
+func FlatMapping(mapper StreamFunction, collector Collector) Collector {
+	supplier := collector.supplier
+
+	accumulator := func(supplierA Entry, entry Entry) Entry {
+		container := supplierA
+		stream := mapper(entry)
+		stream.ForEach(
+			func(e Entry) {
+				container = collector.accumulator(container, e)
+			})
+		return container
+	}
+
+	finisher := collector.finisher
+
+	return NewCollector(supplier, accumulator, finisher)
+}
+
 // Filtering adapts the Entries a Collector accepts to a subset
-// that satisfy the given predicate.
+// that satisfies the given predicate.
 func Filtering(predicate Predicate, collector Collector) Collector {
 	supplier := collector.supplier
 
@@ -78,8 +112,35 @@ func Filtering(predicate Predicate, collector Collector) Collector {
 	return NewCollector(supplier, accumulator, finisher)
 }
 
+// Reducing returns a collector that performs a reduction of
+// its input elements using the provided BiFunction.
+func Reducing(f2 BiFunction) Collector {
+	supplier := func() Entry { // TODO: use chan Entry instead with a finisher that converts to slice?
+		return Tuple2{E1: EntryBool(false), E2: nil}
+	}
+
+	accumulator := func(supplierA Entry, entry Entry) Entry {
+		present := supplierA.(Tuple2).E1.(EntryBool)
+		result := supplierA.(Tuple2).E2
+
+		if present {
+			result = f2(result, entry)
+		} else {
+			present = true
+			result = entry
+		}
+		return Tuple2{E1: present, E2: result}
+	}
+
+	finisher := func(e Entry) Entry {
+		return e.(Tuple2).E2
+	}
+
+	return NewCollector(supplier, accumulator, finisher)
+}
+
 // func ToEntryMap() Collector {
-// 	var supplier = func() Entry { // TODO: use chan Entry instead?
+// 	var supplier = func() Entry { // TODO: use chan Entry instead with a finisher that converts to slice?
 // 		return EntryMap{}
 // 	}
 
@@ -96,7 +157,7 @@ func Filtering(predicate Predicate, collector Collector) Collector {
 // ToEntrySlice returns a collector that accumulates the input
 // entries into an EntrySlice.
 func ToEntrySlice() Collector {
-	var supplier = func() Entry { // TODO: use chan Entry instead?
+	supplier := func() Entry { // TODO: use chan Entry instead with a finisher that converts to slice?
 		return EntrySlice{}
 	}
 
