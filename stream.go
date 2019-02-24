@@ -53,7 +53,6 @@ func NewStreamFromSlice(slice EntrySlice, bufsize int) Stream {
 	c := make(chan Entry, bufsize)
 
 	go func() {
-		// TODO: add test to confirm the stream gets closed
 		defer close(c) // slices have finite size: close stream after all data was read.
 		for _, element := range slice {
 			c <- element
@@ -73,7 +72,7 @@ func (s Stream) Map(mapper Function) Stream {
 	outstream := make(chan Entry, cap(s.stream))
 
 	go func() {
-		defer close(outstream) // TODO: add test to confirm the stream gets closed
+		defer close(outstream)
 		if s.stream == nil {
 			return
 		}
@@ -95,7 +94,7 @@ func (s Stream) FlatMap(mapper StreamFunction) Stream {
 	outstream := make(chan Entry, cap(s.stream))
 
 	go func() {
-		defer close(outstream) // TODO: add test to confirm the stream gets closed
+		defer close(outstream)
 		if s.stream == nil {
 			return
 		}
@@ -119,7 +118,7 @@ func (s Stream) Filter(predicate Predicate) Stream {
 	outstream := make(chan Entry, cap(s.stream))
 
 	go func() {
-		defer close(outstream) // TODO: add test to confirm the stream gets closed
+		defer close(outstream)
 		if s.stream == nil {
 			return
 		}
@@ -157,7 +156,7 @@ func (s Stream) Peek(consumer Consumer) Stream {
 	outstream := make(chan Entry, cap(s.stream))
 
 	go func() {
-		defer close(outstream) // TODO: add test to confirm the stream gets closed
+		defer close(outstream)
 		s.ForEach(func(e Entry) {
 			consumer(e)
 			outstream <- e
@@ -200,7 +199,7 @@ func (s Stream) Intersperse(e Entry) Stream {
 	outstream := make(chan Entry, cap(s.stream))
 
 	go func() {
-		defer close(outstream) // TODO: add test to confirm the stream gets closed
+		defer close(outstream)
 		if s.stream == nil {
 			return
 		}
@@ -246,7 +245,7 @@ func (s Stream) MapToInt(toInt ToIntFunction) IntStream {
 	outstream := make(chan EntryInt, cap(s.stream))
 
 	go func() {
-		defer close(outstream) // TODO: add test to confirm the stream gets closed
+		defer close(outstream)
 		if s.stream == nil {
 			return
 		}
@@ -265,7 +264,7 @@ func (s Stream) MapToFloat(toFloat ToFloatFunction) FloatStream {
 	outstream := make(chan EntryFloat, cap(s.stream))
 
 	go func() {
-		defer close(outstream) // TODO: add test to confirm the stream gets closed
+		defer close(outstream)
 		if s.stream == nil {
 			return
 		}
@@ -362,7 +361,7 @@ func (s Stream) DropWhile(p Predicate) Stream {
 	outstream := make(chan Entry, cap(s.stream))
 
 	go func() {
-		defer close(outstream) // TODO: add test to confirm the stream gets closed
+		defer close(outstream)
 		if s.stream == nil {
 			return
 		}
@@ -530,7 +529,7 @@ func (s Stream) TakeWhile(p Predicate) Stream {
 	outstream := make(chan Entry, cap(s.stream))
 
 	go func() {
-		defer close(outstream) // TODO: add test to confirm the stream gets closed
+		defer close(outstream)
 
 		for val := range s.stream {
 			if !p(val) {
@@ -597,7 +596,7 @@ func (s Stream) Distinct() Stream {
 	outstream := make(chan Entry, cap(s.stream))
 
 	go func() {
-		defer close(outstream) // TODO: add test to confirm the stream gets closed
+		defer close(outstream)
 
 		unique := map[string]struct{}{}
 

@@ -43,18 +43,15 @@ func (s Stream) concurrentDo(f func()) {
 	s.panicIfInvalidConcurrency()
 
 	var wg sync.WaitGroup
-	wg.Add(1)
 
 	for i := uint(1); i <= s.concurrencyLevel; i++ {
+		wg.Add(1)
 		go func() {
-			wg.Add(1)
 			defer wg.Done()
-
 			f()
 		}()
 	}
 
-	wg.Done()
 	wg.Wait()
 }
 
