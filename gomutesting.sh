@@ -13,7 +13,7 @@ tput sc ; echo -n -e "Go getting go-mutesting..." ; tput rc
 go get -t -v github.com/zimmski/go-mutesting/...
 
 tput sc ; echo -n -e "Running go-mutesting...   " ; tput rc
-go-mutesting --verbose --exec-timeout=3 "${GOPATH}"/src/github.com/seborama/fuego/... 2>&1 | grep -Ev "^PASS |^Mutate |^Enable "
+go-mutesting --verbose --exec-timeout=3 --blacklist=gomutesting.blacklist "${GOPATH}"/src/github.com/seborama/fuego/... 2>&1 | grep -Ev "^PASS |^Mutate |^Enable "
 
 sanityCheck
 
