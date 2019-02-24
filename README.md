@@ -727,6 +727,8 @@ Example:
 // map[1:[A] 2:[BB CC] 3:[DDD]]
 ```
 
+More examples are available in [collector_test.go](collector_test.go).
+
 #### Available collectors
 
 - GroupingBy:
@@ -741,10 +743,22 @@ Example:
   Mapping(mapper Function, collector Collector) Collector
   ```
 
+- FlatMapping:
+
+  ```go
+  FlatMapping(mapper StreamFunction, collector Collector) Collector
+  ```
+
 - Filtering:
 
   ```go
   Mapping(mapper Function, collector Collector) Collector
+  ```
+
+- Reducing:
+
+  ```go
+  Reducing(f2 BiFunction) Collector
   ```
 
 - ToEntrySlice:
