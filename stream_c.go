@@ -19,6 +19,7 @@ func (s Stream) Concurrent(n uint) {
 }
 
 // ForEachC is a concurrent wrapper of ForEach.
+// The level of concurrency is set by the last call made to method Concurrent.
 // See 'ForEach' for full details.
 // See 'concurrentDo' for limitations.
 func (s Stream) ForEachC(consumer Consumer) {
