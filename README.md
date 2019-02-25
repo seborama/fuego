@@ -63,6 +63,7 @@ Have fun!!
 
 Several Entry implementations are provided:
 
+- EntyByte
 - EntryBool
 - EntryInt
 - EntryFloat
