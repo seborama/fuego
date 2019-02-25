@@ -63,7 +63,6 @@ Have fun!!
 
 Several Entry implementations are provided:
 
-- EntyByte
 - EntryBool
 - EntryInt
 - EntryFloat
@@ -71,7 +70,7 @@ Several Entry implementations are provided:
 - EntryMap
 - EntrySlice
 
-Check the code for additional methods each of these may provide.
+Check the [godoc](http://godoc.org/github.com/seborama/fuego) for additional methods each of these may provide.
 
 #### EntryMap
 
