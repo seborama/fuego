@@ -59,7 +59,7 @@ Have fun!!
 `Entry` is inspired by `hamt.Entry`. This is an elegant solution from [Yota Toyama](https://github.com/raviqqe): the type can be anything so long as it respects the simple behaviour of the`Entry` interface. This provides an abstraction of types yet with known behaviour:
 
 - Hash(): identifies an Entry Uniquely.
-- Equal(): defines equality for a type of `Entry`. `Equal()` is expected to be based on `Hash()` for non-basic types. Equal should ensure the compared Entry is of the same type as the reference Entry. For instance, `EntryBool(false)` and `EntryInt(0)` both have a Hash of `0`, yet they aren't equal. 
+- Equal(): defines equality for a concrete type of `Entry`. `Equal()` is expected to be based on `Hash()` for non-basic types. Equal should ensure the compared Entry is of the same type as the reference Entry. For instance, `EntryBool(false)` and `EntryInt(0)` both have a Hash of `0`, yet they aren't equal. 
 
 Several Entry implementations are provided:
 
