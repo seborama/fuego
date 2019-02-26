@@ -32,7 +32,7 @@ const PanicMissingChannel = "stream creation requires a channel"
 //
 // A Stream is a wrapper over a Go channel ('nil' channels are prohibited).
 //
-// NOTE:
+// NOTE
 //
 // Concurrent streams are challenging to implement owing to
 // ordering issues in parallel processing. At the moment, the view
@@ -52,7 +52,8 @@ const PanicMissingChannel = "stream creation requires a channel"
 // Streams created from a slice do not suffer from this issue because
 // they are closed when the slice content is fully pushed to the Stream.
 //
-// Example:
+// Example
+//
 //  ƒ.NewStreamFromSlice([]ƒ.Entry{
 //      ƒ.EntryInt(1),
 //      ƒ.EntryInt(2),
@@ -159,9 +160,8 @@ func (s Stream) FlatMap(mapper StreamFunction) Stream {
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
-// Example:
+// Example
 //
-// See helpers_test.go for "newEntryIntEqualsTo()"
 //  s := ƒ.NewStreamFromSlice([]ƒ.Entry{
 //      ƒ.EntryInt(1),
 //      ƒ.EntryInt(2),
@@ -201,7 +201,7 @@ func (s Stream) Filter(predicate Predicate) Stream {
 // the producer to close the stream in order to complete (or
 // it will block).
 //
-// Example:
+// Example
 //
 //  total := 0
 //
@@ -255,7 +255,7 @@ func (s Stream) Peek(consumer Consumer) Stream {
 // the producer to close the stream in order to complete (or
 // it will block).
 //
-// Example:
+// Example
 //
 //  ƒ.NewStreamFromSlice([]ƒ.Entry{
 //      ƒ.EntryString("four"),
