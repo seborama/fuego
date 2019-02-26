@@ -173,8 +173,7 @@ func (s Stream) FlatMap(mapper StreamFunction) Stream {
 //              Or(
 //                  FunctionPredicate(entryIntEqualsTo(ƒ.EntryInt(3)))),
 //  )
-//
-// Result: []ƒ.EntryInt{1,3}
+//  // Result: []ƒ.EntryInt{1,3}
 func (s Stream) Filter(predicate Predicate) Stream {
 	outstream := make(chan Entry, cap(s.stream))
 
@@ -215,8 +214,7 @@ func (s Stream) Filter(predicate Predicate) Stream {
 //      ƒ.EntryInt(3),
 //  }, 0).
 //      ForEach(calculateSumTotal)
-//
-// Result: total == 6
+//  // Result: total == 6
 func (s Stream) ForEach(consumer Consumer) {
 	if s.stream == nil {
 		return
@@ -265,8 +263,7 @@ func (s Stream) Peek(consumer Consumer) Stream {
 //      ƒ.EntryString("three"),
 //  }, 1e3).
 //      Reduce(concatenateStringsBiFunc)
-//
-// Result: ƒ.EntryString("four-twelve-one-six-three")
+//  // Result: ƒ.EntryString("four-twelve-one-six-three")
 func (s Stream) LeftReduce(f2 BiFunction) Entry {
 	if s.stream == nil {
 		return nil // TODO: return Maybe
