@@ -2,11 +2,35 @@ package fuego
 
 import "fmt"
 
-// Stream
+// TODO: consider two types of streams: CStreams (channel based as shown here) and SStreams (slice based). The former allows for infinite streams and thinner memory usage within the CStream object but lacks performance when the operation requires to deal with the end of the steam (it has to consume all the elements of the steam sequentially). SStreams require the entire data to be stored internally from the onset. However,  slices are seekable and can read from the end or be consumed backwards easily.
+
+// TODO: a stream should probably be marked as invalid after most (or all?) operations on it because the channel will have likely changed state.
+
+// TODO list:
+// Methods with ** require the Stream to be finite and closed (or use a Future, perhaps Future.Stream()?)
+// **DropRight(uint64) - drops the last n elements of the Stream. Only meaningful if the Stream is closed.
+// FilterNot(Predicate) - <=> to Filter(Not(Predicate))
+// MapToString(ToStringFunction)
+// FlatMapToXXX (Int, Uint, etc) => is this the same as FlatMap().MapToXXX()?
+// **Sorted(Comparator)
+// Contains
+// ContainsAll
+// Tail
+// Zip / Unzip
+// Concat?
+// Range(from, toExclusive)?
+// RangeBy(from,toExclusive, step)?
+// Unfold()
+// Fold()?
+// Fold / FoldLeft
+
+// PanicMissingChannel signifies that the Stream is missing a channel.
+const PanicMissingChannel = "stream creation requires a channel"
+
+// Stream is a sequence of elements supporting sequential and
+// (in the future?) parallel operations.
 //
-// A Stream is a wrapper over a Go channel.
-//
-// 'nil' channels are prohibited.
+// A Stream is a wrapper over a Go channel ('nil' channels are prohibited).
 //
 // NOTE:
 //
@@ -44,40 +68,13 @@ import "fmt"
 //      // c <- ...
 //  }()
 //  NewStream(c)
-
-// TODO: consider two types of streams: CStreams (channel based as shown here) and SStreams (slice based). The former allows for infinite streams and thinner memory usage within the CStream object but lacks performance when the operation requires to deal with the end of the steam (it has to consume all the elements of the steam sequentially). SStreams require the entire data to be stored internally from the onset. However,  slices are seekable and can read from the end or be consumed backwards easily.
-
-// TODO: a stream should probably be marked as invalid after most (or all?) operations on it because the channel will have likely changed state.
-
-// TODO list:
-// Methods with ** require the Stream to be finite and closed (or use a Future, perhaps Future.Stream()?)
-// **DropRight(uint64) - drops the last n elements of the Stream. Only meaningful if the Stream is closed.
-// FilterNot(Predicate) - <=> to Filter(Not(Predicate))
-// MapToString(ToStringFunction)
-// FlatMapToXXX (Int, Uint, etc) => is this the same as FlatMap().MapToXXX()?
-// **Sorted(Comparator)
-// Contains
-// ContainsAll
-// Tail
-// Zip / Unzip
-// Concat?
-// Range(from, toExclusive)?
-// RangeBy(from,toExclusive, step)?
-// Unfold()
-// Fold()?
-// Fold / FoldLeft
-
-// PanicMissingChannel signifies that the Stream is missing a channel.
-const PanicMissingChannel = "stream creation requires a channel"
-
-// Stream is a sequence of elements supporting sequential and
-// (in the future?) parallel operations.
 type Stream struct {
 	stream           chan Entry
 	concurrencyLevel uint
 }
 
 // NewStream creates a new Stream.
+//
 // This function leaves the provided channel is the same state
 // of openness.
 func NewStream(c chan Entry) Stream {
@@ -90,6 +87,7 @@ func NewStream(c chan Entry) Stream {
 }
 
 // NewStreamFromSlice creates a new Stream from a Go slice.
+//
 // The slice data is published to the stream after which the
 // stream is closed.
 func NewStreamFromSlice(slice EntrySlice, bufsize int) Stream {
@@ -162,6 +160,7 @@ func (s Stream) FlatMap(mapper StreamFunction) Stream {
 // which point the out-stream will be closed too.
 //
 // Example:
+//
 // See helpers_test.go for "newEntryIntEqualsTo()"
 //  s := ƒ.NewStreamFromSlice([]ƒ.Entry{
 //      ƒ.EntryInt(1),
@@ -203,6 +202,7 @@ func (s Stream) Filter(predicate Predicate) Stream {
 // it will block).
 //
 // Example:
+//
 //  total := 0
 //
 //  computeSumTotal := func(value ƒ.Entry) {
@@ -256,6 +256,7 @@ func (s Stream) Peek(consumer Consumer) Stream {
 // it will block).
 //
 // Example:
+//
 //  ƒ.NewStreamFromSlice([]ƒ.Entry{
 //      ƒ.EntryString("four"),
 //      ƒ.EntryString("twelve)",
@@ -280,12 +281,14 @@ func (s Stream) LeftReduce(f2 BiFunction) Entry {
 }
 
 // Reduce is an alias for LeftReduce.
+//
 // See LeftReduce for more info.
 func (s Stream) Reduce(f2 BiFunction) Entry {
 	return s.LeftReduce(f2)
 }
 
 // Intersperse inserts an element between all elements of this Stream.
+//
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 func (s Stream) Intersperse(e Entry) Stream {
@@ -311,6 +314,7 @@ func (s Stream) Intersperse(e Entry) Stream {
 }
 
 // GroupBy groups the elements of this Stream by classifying them.
+//
 // This is a continuous terminal operation and hence expects
 // the producer to close the stream in order to complete (or
 // it will block).
@@ -332,6 +336,7 @@ func (s Stream) GroupBy(classifier Function) EntryMap {
 }
 
 // MapToInt produces an EntryInt stream.
+//
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 func (s Stream) MapToInt(toInt ToIntFunction) IntStream {
@@ -351,6 +356,7 @@ func (s Stream) MapToInt(toInt ToIntFunction) IntStream {
 }
 
 // MapToFloat produces an EntryFloat stream.
+//
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 func (s Stream) MapToFloat(toFloat ToFloatFunction) FloatStream {
@@ -370,8 +376,10 @@ func (s Stream) MapToFloat(toFloat ToFloatFunction) FloatStream {
 }
 
 // Count the number of elements in the stream.
+//
 // This is a special case of a reduction and is equivalent to:
 //   s.MapToInt(func(Entry) { return EntryInt(1) }).Sum()
+//
 // This is a continuous terminal operation and hence expects
 // the producer to close the stream in order to complete (or
 // it will block).
@@ -390,6 +398,7 @@ func (s Stream) Count() int {
 
 // AllMatch returns whether all of the elements in the stream
 // satisfy the predicate.
+//
 // This is a continuous terminal operation and hence expects
 // the producer to close the stream in order to complete (or
 // it will block).
@@ -409,6 +418,7 @@ func (s Stream) AllMatch(p Predicate) bool {
 
 // AnyMatch returns whether any of the elements in the stream
 // satisfies the predicate.
+//
 // This is a continuous terminal operation and hence expects
 // the producer to close the stream in order to complete (or
 // it will block).
@@ -428,6 +438,7 @@ func (s Stream) AnyMatch(p Predicate) bool {
 
 // NoneMatch returns whether none of the elements in the stream
 // satisfies the predicate. It is the opposite of AnyMatch.
+//
 // This is a continuous terminal operation and hence expects
 // the producer to close the stream in order to complete (or
 // it will block).
@@ -436,6 +447,9 @@ func (s Stream) NoneMatch(p Predicate) bool {
 }
 
 // Drop the first 'n' elements of this stream and returns a new stream.
+//
+// This function streams continuously until the in-stream is closed at
+// which point the out-stream will be closed too.
 func (s Stream) Drop(n uint64) Stream {
 	return s.DropWhile(func() func(e Entry) bool {
 		count := uint64(0)
@@ -448,6 +462,7 @@ func (s Stream) Drop(n uint64) Stream {
 
 // DropWhile drops the first elements of this stream while the predicate
 // is satisfied and returns a new stream.
+//
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 func (s Stream) DropWhile(p Predicate) Stream {
@@ -479,6 +494,7 @@ func (s Stream) DropWhile(p Predicate) Stream {
 
 // DropUntil drops the first elements of this stream until the predicate
 // is satisfied and returns a new stream.
+//
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 func (s Stream) DropUntil(p Predicate) Stream {
@@ -486,11 +502,17 @@ func (s Stream) DropUntil(p Predicate) Stream {
 }
 
 // Last returns the last Entry in this stream.
+//
+// This function streams continuously until the in-stream is closed at
+// which point the out-stream will be closed too.
 func (s Stream) Last() Entry {
 	return s.LastN(1)[0]
 }
 
 // LastN returns a slice of the last n elements in this stream.
+//
+// This function streams continuously until the in-stream is closed at
+// which point the out-stream will be closed too.
 func (s Stream) LastN(n uint64) EntrySlice {
 	s.panicIfNilChannel()
 
@@ -528,6 +550,8 @@ func (s Stream) LastN(n uint64) EntrySlice {
 }
 
 // Head returns the first Entry in this stream.
+//
+// This function only consumes at most one element from the stream.
 func (s Stream) Head() Entry {
 	head := s.HeadN(1)
 	if head.Len() != 1 {
@@ -537,6 +561,8 @@ func (s Stream) Head() Entry {
 }
 
 // HeadN returns a slice of the first n elements in this stream.
+//
+// This function only consumes at most 'n' elements from the stream.
 func (s Stream) HeadN(n uint64) EntrySlice {
 	return s.Take(n).Collect(
 		NewCollector(
@@ -548,6 +574,9 @@ func (s Stream) HeadN(n uint64) EntrySlice {
 
 // EndsWith returns true when this stream ends
 // with the supplied elements.
+//
+// This function streams continuously until the in-stream is closed at
+// which point the out-stream will be closed too.
 func (s Stream) EndsWith(slice EntrySlice) bool {
 	if slice.Len() == 0 {
 		return false
@@ -577,6 +606,10 @@ func (s Stream) EndsWith(slice EntrySlice) bool {
 
 // StartsWith returns true when this stream starts
 // with the elements in the supplied slice.
+//
+// This function only consume as much data from the stream as
+// is necessary to prove (or disprove) it starts with the supplied
+// slice data.
 func (s Stream) StartsWith(slice EntrySlice) bool {
 	startElements := s.HeadN(uint64(slice.Len()))
 	if slice.Len() == 0 || startElements.Len() != slice.Len() {
@@ -593,6 +626,7 @@ func (s Stream) StartsWith(slice EntrySlice) bool {
 }
 
 // Take returns a stream of the first 'n' elements of this stream.
+//
 // This function streams continuously until the 'n' elements are picked
 // or the in-stream  is closed at which point the out-stream
 // will be closed too.
@@ -614,6 +648,7 @@ func (s Stream) Limit(n uint64) Stream {
 
 // TakeWhile returns a stream of the first elements of this
 // stream while the predicate is satisfied.
+//
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 func (s Stream) TakeWhile(p Predicate) Stream {
@@ -637,6 +672,7 @@ func (s Stream) TakeWhile(p Predicate) Stream {
 
 // TakeUntil returns a stream of the first elements
 // of this stream until the predicate is satisfied.
+//
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 func (s Stream) TakeUntil(p Predicate) Stream {
@@ -645,6 +681,7 @@ func (s Stream) TakeUntil(p Predicate) Stream {
 
 // Collect reduces and optionally mutates the stream with
 // the supplied Collector.
+//
 // This is a continuous terminal operation and hence expects
 // the producer to close the stream in order to complete (or
 // it will block).
@@ -663,7 +700,9 @@ func (s Stream) Collect(c Collector) interface{} {
 
 // ToSlice extracts the elements of the stream into
 // an EntrySlice.
+//
 // This is a special case of a reduction.
+//
 // This is a continuous terminal operation and hence expects
 // the producer to close the stream in order to complete (or
 // it will block).
@@ -679,8 +718,10 @@ func (s Stream) ToSlice() EntrySlice {
 
 // Distinct returns a stream of the distinct elements of
 // this stream.
+//
 // This operation is costly both in time and in memory. It is
 // strongly recommended to use buffered channels for this operation.
+//
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 func (s Stream) Distinct() Stream {
