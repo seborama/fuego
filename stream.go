@@ -2,6 +2,49 @@ package fuego
 
 import "fmt"
 
+// Stream
+//
+// A Stream is a wrapper over a Go channel.
+//
+// 'nil' channels are prohibited.
+//
+// NOTE:
+//
+// Concurrent streams are challenging to implement owing to
+// ordering issues in parallel processing. At the moment, the view
+// is that the most sensible approach is to delegate control to users.
+// Multiple fuego streams can be created and data distributed
+// across as desired. This empowers users of fuego to implement the
+// desired behaviour of their pipelines.
+//
+// Creation
+//
+// When providing a Go channel to create a Stream, beware that until you
+// close the channel, the Stream's internal Go function that processes
+// the data on the channel will remain active. It will block until
+// either new data is produced or the channel is closed by the producer.
+// When a producer forgets to close the channel, the Go function will stray.
+//
+// Streams created from a slice do not suffer from this issue because
+// they are closed when the slice content is fully pushed to the Stream.
+//
+// Example:
+//  ƒ.NewStreamFromSlice([]ƒ.Entry{
+//      ƒ.EntryInt(1),
+//      ƒ.EntryInt(2),
+//      ƒ.EntryInt(3),
+//  }, 1e3)
+//  // or if you already have a channel of Entry:
+//  c := make(chan ƒ.Entry) // you could add a buffer size as a second arg, if desired
+//  go func() {
+//      defer close(c)
+//      c <- ƒ.EntryString("one")
+//      c <- ƒ.EntryString("two")
+//      c <- ƒ.EntryString("three")
+//      // c <- ...
+//  }()
+//  NewStream(c)
+
 // TODO: consider two types of streams: CStreams (channel based as shown here) and SStreams (slice based). The former allows for infinite streams and thinner memory usage within the CStream object but lacks performance when the operation requires to deal with the end of the steam (it has to consume all the elements of the steam sequentially). SStreams require the entire data to be stored internally from the onset. However,  slices are seekable and can read from the end or be consumed backwards easily.
 
 // TODO: a stream should probably be marked as invalid after most (or all?) operations on it because the channel will have likely changed state.
@@ -66,6 +109,7 @@ func NewStreamFromSlice(slice EntrySlice, bufsize int) Stream {
 
 // Map returns a Stream consisting of the result of
 // applying the given function to the elements of this stream.
+//
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 func (s Stream) Map(mapper Function) Stream {
@@ -88,6 +132,7 @@ func (s Stream) Map(mapper Function) Stream {
 
 // FlatMap takes a StreamFunction to flatten the entries
 // in this stream and produce a new stream.
+//
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 func (s Stream) FlatMap(mapper StreamFunction) Stream {
@@ -112,8 +157,25 @@ func (s Stream) FlatMap(mapper StreamFunction) Stream {
 
 // Filter returns a stream consisting of the elements of this stream that
 // match the given predicate.
+//
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
+//
+// Example:
+// See helpers_test.go for "newEntryIntEqualsTo()"
+//  s := ƒ.NewStreamFromSlice([]ƒ.Entry{
+//      ƒ.EntryInt(1),
+//      ƒ.EntryInt(2),
+//      ƒ.EntryInt(3),
+//  }, 0)
+//
+//  s.Filter(
+//          FunctionPredicate(entryIntEqualsTo(ƒ.EntryInt(1))).
+//              Or(
+//                  FunctionPredicate(entryIntEqualsTo(ƒ.EntryInt(3)))),
+//  )
+//
+// Result: []ƒ.EntryInt{1,3}
 func (s Stream) Filter(predicate Predicate) Stream {
 	outstream := make(chan Entry, cap(s.stream))
 
@@ -135,9 +197,26 @@ func (s Stream) Filter(predicate Predicate) Stream {
 }
 
 // ForEach executes the given function for each entry in this stream.
+//
 // This is a continuous terminal operation and hence expects
 // the producer to close the stream in order to complete (or
 // it will block).
+//
+// Example:
+//  total := 0
+//
+//  computeSumTotal := func(value ƒ.Entry) {
+//      total += int(value.(ƒ.EntryInt).Value())
+//  }
+//
+//  s := ƒ.NewStreamFromSlice([]ƒ.Entry{
+//      ƒ.EntryInt(1),
+//      ƒ.EntryInt(2),
+//      ƒ.EntryInt(3),
+//  }, 0).
+//      ForEach(calculateSumTotal)
+//
+// Result: total == 6
 func (s Stream) ForEach(consumer Consumer) {
 	if s.stream == nil {
 		return
@@ -150,6 +229,7 @@ func (s Stream) ForEach(consumer Consumer) {
 
 // Peek is akin to ForEach but returns the Stream.
 // This is useful for debugging.
+//
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 func (s Stream) Peek(consumer Consumer) Stream {
@@ -170,9 +250,22 @@ func (s Stream) Peek(consumer Consumer) Stream {
 
 // LeftReduce accumulates the elements of this Stream by
 // applying the given function.
+//
 // This is a continuous terminal operation and hence expects
 // the producer to close the stream in order to complete (or
 // it will block).
+//
+// Example:
+//  ƒ.NewStreamFromSlice([]ƒ.Entry{
+//      ƒ.EntryString("four"),
+//      ƒ.EntryString("twelve)",
+//      ƒ.EntryString("one"),
+//      ƒ.EntryString("six"),
+//      ƒ.EntryString("three"),
+//  }, 1e3).
+//      Reduce(concatenateStringsBiFunc)
+//
+// Result: ƒ.EntryString("four-twelve-one-six-three")
 func (s Stream) LeftReduce(f2 BiFunction) Entry {
 	if s.stream == nil {
 		return nil // TODO: return Maybe
