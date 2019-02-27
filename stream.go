@@ -23,6 +23,7 @@ import "fmt"
 // Unfold()
 // Fold()?
 // Fold / FoldLeft
+// TODO: implement NewStreamFromMap -> Stream of Keys / Stream of Values?
 
 // PanicMissingChannel signifies that the Stream is missing a channel.
 const PanicMissingChannel = "stream creation requires a channel"
@@ -104,8 +105,6 @@ func NewStreamFromSlice(slice EntrySlice, bufsize int) Stream {
 	return NewStream(c)
 }
 
-// TODO: implement NewStreamFromMap -> Stream of Keys / Stream of Values?
-
 // Map returns a Stream consisting of the result of
 // applying the given function to the elements of this stream.
 //
@@ -134,6 +133,26 @@ func (s Stream) Map(mapper Function) Stream {
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
+//
+// Example
+//
+//  a := EntrySlice{EntryInt(1), EntryInt(2), EntryInt(3)}
+//  b := EntrySlice{EntryInt(4), EntryInt(5)}
+//  c := EntrySlice{EntryInt(6), EntryInt(7), EntryInt(8)}
+//
+//  sliceOfEntrySlicesOfEntryInts := EntrySlice{a, b, c}
+//
+//  fmt.Printf("Before flattening: %+v\n", sliceOfEntrySlicesOfEntryInts)
+//
+//  sliceOfEntryInts := NewStreamFromSlice(sliceOfEntrySlicesOfEntryInts, 0).
+//      FlatMap(FlattenEntrySliceToEntry(0)).
+//      ToSlice()
+//
+//  fmt.Printf("After flattening: %+v\n", sliceOfEntryInts)
+//
+//  // Output:
+//  // Before flattening: [[1 2 3] [4 5] [6 7 8]]
+//  // After flattening: [1 2 3 4 5 6 7 8]
 func (s Stream) FlatMap(mapper StreamFunction) Stream {
 	outstream := make(chan Entry, cap(s.stream))
 
@@ -226,7 +245,8 @@ func (s Stream) ForEach(consumer Consumer) {
 }
 
 // Peek is akin to ForEach but returns the Stream.
-// This is useful for debugging.
+//
+// This is useful e.g. for debugging.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
@@ -288,6 +308,16 @@ func (s Stream) Reduce(f2 BiFunction) Entry {
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
+//
+// Example
+//
+//  ƒ.NewStreamFromSlice([]ƒ.Entry{
+//      ƒ.EntryString("three"),
+//      ƒ.EntryString("two"),
+//      ƒ.EntryString("four"),
+//  }, 1e3).
+//      Intersperse(ƒ.EntryString(" - "))
+//  // Result: "three - two - four"
 func (s Stream) Intersperse(e Entry) Stream {
 	outstream := make(chan Entry, cap(s.stream))
 
@@ -399,6 +429,18 @@ func (s Stream) Count() int {
 // This is a continuous terminal operation and hence expects
 // the producer to close the stream in order to complete (or
 // it will block).
+//
+// Example
+//
+//  ƒ.NewStreamFromSlice([]ƒ.Entry{
+//      ƒ.EntryString("three"),
+//      ƒ.EntryString("two"),
+//      ƒ.EntryString("fourth"),
+//  }, 1e3).
+//      AllMatch(func(e ƒ.Entry) bool {
+//          return strings.Contains(string(e.(ƒ.EntryString)), "t")
+//      })
+//  // Result: true
 func (s Stream) AllMatch(p Predicate) bool {
 	if s.stream == nil {
 		return false
@@ -419,6 +461,18 @@ func (s Stream) AllMatch(p Predicate) bool {
 // This is a continuous terminal operation and hence expects
 // the producer to close the stream in order to complete (or
 // it will block).
+//
+// Example
+//
+//  ƒ.NewStreamFromSlice([]ƒ.Entry{
+//      ƒ.EntryString("three"),
+//      ƒ.EntryString("two"),
+//      ƒ.EntryString("four"),
+//  }, 1e3).
+//      AnyMatch(func(e ƒ.Entry) bool {
+//          return e.Equal(ƒ.EntryString("three"))
+//      })
+//  // Result: true
 func (s Stream) AnyMatch(p Predicate) bool {
 	if s.stream == nil {
 		return false
@@ -439,6 +493,16 @@ func (s Stream) AnyMatch(p Predicate) bool {
 // This is a continuous terminal operation and hence expects
 // the producer to close the stream in order to complete (or
 // it will block).
+//
+// Example
+//
+//  ƒ.NewStreamFromSlice([]ƒ.Entry{
+//      ƒ.EntryString("three"),
+//      ƒ.EntryString("two"),
+//      ƒ.EntryString("four"),
+//  }, 1e3).
+//      NoneMatch(func(e ƒ.Entry) bool { return e.Equal(ƒ.EntryString("nothing like this")) })
+//  // Result: true
 func (s Stream) NoneMatch(p Predicate) bool {
 	return !s.AnyMatch(p)
 }
