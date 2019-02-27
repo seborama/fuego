@@ -4,6 +4,13 @@ package fuego
 
 // IntStream is a sequence of EntryInt elements supporting sequential
 // and (in the future?) parallel operations.
+//
+// The current implementation is based on `Stream` and an intermediary
+// channel that converts incoming `EntryInt` elements to `Entry`. This
+// approach offers programming conciseness but the use of an
+// intermediary channel likely decreases performance. This also
+// means that type checking is weak on methods "borrowed" from
+// `Stream` that expect `Entry` (instead of `EntryInt`).
 type IntStream struct {
 	Stream
 }

@@ -4,6 +4,12 @@ package fuego
 type Function func(e Entry) Entry
 
 // StreamFunction that accepts one argument and produces a stream.
+//
+// It is worth noting is `StreamFunction` which accepts one argument
+//  and produces a stream. It is used with when "flat mapping" and
+// `Stream`. This effectively is a one to many operation, such
+// as exploding the individual values of an EntrySlice into a Stream.
+//
 // This effectively is a one to many operation, such as exploding
 // the individual values of an EntrySlice into a Stream.
 type StreamFunction func(e Entry) Stream

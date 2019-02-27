@@ -9,7 +9,44 @@ import "fmt"
 
 // TODO: evolve towards a go-style decorator pattern?
 
-// Collector is a reduction with optional mutation.
+// A `Collector` is a mutable reduction operation,
+// optionally transforming the accumulated result.
+//
+// Collectors can be combined to express complex
+// operations in a concise manner.
+//
+// In other words, a collector allows creating custom
+// actions on a Stream. **fuego** comes shipped with a
+// number of methods such as `MapToInt`, `Head`, `LastN`,
+// `Filter`, etc, and Collectors also provide a few
+// additional methods. But what if you need something else?
+// And it is straighforward or readable when combining the
+// existing methods fuego offers? Enters `Collector`:
+// implement you own requirement functionally! Focus on
+// *what* needs to be done in your streams (and
+// delegate the details of the *how* to the implementation
+// of your `Collector`).
+//
+// It should be noted that the `finisher` function is
+// optional (i.e. it may acceptably be `nil`).
+//
+// Example:
+//
+//  strs := EntrySlice{
+//      EntryString("a"),
+//      EntryString("bb"),
+//      EntryString("cc"),
+//      EntryString("ddd"),
+//  }
+//
+//  NewStreamFromSlice(strs, 1e3).
+//      Collect(
+//          GroupingBy(
+//              stringLength,
+//              Mapping(
+//                  stringToUpper,
+//                  ToEntryMap())))
+//  // Result: map[1:[A] 2:[BB CC] 3:[DDD]]
 type Collector struct {
 	supplier    Supplier
 	accumulator BiFunction // TODO: this should be a BiConsumer but is it against pure functional design?

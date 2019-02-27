@@ -4,6 +4,13 @@ package fuego
 
 // FloatStream is a sequence of EntryFloat elements supporting sequential
 // and (in the future?) parallel operations.
+//
+// The current implementation is based on `Stream` and an intermediary
+// channel that converts incoming `EntryFloat` elements to `Entry`. This
+// approach offers programming conciseness but the use of an
+// intermediary channel likely decreases performance. This also
+// means that type checking is weak on methods "borrowed" from
+// `Stream` that expect `Entry` (instead of `EntryFloat`).
 type FloatStream struct {
 	Stream
 }
