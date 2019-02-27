@@ -30,7 +30,7 @@ import "fmt"
 // It should be noted that the `finisher` function is
 // optional (i.e. it may acceptably be `nil`).
 //
-// Example:
+// Example
 //
 //  strs := EntrySlice{
 //      EntryString("a"),
