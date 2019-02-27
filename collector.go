@@ -50,7 +50,7 @@ import "fmt"
 type Collector struct {
 	supplier    Supplier
 	accumulator BiFunction // TODO: this should be a BiConsumer but is it against pure functional design?
-	// combiner BiFunction/BiOperator // this is for joining paralle collectors
+	// combiner BiFunction/BiOperator // this is for joining parallel collectors
 	finisher Function
 }
 
