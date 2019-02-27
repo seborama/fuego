@@ -59,7 +59,7 @@ Presently, a Go channel cannot dynamically change its buffer size. This prevents
 `Entry` is inspired by `hamt.Entry`. This is an elegant solution from [Yota Toyama](https://github.com/raviqqe): the type can be anything so long as it respects the simple behaviour of the`Entry` interface. This provides an abstraction of types yet with known behaviour:
 
 - Hash(): identifies an Entry Uniquely.
-- Equal(): defines equality for a concrete type of `Entry`. `Equal()` is expected to be based on `Hash()` for non-basic types. Equal should ensure the compared Entry is of the same type as the reference Entry. For instance, `EntryBool(false)` and `EntryInt(0)` both have a Hash of `0`, yet they aren't equal. 
+- Equal(): defines equality for a concrete type of `Entry`. `Equal()` is expected to be based on `Hash()` for non-basic types. Equal should ensure the compared Entry is of the same type as the reference Entry. For instance, `EntryBool(false)` and `EntryInt(0)` both have a Hash of `0`, yet they aren't equal.
 
 Several Entry implementations are provided:
 
@@ -122,7 +122,7 @@ Concurrent streams are challenging to implement owing to ordering issues in para
 
 I recommend Rob Pike's slides on Go concurrency patterns:
 
-- https://talks.golang.org/2012/concurrency.slide#1
+- [Go Concurrency Patterns, Rob Pike, 2012](https://talks.golang.org/2012/concurrency.slide#1)
 
 ## Example of Stream
 
@@ -134,6 +134,8 @@ I recommend Rob Pike's slides on Go concurrency patterns:
         EntryString("ddd"),
     }
     got := NewStreamFromSlice(strs, 0).
+        Filter(isEnTryString).
+        Distinct().
         Collect(
             GroupingBy(
                 stringLength,
