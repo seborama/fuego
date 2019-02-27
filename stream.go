@@ -134,25 +134,7 @@ func (s Stream) Map(mapper Function) Stream {
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
-// Example
-//
-//  a := EntrySlice{EntryInt(1), EntryInt(2), EntryInt(3)}
-//  b := EntrySlice{EntryInt(4), EntryInt(5)}
-//  c := EntrySlice{EntryInt(6), EntryInt(7), EntryInt(8)}
-//
-//  sliceOfEntrySlicesOfEntryInts := EntrySlice{a, b, c}
-//
-//  fmt.Printf("Before flattening: %+v\n", sliceOfEntrySlicesOfEntryInts)
-//
-//  sliceOfEntryInts := NewStreamFromSlice(sliceOfEntrySlicesOfEntryInts, 0).
-//      FlatMap(FlattenEntrySliceToEntry(0)).
-//      ToSlice()
-//
-//  fmt.Printf("After flattening: %+v\n", sliceOfEntryInts)
-//
-//  // Output:
-//  // Before flattening: [[1 2 3] [4 5] [6 7 8]]
-//  // After flattening: [1 2 3 4 5 6 7 8]
+// See: example_stream_test.go
 func (s Stream) FlatMap(mapper StreamFunction) Stream {
 	outstream := make(chan Entry, cap(s.stream))
 
@@ -345,6 +327,8 @@ func (s Stream) Intersperse(e Entry) Stream {
 // This is a continuous terminal operation and hence expects
 // the producer to close the stream in order to complete (or
 // it will block).
+//
+// See: example_stream_test.go
 func (s Stream) GroupBy(classifier Function) EntryMap {
 	resultMap := EntryMap{}
 
