@@ -511,6 +511,16 @@ func (s Stream) NoneMatch(p Predicate) bool {
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
+//
+// Example
+//
+//  ƒ.NewStreamFromSlice([]ƒ.Entry{
+//      ƒ.EntryString("three"),
+//      ƒ.EntryString("two"),
+//      ƒ.EntryString("fourth"),
+//  }, 1e3).
+//      Drop(2)
+//  // Result: Stream of ƒ.EntryString("fourth")
 func (s Stream) Drop(n uint64) Stream {
 	return s.DropWhile(func() func(e Entry) bool {
 		count := uint64(0)
@@ -526,6 +536,18 @@ func (s Stream) Drop(n uint64) Stream {
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
+//
+// Example
+//
+//  ƒ.NewStreamFromSlice([]ƒ.Entry{
+//      ƒ.EntryString("three"),
+//      ƒ.EntryString("two"),
+//      ƒ.EntryString("fourth"),
+//  }, 1e3).
+//      DropWhile(func(e ƒ.Entry) bool {
+//          return e.Equal(ƒ.EntryString("three"))
+//      })
+//  // Result: Stream of ƒ.EntryString("two") and ƒ.EntryString("fourth")
 func (s Stream) DropWhile(p Predicate) Stream {
 	outstream := make(chan Entry, cap(s.stream))
 
@@ -558,6 +580,18 @@ func (s Stream) DropWhile(p Predicate) Stream {
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
+//
+// Example
+//
+//  ƒ.NewStreamFromSlice([]ƒ.Entry{
+//      ƒ.EntryString("three"),
+//      ƒ.EntryString("two"),
+//      ƒ.EntryString("fourth"),
+//  }, 1e3).
+//      DropUntil(func(e ƒ.Entry) bool {
+//          return e.Equal(ƒ.EntryString("fourth"))
+//      })
+//  // Result: Stream of ƒ.EntryString("three") and ƒ.EntryString("two")
 func (s Stream) DropUntil(p Predicate) Stream {
 	return s.DropWhile(p.Negate())
 }
@@ -566,6 +600,16 @@ func (s Stream) DropUntil(p Predicate) Stream {
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
+//
+// Example
+//
+//  ƒ.NewStreamFromSlice([]ƒ.Entry{
+//      ƒ.EntryString("three"),
+//      ƒ.EntryString("two"),
+//      ƒ.EntryString("fourth"),
+//  }, 1e3).
+//      Last()
+//  // Result: ƒ.EntryString("fourth")
 func (s Stream) Last() Entry {
 	return s.LastN(1)[0]
 }
@@ -574,6 +618,16 @@ func (s Stream) Last() Entry {
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
+//
+// Example
+//
+//  ƒ.NewStreamFromSlice([]ƒ.Entry{
+//      ƒ.EntryString("three"),
+//      ƒ.EntryString("two"),
+//      ƒ.EntryString("fourth"),
+//  }, 1e3).
+//      LastN(2)
+//  // Result: []ƒ.Entry{ƒ.EntryString("two"), ƒ.EntryString("fourth")}
 func (s Stream) LastN(n uint64) EntrySlice {
 	s.panicIfNilChannel()
 
@@ -613,6 +667,16 @@ func (s Stream) LastN(n uint64) EntrySlice {
 // Head returns the first Entry in this stream.
 //
 // This function only consumes at most one element from the stream.
+//
+// Example
+//
+//  ƒ.NewStreamFromSlice([]ƒ.Entry{
+//      ƒ.EntryString("three"),
+//      ƒ.EntryString("two"),
+//      ƒ.EntryString("fourth"),
+//  }, 1e3).
+//      Head()
+//  // Result: ƒ.EntryString("three")
 func (s Stream) Head() Entry {
 	head := s.HeadN(1)
 	if head.Len() != 1 {
@@ -624,6 +688,16 @@ func (s Stream) Head() Entry {
 // HeadN returns a slice of the first n elements in this stream.
 //
 // This function only consumes at most 'n' elements from the stream.
+//
+// Example
+//
+//  ƒ.NewStreamFromSlice([]ƒ.Entry{
+//      ƒ.EntryString("three"),
+//      ƒ.EntryString("two"),
+//      ƒ.EntryString("fourth"),
+//  }, 1e3).
+//      HeadN(2)
+//  // Result: []ƒ.Entry{ƒ.EntryString("three"), ƒ.EntryString("two")}
 func (s Stream) HeadN(n uint64) EntrySlice {
 	return s.Take(n).Collect(
 		NewCollector(
@@ -636,8 +710,21 @@ func (s Stream) HeadN(n uint64) EntrySlice {
 // EndsWith returns true when this stream ends
 // with the supplied elements.
 //
+// This is a potentially expensive method since it has
+// to consume all the elements in the Stream.
+//
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
+//
+// Example
+//
+//  ƒ.NewStreamFromSlice([]ƒ.Entry{
+//      ƒ.EntryString("three"),
+//      ƒ.EntryString("two"),
+//      ƒ.EntryString("fourth"),
+//  }, 1e3).
+//      EndsWith([]ƒ.Entry{ƒ.EntryString("two"), ƒ.EntryString("fourth")})
+//  // Result: true
 func (s Stream) EndsWith(slice EntrySlice) bool {
 	if slice.Len() == 0 {
 		return false
@@ -671,6 +758,16 @@ func (s Stream) EndsWith(slice EntrySlice) bool {
 // This function only consume as much data from the stream as
 // is necessary to prove (or disprove) it starts with the supplied
 // slice data.
+//
+// Example
+//
+//  ƒ.NewStreamFromSlice([]ƒ.Entry{
+//      ƒ.EntryString("three"),
+//      ƒ.EntryString("two"),
+//      ƒ.EntryString("fourth"),
+//  }, 1e3).
+//      StartsWith([]ƒ.Entry{ƒ.EntryString("three"), ƒ.EntryString("two")})
+//  // Result: true
 func (s Stream) StartsWith(slice EntrySlice) bool {
 	startElements := s.HeadN(uint64(slice.Len()))
 	if slice.Len() == 0 || startElements.Len() != slice.Len() {
@@ -691,6 +788,16 @@ func (s Stream) StartsWith(slice EntrySlice) bool {
 // This function streams continuously until the 'n' elements are picked
 // or the in-stream  is closed at which point the out-stream
 // will be closed too.
+//
+// Example
+//
+//  ƒ.NewStreamFromSlice([]ƒ.Entry{
+//      ƒ.EntryString("three"),
+//      ƒ.EntryString("two"),
+//      ƒ.EntryString("fourth"),
+//  }, 1e3).
+//      Take(2)
+//  // Result: Stream of []ƒ.Entry{ƒ.EntryString("three"), ƒ.EntryString("two")}
 func (s Stream) Take(n uint64) Stream {
 	counterIsLessThanOrEqualTo := func(maxCount uint64) Predicate {
 		counter := uint64(0)
@@ -712,6 +819,18 @@ func (s Stream) Limit(n uint64) Stream {
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
+//
+// Example
+//
+//  ƒ.NewStreamFromSlice([]ƒ.Entry{
+//      ƒ.EntryString("three"),
+//      ƒ.EntryString("two"),
+//      ƒ.EntryString("fourth"),
+//  }, 1e3).
+//      TakeWhile(func(e ƒ.Entry) bool {
+//          return strings.HasPrefix(string(e.(ƒ.EntryString)), "t")
+//      })
+//  // Result: Stream of []ƒ.Entry{ƒ.EntryString("three"), ƒ.EntryString("two")}
 func (s Stream) TakeWhile(p Predicate) Stream {
 	s.panicIfNilChannel()
 
@@ -736,6 +855,18 @@ func (s Stream) TakeWhile(p Predicate) Stream {
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
+//
+// Example
+//
+//  ƒ.NewStreamFromSlice([]ƒ.Entry{
+//      ƒ.EntryString("three"),
+//      ƒ.EntryString("two"),
+//      ƒ.EntryString("fourth"),
+//  }, 1e3).
+//      TakeUntil(func(e ƒ.Entry) bool {
+//          return e.Equal(ƒ.EntryString("fourth"))
+//      })
+//  // Result: Stream of []ƒ.Entry{ƒ.EntryString("three"), ƒ.EntryString("two")}
 func (s Stream) TakeUntil(p Predicate) Stream {
 	return s.TakeWhile(p.Negate())
 }
@@ -743,9 +874,32 @@ func (s Stream) TakeUntil(p Predicate) Stream {
 // Collect reduces and optionally mutates the stream with
 // the supplied Collector.
 //
+// It should be noted that this method returns an `interface{}`
+// which enables it to return `Entry` as well as any other Go types.
+//
 // This is a continuous terminal operation and hence expects
 // the producer to close the stream in order to complete (or
 // it will block).
+//
+// Example
+//
+//  strs := EntrySlice{
+//  	EntryString("a"),
+//  	EntryString("bb"),
+//  	EntryString("cc"),
+//  	EntryString("ddd"),
+//  }
+//
+//  NewStreamFromSlice(strs, 1e3).
+//      Collect(
+//          GroupingBy(
+//              stringLength,
+//              Mapping(
+//                  stringToUpper,
+//                  Filtering(
+//                      stringLengthGreaterThan(1),
+//                      ToEntrySlice()))))
+//  // Result: map[1:[] 2:[BB CC] 3:[DDD]]
 func (s Stream) Collect(c Collector) interface{} {
 	s.panicIfNilChannel()
 

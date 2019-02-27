@@ -1,12 +1,14 @@
 package fuego
 
-import "sync"
-
 // This file is really an extension of stream.go.
+//
 // It contains the "concurrent" methods of Stream.
+//
 // The reason for splitting is two-fold:
 // - convenient separation
 // - help reduce the growth of stream.go
+
+import "sync"
 
 // PanicInvalidConcurrencyLevel signifies that the Stream is missing a channel.
 const PanicInvalidConcurrencyLevel = "stream concurrency must be 1 or more"
