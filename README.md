@@ -154,7 +154,7 @@ A `Collector` is a mutable reduction operation, optionally transforming the accu
 
 Collectors can be combined to express complex operations in a concise manner.
 
-In other words, a collector allows creating custom actions on a Stream. **fuego** comes shipped with a number of methods such as `MapToInt`, `Head`, `LastN`, `Filter`, etc, and Collectors also provide a few additional methods. But what if you need something else? And it is straighforward or readable when combining the existing methods **fuego** offers? Enters `Collector`: implement you own requirement functionally! Focus on _**what**_ needs to be done in your streams (and delegate the details of the _**how**_ to the implementation of your `Collector`).
+In other words, a collector allows creating custom actions on a Stream. **fuego** comes shipped with a number of methods such as `MapToInt`, `Head`, `LastN`, `Filter`, etc, and Collectors also provide a few additional methods. But what if you need something else? And it is not straighforward or readable when combining the existing methods **fuego** offers? Enters `Collector`: implement you own requirement functionally! Focus on _**what**_ needs to be done in your streams (and delegate the details of the _**how**_ to the implementation of your `Collector`).
 
 It should be noted that the `finisher` function is optional (i.e. it may acceptably be `nil`).
 
