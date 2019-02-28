@@ -18,7 +18,7 @@ The code documentation and some examples can be found on [godoc](http://godoc.or
 
 **The tests form the best source of documentation. Fuego comes with a good collection of unit tests and testable Go examples. Don't be shy, open them up and read them and tinker with them!**
 
-**Note however that most tests use unbuffered channels to help detect deadlocks. On real life scenarios, it is recommended to use buffered channels for increased performance.**
+**Note however that most tests use unbuffered channels to help detect deadlocks. In real life scenarios, it is recommended to use buffered channels for increased performance.**
 
 ## Installation
 
