@@ -134,7 +134,7 @@ I recommend Rob Pike's slides on Go concurrency patterns:
         EntryString("ddd"),
     }
     got := NewStreamFromSlice(strs, 0).
-        Filter(isEnTryString).
+        Filter(isEntryString).
         Distinct().
         Collect(
             GroupingBy(
