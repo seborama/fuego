@@ -38,6 +38,8 @@ Contributions and feedback are welcome.
 
 For contributions, you must develop in TDD fashion and ideally provide Go testable examples (if meaningful).
 
+If you have ideas to improve **fuego**, please let me know and share them via an issue. Thanks!
+
 ## The Golden rules of the game
 
 1- Producers close their channel. In other words, when you create a channel, you are responsible for closing it. Similarly, whenever **fuego** creates a channel, it is responsible for closing it.
@@ -124,7 +126,7 @@ I recommend Rob Pike's slides on Go concurrency patterns:
 
 - [Go Concurrency Patterns, Rob Pike, 2012](https://talks.golang.org/2012/concurrency.slide#1)
 
-## Example of Stream
+## Example Stream
 
 ```go
     strs := EntrySlice{
@@ -133,7 +135,7 @@ I recommend Rob Pike's slides on Go concurrency patterns:
         EntryString("cc"),
         EntryString("ddd"),
     }
-    got := NewStreamFromSlice(strs, 0).
+    got := NewStreamFromSlice(strs, 500).
         Filter(isEntryString).
         Distinct().
         Collect(
