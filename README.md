@@ -3,7 +3,7 @@
 [![godoc](https://img.shields.io/badge/godoc-reference-blue.svg)](https://godoc.org/github.com/seborama/fuego) [![goreportcard](https://img.shields.io/badge/go%20report-A%2B-brightgreen.svg)](http://goreportcard.com/report/seborama/fuego) [![cover.run](https://cover.run/go/github.com/seborama/fuego.svg?style=flat&tag=golang-1.9)](https://cover.run/go?tag=golang-1.9&repo=github.com%2Fseborama%2Ffuego)
 
 <p align="center">
-  <img src="doc/fuego_code.png" alt="fuego" width="654">
+  <img src="doc/ƒuefo_logo.png" alt="fuego" height="300">
 </p>
 
 ## Table of content
@@ -24,6 +24,11 @@
 ## Overview
 
 [(toc)](#table-of-content)
+
+<p align="center">
+  <img src="doc/fuego_code.png" alt="fuego" width="654">
+</p>
+
 
 _Making Go come to functional programming._
 
