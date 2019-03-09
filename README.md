@@ -57,9 +57,9 @@ The code documentation and some examples can be found on [godoc](http://godoc.or
 
 The tests form the best source of documentation. ___ƒuego___ comes with a good collection of unit tests and testable Go examples. Don't be shy, open them up and read them and tinker with them!
 
-**Note:**
-<br/>
-Most tests use unbuffered channels to help detect deadlocks. In real life scenarios, it is recommended to use buffered channels for increased performance.
+> **Note:**
+> <br/>
+> Most tests use unbuffered channels to help detect deadlocks. In real life scenarios, it is recommended to use buffered channels for increased performance.
 
 [(toc)](#table-of-content)
 
@@ -234,9 +234,9 @@ Concurrent streams are challenging to implement owing to ordering issues in para
 
 I recommend Rob Pike's slides on Go concurrency patterns:
 
-As a proof of concept and for facilitation, ___ƒuego___ has a `CStream` implementation to manage concurrently a collection of Streams.
-
 - [Go Concurrency Patterns, Rob Pike, 2012](https://talks.golang.org/2012/concurrency.slide#1)
+
+As a proof of concept and for facilitation, ___ƒuego___ has a `CStream` implementation to manage concurrently a collection of Streams.
 
 [(toc)](#table-of-content)
 
