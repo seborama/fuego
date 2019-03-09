@@ -3,7 +3,7 @@
 </p>
 
 <h3 align="center">
-  <a href="">ƒuego - Functional Experiment in Go</a>
+  <a href="#">ƒuego - Functional Experiment in Go</a>
 </h3>
 
 <p align="center">
