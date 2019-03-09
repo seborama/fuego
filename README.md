@@ -43,7 +43,7 @@
 
 This is a research project in functional programming which I hope will prove useful!
 
-**ƒ**___uego___ brings a few functional paradigms to Go. The intent is to save development time while promoting code readability and reduce the risk of complex bugs.
+___ƒuego___ brings a few functional paradigms to Go. The intent is to save development time while promoting code readability and reduce the risk of complex bugs.
 
 I hope you will find it useful!
 
@@ -55,7 +55,7 @@ Have fun!!
 
 The code documentation and some examples can be found on [godoc](http://godoc.org/github.com/seborama/fuego).
 
-The tests form the best source of documentation. **ƒ**___uego___ comes with a good collection of unit tests and testable Go examples. Don't be shy, open them up and read them and tinker with them!
+The tests form the best source of documentation. ___ƒuego___ comes with a good collection of unit tests and testable Go examples. Don't be shy, open them up and read them and tinker with them!
 
 **Note:**
 <br/>
@@ -133,7 +133,7 @@ Contributions and feedback are welcome.
 
 For contributions, you must develop in TDD fashion and ideally provide Go testable examples (if meaningful).
 
-If you have an idea to improve **ƒ**___uego___, please share it via an issue. And if you like **ƒ**___uego___ give it a star to show your support for the project - it will put a smile on my face! :blush:
+If you have an idea to improve ___ƒuego___, please share it via an issue. And if you like ___ƒuego___ give it a star to show your support for the project - it will put a smile on my face! :blush:
 
 Thanks!!
 
@@ -141,7 +141,7 @@ Thanks!!
 
 ## The Golden rules of the game
 
-1. Producers close their channel. In other words, when you create a channel, you are responsible for closing it. Similarly, whenever **ƒ**___uego___ creates a channel, it is responsible for closing it.
+1. Producers close their channel. In other words, when you create a channel, you are responsible for closing it. Similarly, whenever ___ƒuego___ creates a channel, it is responsible for closing it.
 
 1. Consumers do not close channels.
 
@@ -187,6 +187,7 @@ Streams:
 - Stream
 - IntStream
 - FloatStream
+- CStream - concurrent implementation of Stream
 
 Functional Types:
 
@@ -227,11 +228,13 @@ Check the [godoc](http://godoc.org/github.com/seborama/fuego) for full details.
 
 ### Concurrency
 
-Concurrent streams are challenging to implement owing to ordering issues in parallel processing. At the moment, the view is that the most sensible approach is to delegate control to users. Multiple **ƒ**___uego___ streams can be created and data distributed across as desired. This empowers users of **ƒ**___uego___ to implement the desired behaviour of their pipelines.
+Concurrent streams are challenging to implement owing to ordering issues in parallel processing. At the moment, the view is that the most sensible approach is to delegate control to users. Multiple ___ƒuego___ streams can be created and data distributed across as desired. This empowers users of ___ƒuego___ to implement the desired behaviour of their pipelines.
 
 `Stream` has some methods that fan out (e.g. `ForEachC`). See the [godoc](http://godoc.org/github.com/seborama/fuego) for further information and limitations.
 
 I recommend Rob Pike's slides on Go concurrency patterns:
+
+As a proof of concept and for facilitation, ___ƒuego___ has a `CStream` implementation to manage concurrently a collection of Streams.
 
 - [Go Concurrency Patterns, Rob Pike, 2012](https://talks.golang.org/2012/concurrency.slide#1)
 
@@ -245,11 +248,11 @@ Collectors can be combined to express complex operations in a concise manner.
 <br/>
 Simply put, a collector allows creating custom actions on a Stream.
 
-**ƒ**___uego___ exposes a number of functional methods such as `MapToInt`, `Head`, `LastN`, `Filter`, etc...
+___ƒuego___ exposes a number of functional methods such as `MapToInt`, `Head`, `LastN`, `Filter`, etc...
 <br/>
 Collectors also provide a few functional methods.
 
-But... what if you need something else? And it is not straighforward or readable when combining the existing methods **ƒ**___uego___ offers?
+But... what if you need something else? And it is not straighforward or readable when combining the existing methods ___ƒuego___ offers?
 
 Enters `Collector`: implement you own requirement functionally!
 <br/>
