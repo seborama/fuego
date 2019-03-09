@@ -37,7 +37,7 @@
 - [Collectors](#collectors)
 - [Known limitations](#known-limitations)
 
-## Overview
+## [Overview](#overview)
 
 **_Making Go come to functional programming._**
 
