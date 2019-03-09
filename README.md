@@ -27,11 +27,11 @@
 - [Overview](#overview)
 - [Documentation](#documentation)
 - [Installation](#installation)
+- [Example Stream](#example-stream)
 - [Contributions](#contributions)
 - [The Golden rules of the game](#the-golden-rules-of-the-game)
 - [Pressure](#pressure)
 - [Concept: Entry](#concept-entry)
-- [Example Stream](#example-stream)
 - [Features summary](#features-summary)
   - [Concurrency](#concurrency)
 - [Collectors](#collectors)
@@ -51,7 +51,7 @@ Have fun!!
 
 [(toc)](#table-of-content)
 
-## Documentation
+## [Documentation](#documentation)
 
 The code documentation and some examples can be found on [godoc](http://godoc.org/github.com/seborama/fuego).
 
@@ -63,7 +63,7 @@ Most tests use unbuffered channels to help detect deadlocks. In real life scenar
 
 [(toc)](#table-of-content)
 
-## Installation
+## [Installation](#installation)
 
 ### Download
 
@@ -99,7 +99,7 @@ import . "gopkg.in/seborama/fuego.v7"
 
 [(toc)](#table-of-content)
 
-## Example Stream
+## [Example Stream](#example-stream)
 
 ```go
     strs := EntrySlice{
@@ -127,7 +127,7 @@ import . "gopkg.in/seborama/fuego.v7"
 
 [(toc)](#table-of-content)
 
-## Contributions
+## [Contributions](#contributions)
 
 Contributions and feedback are welcome.
 
@@ -139,7 +139,7 @@ Thanks!!
 
 [(toc)](#table-of-content)
 
-## The Golden rules of the game
+## [The Golden rules of the game](#the-golden-rules-of-the-game)
 
 1. Producers close their channel. In other words, when you create a channel, you are responsible for closing it. Similarly, whenever ___ƒuego___ creates a channel, it is responsible for closing it.
 
@@ -149,7 +149,7 @@ Thanks!!
 
 [(toc)](#table-of-content)
 
-## Pressure
+## [Pressure](#pressure)
 
 Go channels support buffering that affects the behaviour when combining channels in a pipeline.
 
@@ -159,7 +159,7 @@ Presently, a Go channel cannot dynamically change its buffer size. This prevents
 
 [(toc)](#table-of-content)
 
-## Concept: Entry
+## [Concept: Entry](#concept-entry)
 
 `Entry` is inspired by `hamt.Entry`. This is an elegant solution from [Yota Toyama](https://github.com/raviqqe): the type can be anything so long as it respects the simple behaviour of the`Entry` interface. This provides an abstraction of types yet with known behaviour:
 
@@ -180,7 +180,7 @@ Check the [godoc](http://godoc.org/github.com/seborama/fuego) for additional met
 
 [(toc)](#table-of-content)
 
-## Features summary
+## [Features summary](#features-summary)
 
 Streams:
 
@@ -240,7 +240,7 @@ As a proof of concept and for facilitation, ___ƒuego___ has a `CStream` impleme
 
 [(toc)](#table-of-content)
 
-## Collectors
+## [Collectors](#collectors)
 
 A `Collector` is a mutable reduction operation, optionally transforming the accumulated result.
 
@@ -260,7 +260,7 @@ Focus on _**what**_ needs doing in your streams (and delegate the details of the
 
 [(toc)](#table-of-content)
 
-## Known limitations
+## [Known limitations](#known-limitations)
 
 - several operations may be memory intensive or poorly performing.
 
