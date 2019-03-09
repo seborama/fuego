@@ -67,14 +67,6 @@ func TestCollector_GroupingBy_Mapping_Filtering_ToEntrySlice(t *testing.T) {
 }
 
 func TestCollector_GroupingBy_Mapping_FlatMapping_Filtering_Mapping_Reducing(t *testing.T) {
-	strs := EntrySlice{
-		EntryString("a"),
-		EntryString("bb"),
-		EntryString("cc"),
-		EntryString("ee"),
-		EntryString("ddd"),
-	}
-
 	stringLength :=
 		func(e Entry) Entry {
 			return e.(EntryString).Len()
@@ -105,6 +97,14 @@ func TestCollector_GroupingBy_Mapping_FlatMapping_Filtering_Mapping_Reducing(t *
 		return iStr + jStr
 	}
 
+	strs := EntrySlice{
+		EntryString("a"),
+		EntryString("bb"),
+		EntryString("cc"),
+		EntryString("ee"),
+		EntryString("ddd"),
+	}
+
 	got := NewStreamFromSlice(strs, 0).
 		Collect(
 			GroupingBy(
@@ -123,6 +123,7 @@ func TestCollector_GroupingBy_Mapping_FlatMapping_Filtering_Mapping_Reducing(t *
 
 	assert.EqualValues(t, expected, got)
 }
+
 func TestCollector_Collect_Reducing(t *testing.T) {
 	s := NewIntStreamFromSlice([]EntryInt{5, 10, 20, 50}, 0)
 

@@ -2,6 +2,23 @@
 
 [![godoc](https://img.shields.io/badge/godoc-reference-blue.svg)](https://godoc.org/github.com/seborama/fuego) [![goreportcard](https://img.shields.io/badge/go%20report-A%2B-brightgreen.svg)](http://goreportcard.com/report/seborama/fuego) [![cover.run](https://cover.run/go/github.com/seborama/fuego.svg?style=flat&tag=golang-1.9)](https://cover.run/go?tag=golang-1.9&repo=github.com%2Fseborama%2Ffuego)
 
+![fuego](doc/fuego_code.png)
+
+## Table of content
+
+- [Overview](#overview)
+- [Documentation](#documentation)
+- [Installation](#installation)
+- [Contributions](#contributions)
+- [The Golden rules of the game](#the-golden-rules-of-the-game)
+- [Pressure](#pressure)
+- [Concept: Entry](#concept-entry)
+- [Example Stream](#example-stream)
+- [Features summary](#features-summary)
+  - [Concurrency](#concurrency)
+- [Collectors](#collectors)
+- [Known limitations](#known-limitations)
+
 ## Overview
 
 _Making Go come to functional programming._
@@ -38,7 +55,9 @@ Contributions and feedback are welcome.
 
 For contributions, you must develop in TDD fashion and ideally provide Go testable examples (if meaningful).
 
-If you have ideas to improve **fuego**, please let me know and share them via an issue. Thanks!
+If you have ideas to improve **fuego**, please share them via an issue. And if you like **fuego** give it a star to show your support for the project - it is my greatest reward! :blush:
+
+Thanks! 
 
 ## The Golden rules of the game
 
@@ -74,6 +93,30 @@ Several Entry implementations are provided:
 - Tuples
 
 Check the [godoc](http://godoc.org/github.com/seborama/fuego) for additional methods each of these may provide.
+
+## Example Stream
+
+```go
+    strs := EntrySlice{
+        EntryString("a"),
+        EntryString("bb"),
+        EntryString("cc"),
+        EntryString("ddd"),
+    }
+    got := NewStreamFromSlice(strs, 500).
+        Filter(isEntryString).
+        Distinct().
+        Collect(
+            GroupingBy(
+                stringLength,
+                Mapping(
+                    stringToUpper,
+                    Filtering(
+                        stringLengthGreaterThan(1),
+                        ToEntrySlice()))))
+
+    // result: map[1:[] 2:[BB CC] 3:[DDD]]
+```
 
 ## Features summary
 
@@ -125,30 +168,6 @@ Concurrent streams are challenging to implement owing to ordering issues in para
 I recommend Rob Pike's slides on Go concurrency patterns:
 
 - [Go Concurrency Patterns, Rob Pike, 2012](https://talks.golang.org/2012/concurrency.slide#1)
-
-## Example Stream
-
-```go
-    strs := EntrySlice{
-        EntryString("a"),
-        EntryString("bb"),
-        EntryString("cc"),
-        EntryString("ddd"),
-    }
-    got := NewStreamFromSlice(strs, 500).
-        Filter(isEntryString).
-        Distinct().
-        Collect(
-            GroupingBy(
-                stringLength,
-                Mapping(
-                    stringToUpper,
-                    Filtering(
-                        stringLengthGreaterThan(1),
-                        ToEntrySlice()))))
-
-    // result: map[1:[] 2:[BB CC] 3:[DDD]]
-```
 
 ## Collectors
 
