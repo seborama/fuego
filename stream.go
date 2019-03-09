@@ -863,6 +863,9 @@ func (s Stream) TakeUntil(p Predicate) Stream {
 // It should be noted that this method returns an `interface{}`
 // which enables it to return `Entry` as well as any other Go types.
 //
+// Also, the `finisher` function is optional.
+// (i.e. it may acceptably be `nil`).
+//
 // This is a continuous terminal operation and hence expects
 // the producer to close the stream in order to complete (or
 // it will block).

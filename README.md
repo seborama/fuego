@@ -242,10 +242,18 @@ I recommend Rob Pike's slides on Go concurrency patterns:
 A `Collector` is a mutable reduction operation, optionally transforming the accumulated result.
 
 Collectors can be combined to express complex operations in a concise manner.
+<br/>
+Simply put, a collector allows creating custom actions on a Stream.
 
-In other words, a collector allows creating custom actions on a Stream. **ƒ**___uego___ comes shipped with a number of methods such as `MapToInt`, `Head`, `LastN`, `Filter`, etc, and Collectors also provide a few additional methods. But what if you need something else? And it is not straighforward or readable when combining the existing methods **ƒ**___uego___ offers? Enters `Collector`: implement you own requirement functionally! Focus on _**what**_ needs to be done in your streams (and delegate the details of the _**how**_ to the implementation of your `Collector`).
+**ƒ**___uego___ exposes a number of functional methods such as `MapToInt`, `Head`, `LastN`, `Filter`, etc...
+<br/>
+Collectors also provide a few functional methods.
 
-It should be noted that the `finisher` function is optional (i.e. it may acceptably be `nil`).
+But... what if you need something else? And it is not straighforward or readable when combining the existing methods **ƒ**___uego___ offers?
+
+Enters `Collector`: implement you own requirement functionally!
+<br/>
+Focus on _**what**_ needs doing in your streams (and delegate the details of the _**how**_ to the implementation of your `Collector`).
 
 [(toc)](#table-of-content)
 
