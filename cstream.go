@@ -11,44 +11,44 @@ type CStream struct {
 
 // NewCStream creates a new concurrent stream.
 func NewCStream(channels []chan Entry) CStream {
-	ps := CStream{}
+	cs := CStream{}
 	for _, channel := range channels {
-		ps.streams = append(ps.streams, NewStream(channel))
+		cs.streams = append(cs.streams, NewStream(channel))
 	}
-	return ps
+	return cs
 }
 
 // AddStreamFromChannels adds Streams derived from the supplied channels to this CStream.
-func (ps CStream) AddStreamFromChannels(channels []chan Entry) CStream {
+func (cs CStream) AddStreamFromChannels(channels []chan Entry) CStream {
 	for _, channel := range channels {
-		ps.streams = append(ps.streams, NewStream(channel))
+		cs.streams = append(cs.streams, NewStream(channel))
 	}
-	// TODO rather than modify in-place, make a copy of ps return the copy? Note: is it worth it because channels will copy by reference anyway?
-	return ps
+	// TODO rather than modify in-place, make a copy of cs return the copy? Note: is it worth it because channels will copy by reference anyway?
+	return cs
 }
 
 // AddStreamFromSlices adds Streams derived from the supplied slices to this CStream.
-func (ps CStream) AddStreamFromSlices(slices []EntrySlice, bufsize int) CStream {
+func (cs CStream) AddStreamFromSlices(slices []EntrySlice, bufsize int) CStream {
 	for _, slice := range slices {
-		ps.streams = append(ps.streams, NewStreamFromSlice(slice, bufsize))
+		cs.streams = append(cs.streams, NewStreamFromSlice(slice, bufsize))
 	}
-	// TODO rather than modify in-place, make a copy of ps return the copy? Note: is it worth it because channels will copy by reference anyway?
-	return ps
+	// TODO rather than modify in-place, make a copy of cs return the copy? Note: is it worth it because channels will copy by reference anyway?
+	return cs
 }
 
 // AddStreams adds Streams to this CStream.
-func (ps CStream) AddStreams(streams []Stream) CStream {
-	ps.streams = append(ps.streams, streams...)
-	// TODO rather than modify in-place, make a copy of ps and return the copy? Note: is it worth it because channels will copy by reference anyway?
-	return ps
+func (cs CStream) AddStreams(streams []Stream) CStream {
+	cs.streams = append(cs.streams, streams...)
+	// TODO rather than modify in-place, make a copy of cs and return the copy? Note: is it worth it because channels will copy by reference anyway?
+	return cs
 }
 
 // ForEach is the concurrent equivalent of Stream.ForEach.
 // See Stream.ForEach for further information.
-func (ps CStream) ForEach(consumer Consumer) {
+func (cs CStream) ForEach(consumer Consumer) {
 	var wg sync.WaitGroup
 
-	for _, stream := range ps.streams {
+	for _, stream := range cs.streams {
 		wg.Add(1)
 		go func(stream Stream) {
 			defer wg.Done()
@@ -57,4 +57,24 @@ func (ps CStream) ForEach(consumer Consumer) {
 	}
 
 	wg.Wait()
+}
+
+// Filter is the concurrent equivalent of Stream.Filter.
+// See Stream.Filter for further information.
+func (cs CStream) Filter(predicate Predicate) CStream {
+	cstream := make([]Stream, len(cs.streams))
+
+	var wg sync.WaitGroup
+
+	for idx, stream := range cs.streams {
+		wg.Add(1)
+		go func(idx int, stream Stream) {
+			defer wg.Done()
+			cstream[idx] = stream.Filter(predicate)
+		}(idx, stream)
+	}
+
+	wg.Wait()
+
+	return NewCStream(nil).AddStreams(cstream)
 }

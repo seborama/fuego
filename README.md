@@ -1,8 +1,10 @@
-# ƒuego - Functional Experiment in Go
-
 <p align="center">
   <img src="doc/fuego_logo.png" alt="ƒuego logo" height="300">
 </p>
+
+<h3 align="center">
+    ƒuego - Functional Experiment in Go
+</h3>
 
 <p align="center">
   <a href="https://godoc.org/github.com/seborama/fuego">
@@ -14,6 +16,10 @@
   <a href="https://cover.run/go?tag=golang-1.9&repo=github.com%2Fseborama%2Ffuego">
     <img src="https://cover.run/go/github.com/seborama/fuego.svg?style=flat&tag=golang-1.9" alt="cover.run">
   </a>
+</p>
+
+<p align="left">
+  <img src="doc/fuego_code.png" alt="ƒuego example" width="654">
 </p>
 
 ## Table of content
@@ -34,11 +40,6 @@
 ## Overview
 
 **_Making Go come to functional programming._**
-
-<p align="left">
-  <img src="doc/fuego_code.png" alt="ƒuego example" width="654">
-</p>
-
 
 This is a research project in functional programming which I hope will prove useful!
 
@@ -134,7 +135,8 @@ Check the [godoc](http://godoc.org/github.com/seborama/fuego) for additional met
         EntryString("cc"),
         EntryString("ddd"),
     }
-    got := NewStreamFromSlice(strs, 500).
+    
+    NewStreamFromSlice(strs, 500).
         Filter(isEntryString).
         Distinct().
         Collect(
@@ -145,6 +147,7 @@ Check the [godoc](http://godoc.org/github.com/seborama/fuego) for additional met
                     Filtering(
                         stringLengthGreaterThan(1),
                         ToEntrySlice()))))
+    }
 
     // result: map[1:[] 2:[BB CC] 3:[DDD]]
 ```

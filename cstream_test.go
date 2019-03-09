@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNewPStream(t *testing.T) {
@@ -295,6 +296,62 @@ func TestCStream_ForEach(t *testing.T) {
 	wg.Wait()
 
 	assert.Equal(t, 10, count)
+}
+
+func TestCStream_Filter(t *testing.T) {
+	predicate := func(e Entry) bool {
+		if _, ok := e.(EntryString); ok {
+			return true
+		}
+		if _, ok := e.(EntryBool); ok {
+			return true
+		}
+		return false
+	}
+
+	cs := CStream{
+		streams: []Stream{
+			NewStreamFromSlice(EntrySlice{
+				EntryString("a"),
+				EntryString("b"),
+				EntryString("c"),
+			}, 0),
+			NewStreamFromSlice(EntrySlice{
+				EntryInt(1),
+				EntryInt(2),
+				EntryInt(3),
+			}, 0),
+			NewStreamFromSlice(EntrySlice{
+				EntryBool(true),
+				EntryBool(false),
+			}, 0),
+			NewStreamFromSlice(EntrySlice{
+				EntryFloat(1.2),
+				EntryFloat(3.4),
+			}, 0),
+		},
+	}
+	cstream := cs.Filter(predicate)
+
+	expected := []Stream{
+		NewStreamFromSlice(EntrySlice{
+			EntryString("a"),
+			EntryString("b"),
+			EntryString("c"),
+		}, 0),
+		{},
+		NewStreamFromSlice(EntrySlice{
+			EntryBool(true),
+			EntryBool(false),
+		}, 0),
+		{},
+	}
+
+	require.Equal(t, len(expected), len(cstream.streams))
+
+	for idx, gotCStream := range cstream.streams {
+		assert.EqualValues(t, expected[idx].ToSlice(), gotCStream.ToSlice())
+	}
 }
 
 func consumeChannels(channels []chan Entry) []EntrySlice {
