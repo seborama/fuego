@@ -9,7 +9,7 @@ import "fmt"
 
 // TODO: evolve towards a go-style decorator pattern?
 
-// A `Collector` is a mutable reduction operation,
+// A Collector is a mutable reduction operation,
 // optionally transforming the accumulated result.
 //
 // Collectors can be combined to express complex
