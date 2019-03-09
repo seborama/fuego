@@ -23,7 +23,7 @@
 
 ## Overview
 
-_Making Go come to functional programming._
+**_Making Go come to functional programming._**
 
 <p align="left">
   <img src="doc/fuego_code.png" alt="ƒuego example" width="654">
