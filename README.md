@@ -18,7 +18,7 @@
   </a>
 </p>
 
-<p align="left">
+<p align="center">
   <img src="doc/fuego_code.png" alt="ƒuego example" width="654">
 </p>
 
