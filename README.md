@@ -2,7 +2,7 @@
 
 [![godoc](https://img.shields.io/badge/godoc-reference-blue.svg)](https://godoc.org/github.com/seborama/fuego) [![goreportcard](https://img.shields.io/badge/go%20report-A%2B-brightgreen.svg)](http://goreportcard.com/report/seborama/fuego) [![cover.run](https://cover.run/go/github.com/seborama/fuego.svg?style=flat&tag=golang-1.9)](https://cover.run/go?tag=golang-1.9&repo=github.com%2Fseborama%2Ffuego)
 
-<p align="center">
+<p align="right">
   <img src="doc/ƒuefo_logo.png" alt="fuego" height="300">
 </p>
 
@@ -23,8 +23,6 @@
 
 ## Overview
 
-[(toc)](#table-of-content)
-
 <p align="center">
   <img src="doc/fuego_code.png" alt="fuego" width="654">
 </p>
@@ -38,9 +36,9 @@ Fuego brings a few functional paradigms to Go. The intent is to save development
 
 Have fun!!
 
-## Documentation
-
 [(toc)](#table-of-content)
+
+## Documentation
 
 The code documentation and some examples can be found on [godoc](http://godoc.org/github.com/seborama/fuego).
 
@@ -48,9 +46,9 @@ The code documentation and some examples can be found on [godoc](http://godoc.or
 
 **Note however that most tests use unbuffered channels to help detect deadlocks. In real life scenarios, it is recommended to use buffered channels for increased performance.**
 
-## Installation
-
 [(toc)](#table-of-content)
+
+## Installation
 
 ```bash
 go get github.com/seborama/fuego
@@ -62,9 +60,9 @@ Or for a specific version:
 go get gopkg.in/seborama/fuego.v7
 ```
 
-## Contributions
-
 [(toc)](#table-of-content)
+
+## Contributions
 
 Contributions and feedback are welcome.
 
@@ -74,9 +72,9 @@ If you have ideas to improve **fuego**, please share them via an issue. And if y
 
 Thanks! 
 
-## The Golden rules of the game
-
 [(toc)](#table-of-content)
+
+## The Golden rules of the game
 
 1. Producers close their channel. In other words, when you create a channel, you are responsible for closing it. Similarly, whenever **fuego** creates a channel, it is responsible for closing it.
 
@@ -84,9 +82,9 @@ Thanks!
 
 1. Producers and consumers should be running in separate Go routines to prevent deadlocks when the channels' buffers fill up.
 
-## Pressure
-
 [(toc)](#table-of-content)
+
+## Pressure
 
 Go channels support buffering that affects the behaviour when combining channels in a pipeline.
 
@@ -94,9 +92,9 @@ When the buffer of a Stream's channel of a consumer  is full, the producer will 
 
 Presently, a Go channel cannot dynamically change its buffer size. This prevents from adapting the stream flexibly. Constructs that use 'select' on channels on the producer side can offer opportunities for mitigation.
 
-## Concept: Entry
-
 [(toc)](#table-of-content)
+
+## Concept: Entry
 
 `Entry` is inspired by `hamt.Entry`. This is an elegant solution from [Yota Toyama](https://github.com/raviqqe): the type can be anything so long as it respects the simple behaviour of the`Entry` interface. This provides an abstraction of types yet with known behaviour:
 
@@ -115,9 +113,9 @@ Several Entry implementations are provided:
 
 Check the [godoc](http://godoc.org/github.com/seborama/fuego) for additional methods each of these may provide.
 
-## Example Stream
-
 [(toc)](#table-of-content)
+
+## Example Stream
 
 ```go
     strs := EntrySlice{
@@ -141,9 +139,9 @@ Check the [godoc](http://godoc.org/github.com/seborama/fuego) for additional met
     // result: map[1:[] 2:[BB CC] 3:[DDD]]
 ```
 
-## Features summary
-
 [(toc)](#table-of-content)
+
+## Features summary
 
 Streams:
 
@@ -184,9 +182,9 @@ Collectors:
 - Reducing
 - ToEntrySlice
 
-### Concurrency
-
 [(toc)](#table-of-content)
+
+### Concurrency
 
 Concurrent streams are challenging to implement owing to ordering issues in parallel processing. At the moment, the view is that the most sensible approach is to delegate control to users. Multiple **fuego** streams can be created and data distributed across as desired. This empowers users of **fuego** to implement the desired behaviour of their pipelines.
 
@@ -196,9 +194,9 @@ I recommend Rob Pike's slides on Go concurrency patterns:
 
 - [Go Concurrency Patterns, Rob Pike, 2012](https://talks.golang.org/2012/concurrency.slide#1)
 
-## Collectors
-
 [(toc)](#table-of-content)
+
+## Collectors
 
 A `Collector` is a mutable reduction operation, optionally transforming the accumulated result.
 
@@ -208,8 +206,10 @@ In other words, a collector allows creating custom actions on a Stream. **fuego*
 
 It should be noted that the `finisher` function is optional (i.e. it may acceptably be `nil`).
 
-## Known limitations
-
 [(toc)](#table-of-content)
 
+## Known limitations
+
 - several operations may be memory intensive or poorly performing.
+
+[(toc)](#table-of-content)
