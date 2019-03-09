@@ -1,4 +1,4 @@
-# fuego - Functional Experiment in Go
+# ƒuego - Functional Experiment in Go
 
 [![godoc](https://img.shields.io/badge/godoc-reference-blue.svg)](https://godoc.org/github.com/seborama/fuego) [![goreportcard](https://img.shields.io/badge/go%20report-A%2B-brightgreen.svg)](http://goreportcard.com/report/seborama/fuego) [![cover.run](https://cover.run/go/github.com/seborama/fuego.svg?style=flat&tag=golang-1.9)](https://cover.run/go?tag=golang-1.9&repo=github.com%2Fseborama%2Ffuego)
 
@@ -32,7 +32,7 @@ _Making Go come to functional programming._
 
 This is a research project in functional programming which I hope will prove useful!
 
-Fuego brings a few functional paradigms to Go. The intent is to save development time while promoting code readability and reduce the risk of complex bugs.
+**ƒuego** brings a few functional paradigms to Go. The intent is to save development time while promoting code readability and reduce the risk of complex bugs.
 
 Have fun!!
 
@@ -42,7 +42,7 @@ Have fun!!
 
 The code documentation and some examples can be found on [godoc](http://godoc.org/github.com/seborama/fuego).
 
-**The tests form the best source of documentation. Fuego comes with a good collection of unit tests and testable Go examples. Don't be shy, open them up and read them and tinker with them!**
+**The tests form the best source of documentation. **ƒuego** comes with a good collection of unit tests and testable Go examples. Don't be shy, open them up and read them and tinker with them!**
 
 **Note however that most tests use unbuffered channels to help detect deadlocks. In real life scenarios, it is recommended to use buffered channels for increased performance.**
 
@@ -68,7 +68,7 @@ Contributions and feedback are welcome.
 
 For contributions, you must develop in TDD fashion and ideally provide Go testable examples (if meaningful).
 
-If you have ideas to improve **fuego**, please share them via an issue. And if you like **fuego** give it a star to show your support for the project - it is my greatest reward! :blush:
+If you have ideas to improve **ƒuego**, please share them via an issue. And if you like **ƒuego** give it a star to show your support for the project - it is my greatest reward! :blush:
 
 Thanks! 
 
@@ -76,7 +76,7 @@ Thanks!
 
 ## The Golden rules of the game
 
-1. Producers close their channel. In other words, when you create a channel, you are responsible for closing it. Similarly, whenever **fuego** creates a channel, it is responsible for closing it.
+1. Producers close their channel. In other words, when you create a channel, you are responsible for closing it. Similarly, whenever **ƒuego** creates a channel, it is responsible for closing it.
 
 1. Consumers do not close channels.
 
@@ -186,7 +186,7 @@ Collectors:
 
 ### Concurrency
 
-Concurrent streams are challenging to implement owing to ordering issues in parallel processing. At the moment, the view is that the most sensible approach is to delegate control to users. Multiple **fuego** streams can be created and data distributed across as desired. This empowers users of **fuego** to implement the desired behaviour of their pipelines.
+Concurrent streams are challenging to implement owing to ordering issues in parallel processing. At the moment, the view is that the most sensible approach is to delegate control to users. Multiple **ƒuego** streams can be created and data distributed across as desired. This empowers users of **ƒuego** to implement the desired behaviour of their pipelines.
 
 `Stream` has some methods that fan out (e.g. `ForEachC`). See the [godoc](http://godoc.org/github.com/seborama/fuego) for further information and limitations.
 
@@ -202,7 +202,7 @@ A `Collector` is a mutable reduction operation, optionally transforming the accu
 
 Collectors can be combined to express complex operations in a concise manner.
 
-In other words, a collector allows creating custom actions on a Stream. **fuego** comes shipped with a number of methods such as `MapToInt`, `Head`, `LastN`, `Filter`, etc, and Collectors also provide a few additional methods. But what if you need something else? And it is not straighforward or readable when combining the existing methods **fuego** offers? Enters `Collector`: implement you own requirement functionally! Focus on _**what**_ needs to be done in your streams (and delegate the details of the _**how**_ to the implementation of your `Collector`).
+In other words, a collector allows creating custom actions on a Stream. **ƒuego** comes shipped with a number of methods such as `MapToInt`, `Head`, `LastN`, `Filter`, etc, and Collectors also provide a few additional methods. But what if you need something else? And it is not straighforward or readable when combining the existing methods **ƒuego** offers? Enters `Collector`: implement you own requirement functionally! Focus on _**what**_ needs to be done in your streams (and delegate the details of the _**how**_ to the implementation of your `Collector`).
 
 It should be noted that the `finisher` function is optional (i.e. it may acceptably be `nil`).
 
