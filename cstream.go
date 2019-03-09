@@ -38,9 +38,7 @@ func (ps CStream) AddStreamFromSlices(slices []EntrySlice, bufsize int) CStream 
 
 // AddStreams adds Streams to this CStream.
 func (ps CStream) AddStreams(streams []Stream) CStream {
-	for _, stream := range streams {
-		ps.streams = append(ps.streams, stream)
-	}
+	ps.streams = append(ps.streams, streams...)
 	// TODO rather than modify in-place, make a copy of ps and return the copy? Note: is it worth it because channels will copy by reference anyway?
 	return ps
 }

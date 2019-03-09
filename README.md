@@ -21,6 +21,8 @@
 
 ## Overview
 
+[(toc)](#table-of-content)
+
 _Making Go come to functional programming._
 
 This is a research project in functional programming which I hope will prove useful!
@@ -31,6 +33,8 @@ Have fun!!
 
 ## Documentation
 
+[(toc)](#table-of-content)
+
 The code documentation and some examples can be found on [godoc](http://godoc.org/github.com/seborama/fuego).
 
 **The tests form the best source of documentation. Fuego comes with a good collection of unit tests and testable Go examples. Don't be shy, open them up and read them and tinker with them!**
@@ -38,6 +42,8 @@ The code documentation and some examples can be found on [godoc](http://godoc.or
 **Note however that most tests use unbuffered channels to help detect deadlocks. In real life scenarios, it is recommended to use buffered channels for increased performance.**
 
 ## Installation
+
+[(toc)](#table-of-content)
 
 ```bash
 go get github.com/seborama/fuego
@@ -51,6 +57,8 @@ go get gopkg.in/seborama/fuego.v7
 
 ## Contributions
 
+[(toc)](#table-of-content)
+
 Contributions and feedback are welcome.
 
 For contributions, you must develop in TDD fashion and ideally provide Go testable examples (if meaningful).
@@ -61,13 +69,17 @@ Thanks!
 
 ## The Golden rules of the game
 
-1- Producers close their channel. In other words, when you create a channel, you are responsible for closing it. Similarly, whenever **fuego** creates a channel, it is responsible for closing it.
+[(toc)](#table-of-content)
 
-2- Consumers do not close channels.
+1. Producers close their channel. In other words, when you create a channel, you are responsible for closing it. Similarly, whenever **fuego** creates a channel, it is responsible for closing it.
 
-3- Producers and consumers should be running in separate Go routines to prevent deadlocks when the channels' buffers fill up.
+1. Consumers do not close channels.
+
+1. Producers and consumers should be running in separate Go routines to prevent deadlocks when the channels' buffers fill up.
 
 ## Pressure
+
+[(toc)](#table-of-content)
 
 Go channels support buffering that affects the behaviour when combining channels in a pipeline.
 
@@ -76,6 +88,8 @@ When the buffer of a Stream's channel of a consumer  is full, the producer will 
 Presently, a Go channel cannot dynamically change its buffer size. This prevents from adapting the stream flexibly. Constructs that use 'select' on channels on the producer side can offer opportunities for mitigation.
 
 ## Concept: Entry
+
+[(toc)](#table-of-content)
 
 `Entry` is inspired by `hamt.Entry`. This is an elegant solution from [Yota Toyama](https://github.com/raviqqe): the type can be anything so long as it respects the simple behaviour of the`Entry` interface. This provides an abstraction of types yet with known behaviour:
 
@@ -95,6 +109,8 @@ Several Entry implementations are provided:
 Check the [godoc](http://godoc.org/github.com/seborama/fuego) for additional methods each of these may provide.
 
 ## Example Stream
+
+[(toc)](#table-of-content)
 
 ```go
     strs := EntrySlice{
@@ -119,6 +135,8 @@ Check the [godoc](http://godoc.org/github.com/seborama/fuego) for additional met
 ```
 
 ## Features summary
+
+[(toc)](#table-of-content)
 
 Streams:
 
@@ -161,6 +179,8 @@ Collectors:
 
 ### Concurrency
 
+[(toc)](#table-of-content)
+
 Concurrent streams are challenging to implement owing to ordering issues in parallel processing. At the moment, the view is that the most sensible approach is to delegate control to users. Multiple **fuego** streams can be created and data distributed across as desired. This empowers users of **fuego** to implement the desired behaviour of their pipelines.
 
 `Stream` has some methods that fan out (e.g. `ForEachC`). See the [godoc](http://godoc.org/github.com/seborama/fuego) for further information and limitations.
@@ -171,6 +191,8 @@ I recommend Rob Pike's slides on Go concurrency patterns:
 
 ## Collectors
 
+[(toc)](#table-of-content)
+
 A `Collector` is a mutable reduction operation, optionally transforming the accumulated result.
 
 Collectors can be combined to express complex operations in a concise manner.
@@ -180,5 +202,7 @@ In other words, a collector allows creating custom actions on a Stream. **fuego*
 It should be noted that the `finisher` function is optional (i.e. it may acceptably be `nil`).
 
 ## Known limitations
+
+[(toc)](#table-of-content)
 
 - several operations may be memory intensive or poorly performing.
