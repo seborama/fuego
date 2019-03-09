@@ -45,6 +45,8 @@ This is a research project in functional programming which I hope will prove use
 
 **ƒ**___uego___ brings a few functional paradigms to Go. The intent is to save development time while promoting code readability and reduce the risk of complex bugs.
 
+I hope you will find it useful!
+
 Have fun!!
 
 [(toc)](#table-of-content)
@@ -53,13 +55,17 @@ Have fun!!
 
 The code documentation and some examples can be found on [godoc](http://godoc.org/github.com/seborama/fuego).
 
-**The tests form the best source of documentation. **ƒ**___uego___ comes with a good collection of unit tests and testable Go examples. Don't be shy, open them up and read them and tinker with them!**
+The tests form the best source of documentation. **ƒ**___uego___ comes with a good collection of unit tests and testable Go examples. Don't be shy, open them up and read them and tinker with them!
 
-**Note however that most tests use unbuffered channels to help detect deadlocks. In real life scenarios, it is recommended to use buffered channels for increased performance.**
+**Note:**
+<br/>
+Most tests use unbuffered channels to help detect deadlocks. In real life scenarios, it is recommended to use buffered channels for increased performance.
 
 [(toc)](#table-of-content)
 
 ## Installation
+
+### Download
 
 ```bash
 go get github.com/seborama/fuego
@@ -71,6 +77,54 @@ Or for a specific version:
 go get gopkg.in/seborama/fuego.v7
 ```
 
+### Import in your code
+
+You can import the package in the usua Go fashiom.
+
+To simplify usage, you can use an alias:
+
+```go
+package sample
+
+import ƒ "gopkg.in/seborama/fuego.v7"
+```
+
+or import as an unqualified dot import:
+
+```go
+package sample
+
+import . "gopkg.in/seborama/fuego.v7"
+```
+
+[(toc)](#table-of-content)
+
+## Example Stream
+
+```go
+    strs := EntrySlice{
+        EntryString("a"),
+        EntryString("bb"),
+        EntryString("cc"),
+        EntryString("ddd"),
+    }
+    
+    NewStreamFromSlice(strs, 500).
+        Filter(isEntryString).
+        Distinct().
+        Collect(
+            GroupingBy(
+                stringLength,
+                Mapping(
+                    stringToUpper,
+                    Filtering(
+                        stringLengthGreaterThan(1),
+                        ToEntrySlice()))))
+    }
+
+    // result: map[1:[] 2:[BB CC] 3:[DDD]]
+```
+
 [(toc)](#table-of-content)
 
 ## Contributions
@@ -79,9 +133,9 @@ Contributions and feedback are welcome.
 
 For contributions, you must develop in TDD fashion and ideally provide Go testable examples (if meaningful).
 
-If you have ideas to improve **ƒ**___uego___, please share them via an issue. And if you like **ƒ**___uego___ give it a star to show your support for the project - it is my greatest reward! :blush:
+If you have an idea to improve **ƒ**___uego___, please share it via an issue. And if you like **ƒ**___uego___ give it a star to show your support for the project - it will put a smile on my face! :blush:
 
-Thanks! 
+Thanks!!
 
 [(toc)](#table-of-content)
 
@@ -126,34 +180,6 @@ Check the [godoc](http://godoc.org/github.com/seborama/fuego) for additional met
 
 [(toc)](#table-of-content)
 
-## Example Stream
-
-```go
-    strs := EntrySlice{
-        EntryString("a"),
-        EntryString("bb"),
-        EntryString("cc"),
-        EntryString("ddd"),
-    }
-    
-    NewStreamFromSlice(strs, 500).
-        Filter(isEntryString).
-        Distinct().
-        Collect(
-            GroupingBy(
-                stringLength,
-                Mapping(
-                    stringToUpper,
-                    Filtering(
-                        stringLengthGreaterThan(1),
-                        ToEntrySlice()))))
-    }
-
-    // result: map[1:[] 2:[BB CC] 3:[DDD]]
-```
-
-[(toc)](#table-of-content)
-
 ## Features summary
 
 Streams:
@@ -194,6 +220,8 @@ Collectors:
 - Filtering
 - Reducing
 - ToEntrySlice
+
+Check the [godoc](http://godoc.org/github.com/seborama/fuego) for full details.
 
 [(toc)](#table-of-content)
 
