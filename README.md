@@ -89,7 +89,7 @@ package sample
 import ƒ "gopkg.in/seborama/fuego.v7"
 ```
 
-or import as an unqualified dot import:
+...or import as an unqualified dot import:
 
 ```go
 package sample
