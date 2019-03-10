@@ -174,3 +174,94 @@ func TestIdentityFinisher(t *testing.T) {
 		})
 	}
 }
+
+type employee struct {
+	id         uint32
+	department string
+	salary     float32
+}
+
+func (e employee) Hash() uint32 {
+	return e.id
+}
+
+func (e employee) Equal(other Entry) bool {
+	if other == nil {
+		return false
+	}
+	_, ok := other.(employee)
+	return ok && (e.Hash() == other.Hash())
+}
+
+func (e employee) Department() EntryString {
+	return EntryString(e.department)
+}
+
+func (e employee) Salary() EntryFloat {
+	return EntryFloat(e.salary)
+}
+
+var employeeDepartment = func(e Entry) Entry {
+	return e.(employee).Department()
+}
+
+func TestCollector_Filtering(t *testing.T) {
+	employees := EntrySlice{
+		employee{
+			id:         1,
+			department: "Marketing",
+			salary:     1500,
+		},
+		employee{
+			id:         2,
+			department: "IT",
+			salary:     2500,
+		},
+		employee{
+			id:         3,
+			department: "IT",
+			salary:     2200,
+		},
+		employee{
+			id:         4,
+			department: "HR",
+			salary:     1800,
+		},
+		employee{
+			id:         5,
+			department: "HR",
+			salary:     2300,
+		},
+	}
+
+	highestPaidEmployeesByDepartment :=
+		NewStreamFromSlice(employees, 0).Collect(
+			GroupingBy(employeeDepartment,
+				Filtering(func(e Entry) bool {
+					return e.(employee).Salary() > 2000
+				},
+					ToEntrySlice())))
+
+	expected := EntryMap{
+		EntryString("HR"): EntrySlice{
+			employee{
+				id:         5,
+				department: "HR",
+				salary:     2300,
+			}},
+		EntryString("IT"): EntrySlice{
+			employee{
+				id:         2,
+				department: "IT",
+				salary:     2500,
+			},
+			employee{
+				id:         3,
+				department: "IT",
+				salary:     2200,
+			}},
+		EntryString("Marketing"): EntrySlice{},
+	}
+
+	assert.EqualValues(t, expected, highestPaidEmployeesByDepartment)
+}

@@ -24,8 +24,12 @@
   </a>
 </p>
 
-<p align="center">
+<p align="left">
   <img src="doc/fuego_code.png" alt="ƒuego example" width="654">
+</p>
+
+<p align="right">
+  <img src="doc/fuego_code_employees.png" alt="ƒuego example" width="654">
 </p>
 
 ## Table of content
