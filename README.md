@@ -7,6 +7,12 @@
 </h3>
 
 <p align="center">
+  <a href="https://twitter.com/intent/tweet?text=Fuego%20Go%20language%20functional%20experiment&url=https://www.github.com/seborama/fuego&hashtags=golang,functional,programming,developers">
+    <img src="https://img.shields.io/twitter/url/http/shields.io.svg?style=social" alt="Tweet">
+  </a>
+</p>
+
+<p align="center">
   <a href="https://godoc.org/github.com/seborama/fuego">
     <img src="https://img.shields.io/badge/godoc-reference-blue.svg" alt="fuego">
   </a>
