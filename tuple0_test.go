@@ -29,7 +29,7 @@ func TestTuple0_Hash(t *testing.T) {
 func TestTuple0_Equal(t *testing.T) {
 	refTuple := Tuple0{}
 	type args struct {
-		o Tuple
+		o Entry
 	}
 	tests := []struct {
 		name string

@@ -42,7 +42,7 @@ func TestTuple1_Equal(t *testing.T) {
 		E1 Entry
 	}
 	type args struct {
-		o Tuple
+		o Entry
 	}
 	tests := []struct {
 		name   string
@@ -50,6 +50,16 @@ func TestTuple1_Equal(t *testing.T) {
 		args   args
 		want   bool
 	}{
+		{
+			name: "Should equal: Tuple1 and Tuple2",
+			fields: fields{
+				E1: EntryString("hi"),
+			},
+			args: args{
+				o: Tuple2{
+					E1: EntryString("hi")}},
+			want: false,
+		},
 		{
 			name: "Should not equal: nil != hi",
 			fields: fields{
@@ -69,7 +79,7 @@ func TestTuple1_Equal(t *testing.T) {
 			want: false,
 		},
 		{
-			name:   "Should equal: Tuple(nil) != nil",
+			name:   "Should not equal: Tuple(nil) != nil",
 			fields: fields{E1: nil},
 			args:   args{o: nil},
 			want:   false,

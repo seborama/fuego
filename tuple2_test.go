@@ -67,7 +67,7 @@ func TestTuple2_Equal(t *testing.T) {
 		E2 Entry
 	}
 	type args struct {
-		o Tuple
+		o Entry
 	}
 	tests := []struct {
 		name   string
