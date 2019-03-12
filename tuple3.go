@@ -52,6 +52,16 @@ func (t Tuple3) Map(mapper Function) Tuple3 {
 	}
 }
 
+// MapMulti applies the supplied mappers one for each element
+// of this Tuple and returns a new Tuple.
+func (t Tuple3) MapMulti(mapper1 Function, mapper2 Function, mapper3 Function) Tuple3 {
+	return Tuple3{
+		E1: mapper1(t.E1),
+		E2: mapper2(t.E2),
+		E3: mapper3(t.E3),
+	}
+}
+
 // ToSlice returns the elements of this tuple as a Go slice.
 func (t Tuple3) ToSlice() EntrySlice {
 	return EntrySlice{

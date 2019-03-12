@@ -210,12 +210,29 @@ func TestTuple2_Map(t *testing.T) {
 
 	expected := Tuple2{
 		E1: EntryInt(9),
-		E2: EntryInt(49),
+		E2: EntryInt(-21),
 	}
 
-	got := unit.Map(func(e Entry) Entry {
-		return e.(EntryInt) * e.(EntryInt)
-	})
+	got := unit.Map(timesN(3))
+
+	assert.EqualValues(t, expected, got)
+}
+
+func TestTuple2_MapMulti(t *testing.T) {
+	unit := Tuple2{
+		E1: EntryInt(3),
+		E2: EntryInt(-7),
+	}
+
+	expected := Tuple2{
+		E1: EntryInt(9),
+		E2: EntryInt(-35),
+	}
+
+	got := unit.MapMulti(
+		timesN(3),
+		timesN(5),
+	)
 
 	assert.EqualValues(t, expected, got)
 }
