@@ -36,6 +36,15 @@ func (t Tuple2) Arity() int {
 	return 2
 }
 
+// Map applies the supplied mapper to all elements of this Tuple
+// and returns a new Tuple.
+func (t Tuple2) Map(mapper Function) Tuple2 {
+	return Tuple2{
+		E1: mapper(t.E1),
+		E2: mapper(t.E2),
+	}
+}
+
 // ToSlice returns the elements of this tuple as a Go slice.
 func (t Tuple2) ToSlice() EntrySlice {
 	return EntrySlice{

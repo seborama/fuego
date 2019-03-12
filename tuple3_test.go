@@ -226,3 +226,23 @@ func TestTuple3_ToSlice(t *testing.T) {
 		})
 	}
 }
+
+func TestTuple3_Map(t *testing.T) {
+	unit := Tuple3{
+		E1: EntryInt(3),
+		E2: EntryInt(-7),
+		E3: EntryInt(10),
+	}
+
+	expected := Tuple3{
+		E1: EntryInt(9),
+		E2: EntryInt(49),
+		E3: EntryInt(100),
+	}
+
+	got := unit.Map(func(e Entry) Entry {
+		return e.(EntryInt) * e.(EntryInt)
+	})
+
+	assert.EqualValues(t, expected, got)
+}

@@ -3,6 +3,8 @@ package fuego
 import (
 	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestTuple2_Hash(t *testing.T) {
@@ -198,4 +200,22 @@ func TestTuple2_ToSlice(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestTuple2_Map(t *testing.T) {
+	unit := Tuple2{
+		E1: EntryInt(3),
+		E2: EntryInt(-7),
+	}
+
+	expected := Tuple2{
+		E1: EntryInt(9),
+		E2: EntryInt(49),
+	}
+
+	got := unit.Map(func(e Entry) Entry {
+		return e.(EntryInt) * e.(EntryInt)
+	})
+
+	assert.EqualValues(t, expected, got)
 }
