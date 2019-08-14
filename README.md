@@ -244,6 +244,12 @@ Check the [godoc](http://godoc.org/github.com/seborama/fuego) for full details.
 
 ### Concurrency
 
+As of v8.0.0, a new concurrent model offers to process a stream concurrently while preserving order.
+
+This is not possible yet with all Stream methods but is available with e.g. `Stream.Map`.
+
+#### Notes on concurrency
+
 Concurrent streams are challenging to implement owing to ordering issues in parallel processing. At the moment, the view is that the most sensible approach is to delegate control to users. Multiple ___ƒuego___ streams can be created and data distributed across as desired. This empowers users of ___ƒuego___ to implement the desired behaviour of their pipelines.
 
 `Stream` has some methods that fan out (e.g. `ForEachC`). See the [godoc](http://godoc.org/github.com/seborama/fuego) for further information and limitations.
