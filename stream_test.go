@@ -129,7 +129,7 @@ func TestStream_Map_Concurrent(t *testing.T) {
 	}
 
 	var got EntrySlice
-	sinkStream := unitStream.Map(functionSlowTimesTwo()) // use slow function to illustrate the performance improvement
+	sinkStream := unitStream.Concurrent(concurrencyLevel).Map(functionSlowTimesTwo()) // use slow function to illustrate the performance improvement
 	if gotStream := sinkStream.stream; gotStream != nil {
 		got = EntrySlice{}
 		for val := range gotStream {

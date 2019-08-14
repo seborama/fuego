@@ -108,6 +108,45 @@ func NewStreamFromSlice(slice EntrySlice, bufsize int) Stream {
 	return NewStream(c)
 }
 
+// Concurrent sets the level of concurrency for this Stream.
+//
+// This is used for concurrent methods such as Stream.Map.
+//
+// Consumption is ordered by the stream's channel but output
+// is unordered: a slow consumer will be "out-raced" by faster
+// consumers.
+//
+// Performance:
+//
+// Channels are inherently expensive to use owing to their internal
+// mutex lock.
+//
+// Benefits will ONLY be observed when the execution has a degree
+// of latency (at the very least, several dozens of nanoseconds).
+// The higher the latency, the better the gains from concurrency
+// (even on a single CPU core).
+//
+// If latency is too low or next to none, using concurrency will
+// likely be slower than without, particularly when no CPU core is
+// available.
+func (s Stream) Concurrent(n int) Stream {
+	s.concurrencyLevel = n
+	s.panicIfInvalidConcurrency()
+
+	// This is not accurate but improves performance (by avoiding the
+	// creation of a new channel and iterating through this one).
+	// It should be safe.
+	return s
+}
+
+// panicIfInvalidConcurrency panics if the concurrency level
+// is not valid.
+func (s Stream) panicIfInvalidConcurrency() {
+	if s.concurrencyLevel < 2 {
+		panic(PanicInvalidConcurrencyLevel)
+	}
+}
+
 // Map returns a Stream consisting of the result of
 // applying the given function to the elements of this stream.
 //
@@ -119,11 +158,11 @@ func (s Stream) Map(mapper Function) Stream {
 	}
 
 	return Stream{
-		stream: s.pipeline(fn),
+		stream: s.orderlyConcurrentDo(fn),
 	}
 }
 
-func (s Stream) pipeline(fn Function) chan Entry {
+func (s Stream) orderlyConcurrentDo(fn Function) chan Entry {
 	outstream := make(chan Entry, cap(s.stream))
 
 	go func() {
