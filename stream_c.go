@@ -33,7 +33,7 @@ const PanicInvalidConcurrencyLevel = "stream concurrency must be 1 or more"
 //
 // If latency is too low or none, using concurrency will likely be
 // slower than without, particularly when no CPU core is available.
-func (s Stream) Concurrent(n uint) {
+func (s Stream) Concurrent(n int) {
 	s.concurrencyLevel = n
 	s.panicIfInvalidConcurrency()
 }
@@ -63,7 +63,7 @@ func (s Stream) concurrentDo(f func()) {
 
 	var wg sync.WaitGroup
 
-	for i := uint(1); i <= s.concurrencyLevel; i++ {
+	for i := 1; i <= s.concurrencyLevel; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()

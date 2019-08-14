@@ -11,10 +11,10 @@ import (
 func TestStream_Concurrent_panicIfInvalidConcurrency(t *testing.T) {
 	type fields struct {
 		stream           chan Entry
-		concurrencyLevel uint
+		concurrencyLevel int
 	}
 	type args struct {
-		n uint
+		n int
 	}
 	tests := []struct {
 		name      string
@@ -65,7 +65,7 @@ func TestStream_Concurrent_panicIfInvalidConcurrency(t *testing.T) {
 func TestStream_ForEachC(t *testing.T) {
 	var consumeCount int64
 	produceCount := int64(5000)
-	concurrencyLevel := uint(1000)
+	concurrencyLevel := 1000
 
 	channel := make(chan Entry, concurrencyLevel)
 	go func() {
@@ -119,7 +119,7 @@ func TestStream_concurrentDo(t *testing.T) {
 
 	s := Stream{
 		stream:           channel,
-		concurrencyLevel: uint(concurrencyLevel),
+		concurrencyLevel: int(concurrencyLevel),
 	}
 
 	s.concurrentDo(f)

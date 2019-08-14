@@ -74,7 +74,7 @@ const PanicMissingChannel = "stream creation requires a channel"
 //  NewStream(c)
 type Stream struct {
 	stream           chan Entry
-	concurrencyLevel uint
+	concurrencyLevel int
 }
 
 // NewStream creates a new Stream.
