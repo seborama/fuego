@@ -2,6 +2,7 @@ package fuego
 
 import (
 	"fmt"
+	"sync"
 )
 
 // TODO: consider two types of streams: CStreams (channel based as shown here) and SStreams (slice based). The former allows for infinite streams and thinner memory usage within the CStream object but lacks performance when the operation requires to deal with the end of the steam (it has to consume all the elements of the steam sequentially). SStreams require the entire data to be stored internally from the onset. However,  slices are seekable and can read from the end or be consumed backwards easily.
@@ -113,21 +114,60 @@ func NewStreamFromSlice(slice EntrySlice, bufsize int) Stream {
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 func (s Stream) Map(mapper Function) Stream {
+	fn := func(e Entry) Entry {
+		return mapper(e)
+	}
+
+	return Stream{
+		stream: s.pipeline(fn),
+	}
+}
+
+func (s Stream) pipeline(fn Function) chan Entry {
 	outstream := make(chan Entry, cap(s.stream))
 
 	go func() {
 		defer close(outstream)
+
 		if s.stream == nil {
 			return
 		}
-		for val := range s.stream {
-			outstream <- mapper(val)
+
+		pipelineCh := make(chan chan Entry, s.concurrencyLevel)
+
+		pipelineWriter := func(pipelineWCh chan chan Entry) {
+			defer close(pipelineWCh)
+
+			for val := range s.stream {
+				resultCh := make(chan Entry, 1)
+				pipelineWCh <- resultCh
+				go func(resultCh chan<- Entry, val Entry) {
+					defer close(resultCh)
+					resultCh <- fn(val)
+				}(resultCh, val)
+			}
 		}
+
+		var wg sync.WaitGroup
+
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			pipelineWriter(pipelineCh)
+		}()
+
+		wg.Add(1)
+		go func(pipelineRCh chan chan Entry) {
+			defer wg.Done()
+			for resultCh := range pipelineRCh {
+				outstream <- <-resultCh
+			}
+		}(pipelineCh)
+
+		wg.Wait()
 	}()
 
-	return Stream{
-		stream: outstream,
-	}
+	return outstream
 }
 
 // FlatMap takes a StreamFunction to flatten the entries

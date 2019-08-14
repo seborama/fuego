@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -11,6 +12,14 @@ import (
 func functionTimesTwo() Function {
 	return func(i Entry) Entry {
 		num := int(i.(EntryInt))
+		return EntryInt(2 * num)
+	}
+}
+
+func functionSlowTimesTwo() Function {
+	return func(i Entry) Entry {
+		num := int(i.(EntryInt))
+		time.Sleep(50 * time.Millisecond)
 		return EntryInt(2 * num)
 	}
 }
@@ -89,6 +98,47 @@ func TestStream_Map(t *testing.T) {
 				t.Errorf("Stream.Map() = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestStream_Map_Concurrent(t *testing.T) {
+	const concurrencyLevel = 300
+
+	sourceStream := func() chan Entry {
+		c := make(chan Entry, 1)
+		go func() {
+			defer close(c)
+			for i := 0; i < concurrencyLevel; i++ {
+				c <- EntryInt(i)
+			}
+		}()
+		return c
+	}()
+
+	want := func() EntrySlice {
+		es := EntrySlice{}
+		for i := 0; i < concurrencyLevel; i++ {
+			es = es.Append(functionTimesTwo()(EntryInt(i)))
+		}
+		return es
+	}()
+
+	unitStream := Stream{
+		stream:           sourceStream,
+		concurrencyLevel: concurrencyLevel,
+	}
+
+	var got EntrySlice
+	sinkStream := unitStream.Map(functionSlowTimesTwo()) // use slow function to illustrate the performance improvement
+	if gotStream := sinkStream.stream; gotStream != nil {
+		got = EntrySlice{}
+		for val := range gotStream {
+			got = append(got, val)
+		}
+	}
+
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("Stream.Map() = %v, want %v", got, want)
 	}
 }
 
@@ -1652,7 +1702,7 @@ func TestStream_HeadN(t *testing.T) {
 				stream: generateStream(largeData),
 			},
 			args: args{2e3},
-			want: largeData[:2e3],
+			want: largeData[:2000],
 		},
 	}
 	for _, tt := range tests {
