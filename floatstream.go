@@ -22,7 +22,8 @@ func NewFloatStream(c chan EntryFloat) FloatStream {
 	return NewConcurrentFloatStream(c, 0)
 }
 
-// NewFloatStream creates a new FloatStream with a degree of concurrency of n.
+// NewConcurrentFloatStream creates a new FloatStream with a degree
+// of concurrency of n.
 // This function leaves the provided channel is the same state
 // of openness.
 func NewConcurrentFloatStream(c chan EntryFloat, n int) FloatStream {

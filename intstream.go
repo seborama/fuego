@@ -22,7 +22,8 @@ func NewIntStream(c chan EntryInt) IntStream {
 	return NewConcurrentIntStream(c, 0)
 }
 
-// NewIntStream creates a new IntStream with a degree of concurrency of n.
+// NewConcurrentIntStream creates a new IntStream with a degree
+// of concurrency of n.
 // This function leaves the provided channel is the same state
 // of openness.
 func NewConcurrentIntStream(c chan EntryInt, n int) IntStream {

@@ -86,7 +86,8 @@ func NewStream(c chan Entry) Stream {
 	return NewConcurrentStream(c, 0)
 }
 
-// NewConcurrentStream creates a new Stream with a degree of concurrency of n.
+// NewConcurrentStream creates a new Stream with a degree
+// of concurrency of n.
 func NewConcurrentStream(c chan Entry, n int) Stream {
 	if c == nil {
 		panic(PanicMissingChannel)
