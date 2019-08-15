@@ -83,11 +83,17 @@ type Stream struct {
 // This function leaves the provided channel is the same state
 // of openness.
 func NewStream(c chan Entry) Stream {
+	return NewConcurrentStream(c, 0)
+}
+
+// NewConcurrentStream creates a new Stream with a degree of concurrency of n.
+func NewConcurrentStream(c chan Entry, n int) Stream {
 	if c == nil {
 		panic(PanicMissingChannel)
 	}
 	return Stream{
-		stream: c,
+		stream:           c,
+		concurrencyLevel: n,
 	}
 }
 
@@ -113,8 +119,15 @@ func NewStreamFromSlice(slice EntrySlice, bufsize int) Stream {
 // This is used for concurrent methods such as Stream.Map.
 //
 // Consumption is ordered by the stream's channel but output
-// is unordered: a slow consumer will be "out-raced" by faster
-// consumers.
+// may be unordered (a slow consumer will be "out-raced" by faster
+// consumers). Ordering is dependent on the implementation of
+// concurrency. For instance Stream.Map() is orderly but
+// Stream.ForEachC is not.
+//
+// Note that to switch off concurrency, you should provide n = 0.
+// With n = 1, concurrency is internal whereby the Stream writer
+// will not block on writing a single element (i.e. buffered
+// channel of 1). This already provides significant processing gains.
 //
 // Performance:
 //
@@ -136,15 +149,7 @@ func (s Stream) Concurrent(n int) Stream {
 	// This is not accurate but improves performance (by avoiding the
 	// creation of a new channel and iterating through this one).
 	// It should be safe.
-	return s
-}
-
-// panicIfInvalidConcurrency panics if the concurrency level
-// is not valid.
-func (s Stream) panicIfInvalidConcurrency() {
-	if s.concurrencyLevel < 2 {
-		panic(PanicInvalidConcurrencyLevel)
-	}
+	return NewConcurrentStream(s.stream, s.concurrencyLevel)
 }
 
 // Map returns a Stream consisting of the result of
@@ -157,56 +162,7 @@ func (s Stream) Map(mapper Function) Stream {
 		return mapper(e)
 	}
 
-	return Stream{
-		stream: s.orderlyConcurrentDo(fn),
-	}
-}
-
-func (s Stream) orderlyConcurrentDo(fn Function) chan Entry {
-	outstream := make(chan Entry, cap(s.stream))
-
-	go func() {
-		defer close(outstream)
-
-		if s.stream == nil {
-			return
-		}
-
-		pipelineCh := make(chan chan Entry, s.concurrencyLevel)
-
-		pipelineWriter := func(pipelineWCh chan chan Entry) {
-			defer close(pipelineWCh)
-
-			for val := range s.stream {
-				resultCh := make(chan Entry, 1)
-				pipelineWCh <- resultCh
-				go func(resultCh chan<- Entry, val Entry) {
-					defer close(resultCh)
-					resultCh <- fn(val)
-				}(resultCh, val)
-			}
-		}
-
-		var wg sync.WaitGroup
-
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			pipelineWriter(pipelineCh)
-		}()
-
-		wg.Add(1)
-		go func(pipelineRCh chan chan Entry) {
-			defer wg.Done()
-			for resultCh := range pipelineRCh {
-				outstream <- <-resultCh
-			}
-		}(pipelineCh)
-
-		wg.Wait()
-	}()
-
-	return outstream
+	return NewConcurrentStream(s.orderlyConcurrentDo(fn), s.concurrencyLevel)
 }
 
 // FlatMap takes a StreamFunction to flatten the entries
@@ -231,9 +187,7 @@ func (s Stream) FlatMap(mapper StreamFunction) Stream {
 		}
 	}()
 
-	return Stream{
-		stream: outstream,
-	}
+	return NewConcurrentStream(outstream, s.concurrencyLevel)
 }
 
 // Filter returns a stream consisting of the elements of this stream that
@@ -271,9 +225,7 @@ func (s Stream) Filter(predicate Predicate) Stream {
 		}
 	}()
 
-	return Stream{
-		stream: outstream,
-	}
+	return NewConcurrentStream(outstream, s.concurrencyLevel)
 }
 
 // ForEach executes the given function for each entry in this stream.
@@ -324,9 +276,7 @@ func (s Stream) Peek(consumer Consumer) Stream {
 		})
 	}()
 
-	return Stream{
-		stream: outstream,
-	}
+	return NewConcurrentStream(outstream, s.concurrencyLevel)
 }
 
 // LeftReduce accumulates the elements of this Stream by
@@ -398,9 +348,7 @@ func (s Stream) Intersperse(e Entry) Stream {
 		}
 	}()
 
-	return Stream{
-		stream: outstream,
-	}
+	return NewConcurrentStream(outstream, s.concurrencyLevel)
 }
 
 // GroupBy groups the elements of this Stream by classifying them.
@@ -444,7 +392,8 @@ func (s Stream) MapToInt(toInt ToIntFunction) IntStream {
 		}
 	}()
 
-	return NewIntStream(outstream)
+	return NewConcurrentIntStream(outstream, s.concurrencyLevel)
+
 }
 
 // MapToFloat produces an EntryFloat stream.
@@ -464,7 +413,7 @@ func (s Stream) MapToFloat(toFloat ToFloatFunction) FloatStream {
 		}
 	}()
 
-	return NewFloatStream(outstream)
+	return NewConcurrentFloatStream(outstream, s.concurrencyLevel)
 }
 
 // Count the number of elements in the stream.
@@ -637,7 +586,7 @@ func (s Stream) DropWhile(p Predicate) Stream {
 		}
 	}()
 
-	return NewStream(outstream)
+	return NewConcurrentStream(outstream, s.concurrencyLevel)
 }
 
 // DropUntil drops the first elements of this stream until the predicate
@@ -912,7 +861,7 @@ func (s Stream) TakeWhile(p Predicate) Stream {
 		}
 	}()
 
-	return NewStream(outstream)
+	return NewConcurrentStream(outstream, s.concurrencyLevel)
 }
 
 // TakeUntil returns a stream of the first elements
@@ -1027,12 +976,69 @@ func (s Stream) Distinct() Stream {
 		}
 	}()
 
-	return NewStream(outstream)
+	return NewConcurrentStream(outstream, s.concurrencyLevel)
+}
+
+// orderlyConcurrentDo executes a Function on the stream.
+// Execution is concurrent and order is preserved.
+func (s Stream) orderlyConcurrentDo(fn Function) chan Entry {
+	outstream := make(chan Entry, cap(s.stream))
+
+	go func() {
+		defer close(outstream)
+
+		if s.stream == nil {
+			return
+		}
+
+		pipelineCh := make(chan chan Entry, s.concurrencyLevel)
+
+		pipelineWriter := func(pipelineWCh chan chan Entry) {
+			defer close(pipelineWCh)
+
+			for val := range s.stream {
+				resultCh := make(chan Entry, 1)
+				pipelineWCh <- resultCh
+				go func(resultCh chan<- Entry, val Entry) {
+					defer close(resultCh)
+					resultCh <- fn(val)
+				}(resultCh, val)
+			}
+		}
+
+		var wg sync.WaitGroup
+
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			pipelineWriter(pipelineCh)
+		}()
+
+		wg.Add(1)
+		go func(pipelineRCh chan chan Entry) {
+			defer wg.Done()
+			for resultCh := range pipelineRCh {
+				outstream <- <-resultCh
+			}
+		}(pipelineCh)
+
+		wg.Wait()
+	}()
+
+	return outstream
 }
 
 // panicIfNilChannel panics if s.stream is nil.
 func (s Stream) panicIfNilChannel() {
 	if s.stream == nil {
 		panic(PanicMissingChannel)
+	}
+}
+
+// panicIfInvalidConcurrency panics if the concurrency level
+// is not valid.
+func (s Stream) panicIfInvalidConcurrency() {
+	if s.concurrencyLevel < 2 {
+		panic(PanicInvalidConcurrencyLevel)
 	}
 }
