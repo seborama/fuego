@@ -206,6 +206,9 @@ func (s Stream) FlatMap(mapper StreamFunction) Stream {
 
 		for resultCh := range pipelineCh {
 			val := <-resultCh
+			// TODO: make ForEach orderly concurrent (possible???)
+			//       or rather avoid using it and proceed here locally
+			//       with an orderly concurrent iterator (orderlyConcurrentDo()?)
 			val.ForEach(func(e Entry) {
 				outstream <- e
 			})
