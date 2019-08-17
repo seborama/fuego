@@ -10,9 +10,6 @@ package fuego
 
 import "sync"
 
-// PanicInvalidConcurrencyLevel signifies that the Stream is missing a channel.
-const PanicInvalidConcurrencyLevel = "stream concurrency must be 1 or more"
-
 // ForEachC is a concurrent wrapper of ForEach.
 //
 // The level of concurrency is set by the last call made to method
@@ -36,11 +33,16 @@ func (s Stream) ForEachC(consumer Consumer) {
 // Note that this method consumes the stream orderly but does NOT preserve
 // order of output.
 func (s Stream) concurrentDo(f func()) {
-	s.panicIfInvalidConcurrency()
-
 	var wg sync.WaitGroup
 
-	for i := 1; i <= s.concurrencyLevel; i++ {
+	threads := s.concurrencyLevel
+	if s.concurrencyLevel == 0 {
+		threads = 1
+	}
+	if threads < 1 {
+		panic(PanicInvalidConcurrencyLevel)
+	}
+	for i := 1; i <= threads; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()

@@ -2,7 +2,7 @@ package fuego
 
 import (
 	"fmt"
-	"sync"
+	"log"
 )
 
 // TODO: consider two types of streams: CStreams (channel based as shown here) and SStreams (slice based). The former allows for infinite streams and thinner memory usage within the CStream object but lacks performance when the operation requires to deal with the end of the steam (it has to consume all the elements of the steam sequentially). SStreams require the entire data to be stored internally from the onset. However,  slices are seekable and can read from the end or be consumed backwards easily.
@@ -26,7 +26,6 @@ import (
 // Unfold()
 // Fold()?
 // Fold / FoldLeft
-// TODO: implement NewStreamFromMap -> Stream of Keys / Stream of Values?
 
 // PanicMissingChannel signifies that the Stream is missing a channel.
 const PanicMissingChannel = "stream creation requires a channel"
@@ -44,6 +43,9 @@ const PanicMissingChannel = "stream creation requires a channel"
 // Multiple fuego streams can be created and data distributed
 // across as desired. This empowers users of fuego to implement the
 // desired behaviour of their pipelines.
+//
+// As of v8.0.0, fuego offers ordered concurrency for some linear
+// operations such as Map().
 //
 // Creation
 //
@@ -92,10 +94,14 @@ func NewConcurrentStream(c chan Entry, n int) Stream {
 	if c == nil {
 		panic(PanicMissingChannel)
 	}
-	return Stream{
+
+	s:= Stream{
 		stream:           c,
 		concurrencyLevel: n,
 	}
+	s.panicIfInvalidConcurrency()
+
+	return s
 }
 
 // NewStreamFromSlice creates a new Stream from a Go slice.
@@ -144,13 +150,10 @@ func NewStreamFromSlice(slice EntrySlice, bufsize int) Stream {
 // likely be slower than without, particularly when no CPU core is
 // available.
 func (s Stream) Concurrent(n int) Stream {
-	s.concurrencyLevel = n
-	s.panicIfInvalidConcurrency()
-
 	// This is not accurate but improves performance (by avoiding the
 	// creation of a new channel and iterating through this one).
 	// It should be safe.
-	return NewConcurrentStream(s.stream, s.concurrencyLevel)
+	return NewConcurrentStream(s.stream, n)
 }
 
 // Map returns a Stream consisting of the result of
@@ -174,6 +177,45 @@ func (s Stream) Map(mapper Function) Stream {
 //
 // See: example_stream_test.go
 func (s Stream) FlatMap(mapper StreamFunction) Stream {
+	outstream := make(chan Entry, cap(s.stream))
+
+	go func() {
+		defer close(outstream)
+		if s.stream == nil {
+			return
+		}
+
+		pipelineCh := make(chan chan Stream, s.concurrencyLevel)
+
+		pipelineWriter := func(pipelineWCh chan chan Stream) {
+			defer close(pipelineWCh)
+
+			for val := range s.stream {
+				resultCh := make(chan Stream, 1)
+				pipelineWCh <- resultCh
+				go func(resultCh chan<- Stream, val Entry) {
+					defer close(resultCh)
+					resultCh <- mapper(val)
+				}(resultCh, val)
+			}
+		}
+
+		go func() {
+			pipelineWriter(pipelineCh)
+		}()
+
+		for resultCh := range pipelineCh {
+			val := <-resultCh
+			val.ForEach(func(e Entry) {
+				outstream <- e
+			})
+		}
+	}()
+
+	return NewConcurrentStream(outstream, s.concurrencyLevel)
+}
+
+func (s Stream) FlatMap2(mapper StreamFunction) Stream {
 	outstream := make(chan Entry, cap(s.stream))
 
 	go func() {
@@ -1007,23 +1049,16 @@ func (s Stream) orderlyConcurrentDo(fn Function) chan Entry {
 			}
 		}
 
-		var wg sync.WaitGroup
-
-		wg.Add(1)
 		go func() {
-			defer wg.Done()
 			pipelineWriter(pipelineCh)
 		}()
 
-		wg.Add(1)
-		go func(pipelineRCh chan chan Entry) {
-			defer wg.Done()
+		pipelineReader := func(pipelineRCh chan chan Entry) {
 			for resultCh := range pipelineRCh {
 				outstream <- <-resultCh
 			}
-		}(pipelineCh)
-
-		wg.Wait()
+		}
+		pipelineReader(pipelineCh)
 	}()
 
 	return outstream
@@ -1036,10 +1071,16 @@ func (s Stream) panicIfNilChannel() {
 	}
 }
 
+// PanicInvalidConcurrencyLevel signifies that the Stream is missing a channel.
+const PanicInvalidConcurrencyLevel = "stream concurrency must be at least 0"
+
 // panicIfInvalidConcurrency panics if the concurrency level
 // is not valid.
 func (s Stream) panicIfInvalidConcurrency() {
-	if s.concurrencyLevel < 2 {
+	if s.concurrencyLevel < 0 {
 		panic(PanicInvalidConcurrencyLevel)
+	}
+	if s.concurrencyLevel > cap(s.stream) {
+		log.Printf("notice: stream concurrency (%d) is greater than stream's channel capacity (%d)", s.concurrencyLevel, cap(s.stream))
 	}
 }
