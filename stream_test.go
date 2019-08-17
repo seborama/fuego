@@ -102,13 +102,14 @@ func TestStream_Map(t *testing.T) {
 }
 
 func TestStream_Map_Concurrent(t *testing.T) {
-	const concurrencyLevel = 300
+	const numEntries = 300
+	const concurrencyLevel = numEntries / 10
 
 	sourceStream := func() chan Entry {
 		c := make(chan Entry, 10)
 		go func() {
 			defer close(c)
-			for i := 0; i < concurrencyLevel; i++ {
+			for i := 0; i < numEntries; i++ {
 				c <- EntryInt(i)
 			}
 		}()
@@ -117,7 +118,7 @@ func TestStream_Map_Concurrent(t *testing.T) {
 
 	want := func() EntrySlice {
 		es := EntrySlice{}
-		for i := 0; i < concurrencyLevel; i++ {
+		for i := 0; i < numEntries; i++ {
 			es = es.Append(functionTimesTwo()(EntryInt(i)))
 		}
 		return es
