@@ -95,7 +95,7 @@ func NewConcurrentStream(c chan Entry, n int) Stream {
 		panic(PanicMissingChannel)
 	}
 
-	s:= Stream{
+	s := Stream{
 		stream:           c,
 		concurrencyLevel: n,
 	}
@@ -215,7 +215,8 @@ func (s Stream) FlatMap(mapper StreamFunction) Stream {
 	return NewConcurrentStream(outstream, s.concurrencyLevel)
 }
 
-func (s Stream) FlatMap2(mapper StreamFunction) Stream {
+// TODO: delete FlatMap1 when FlatMap is complete
+func (s Stream) FlatMap1(mapper StreamFunction) Stream {
 	outstream := make(chan Entry, cap(s.stream))
 
 	go func() {
