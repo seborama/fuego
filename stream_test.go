@@ -102,13 +102,14 @@ func TestStream_Map(t *testing.T) {
 }
 
 func TestStream_Map_Concurrent(t *testing.T) {
-	const concurrencyLevel = 300
+	const numEntries = 300
+	const concurrencyLevel = numEntries / 10
 
 	sourceStream := func() chan Entry {
-		c := make(chan Entry, 1)
+		c := make(chan Entry, 10)
 		go func() {
 			defer close(c)
-			for i := 0; i < concurrencyLevel; i++ {
+			for i := 0; i < numEntries; i++ {
 				c <- EntryInt(i)
 			}
 		}()
@@ -117,28 +118,21 @@ func TestStream_Map_Concurrent(t *testing.T) {
 
 	want := func() EntrySlice {
 		es := EntrySlice{}
-		for i := 0; i < concurrencyLevel; i++ {
+		for i := 0; i < numEntries; i++ {
 			es = es.Append(functionTimesTwo()(EntryInt(i)))
 		}
 		return es
 	}()
 
 	unitStream := Stream{
-		stream:           sourceStream,
-		concurrencyLevel: concurrencyLevel,
+		stream: sourceStream,
 	}
 
-	var got EntrySlice
-	sinkStream := unitStream.Concurrent(concurrencyLevel).Map(functionSlowTimesTwo()) // use slow function to illustrate the performance improvement
-	if gotStream := sinkStream.stream; gotStream != nil {
-		got = EntrySlice{}
-		for val := range gotStream {
-			got = append(got, val)
-		}
-	}
+	// functionSlowTimesTwo: use slow function to illustrate the performance improvement
+	gotStream := unitStream.Concurrent(concurrencyLevel).Map(functionSlowTimesTwo()).ToSlice()
 
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("Stream.Map() = %v, want %v", got, want)
+	if !reflect.DeepEqual(gotStream, want) {
+		t.Errorf("Stream.Map() = %v, want %v", gotStream, want)
 	}
 }
 
@@ -2187,7 +2181,9 @@ func TestStream_FlatMap(t *testing.T) {
 				stream: nil,
 			},
 			args: args{
-				mapper: func(Entry) Stream { return NewStreamFromSlice(EntrySlice{}, 0) },
+				mapper: func(e Entry) Stream {
+					return FlattenEntrySliceToEntry(0)(e)
+				},
 			},
 			want: NewStreamFromSlice(EntrySlice{}, 0),
 		},
@@ -2201,7 +2197,9 @@ func TestStream_FlatMap(t *testing.T) {
 				}(),
 			},
 			args: args{
-				mapper: func(Entry) Stream { return NewStreamFromSlice(EntrySlice{}, 0) },
+				mapper: func(e Entry) Stream {
+					return FlattenEntrySliceToEntry(0)(e)
+				},
 			},
 			want: NewStreamFromSlice(EntrySlice{}, 0),
 		},
@@ -2212,22 +2210,32 @@ func TestStream_FlatMap(t *testing.T) {
 					c := make(chan Entry)
 					go func() {
 						defer close(c)
-						c <- EntryInt(1)
-						c <- EntryInt(2)
-						c <- EntryInt(3)
+						c <- EntrySlice{
+							EntryInt(1),
+							EntryInt(2),
+							EntryInt(3),
+						}
+						c <- EntrySlice{
+							EntryInt(4),
+							EntryInt(5),
+							EntryInt(6),
+						}
 					}()
 					return c
 				}(),
 			},
 			args: args{
 				mapper: func(e Entry) Stream {
-					return NewStreamFromSlice(EntrySlice{e}, 0)
+					return FlattenEntrySliceToEntry(0)(e)
 				},
 			},
 			want: NewStreamFromSlice(EntrySlice{
 				EntryInt(1),
 				EntryInt(2),
 				EntryInt(3),
+				EntryInt(4),
+				EntryInt(5),
+				EntryInt(6),
 			}, 0),
 		},
 	}
@@ -2240,6 +2248,52 @@ func TestStream_FlatMap(t *testing.T) {
 			expected := tt.want.ToSlice()
 			assert.EqualValues(t, expected, got)
 		})
+	}
+}
+
+func TestStream_FlatMap_Concurrent(t *testing.T) {
+	const numSlices = 300
+	const concurrencyLevel = numSlices / 10
+
+	sourceStream := func() chan Entry {
+		c := make(chan Entry, 10)
+		go func() {
+			defer close(c)
+			for i := 0; i < numSlices; i++ {
+				es := EntrySlice{}
+				for j := 0; j < 10; j++ {
+					es = append(es, EntryInt(j))
+				}
+				c <- es
+			}
+		}()
+		return c
+	}()
+
+	// Stream.flatMap() helps in converting Collection<Collection<T>> to Collection<T>.
+	// flatMap() = map() + Flattening
+	mapper := func(e Entry) Stream {
+		time.Sleep(50 * time.Millisecond)
+		return FlattenEntrySliceToEntry(concurrencyLevel)(e)
+	}
+
+	want := func() EntrySlice {
+		resultES := EntrySlice{}
+		for i := 0; i < numSlices; i++ {
+			for j := 0; j < 10; j++ {
+				resultES = resultES.Append(EntryInt(j))
+			}
+		}
+		return resultES
+	}()
+
+	unitStream := Stream{
+		stream: sourceStream,
+	}
+	gotStream := unitStream.Concurrent(concurrencyLevel).FlatMap(mapper).ToSlice()
+
+	if !reflect.DeepEqual(gotStream, want) {
+		t.Errorf("Stream.Map() = %v, want %v", gotStream, want)
 	}
 }
 

@@ -89,7 +89,7 @@ linters-settings:
   goimports:
     # put imports beginning with prefix after 3rd-party packages;
     # it's a comma-separated list of prefixes
-    local-prefixes: github.com/org/project
+    local-prefixes: github.com/seborama/fuego
   gocyclo:
     # minimal code complexity to report, 30 by default (but we recommend 10-20)
     min-complexity: 10
@@ -247,8 +247,8 @@ issues:
   new: false
 
   # Show only new issues created after git revision `REV`
-  new-from-rev: REV
+  #new-from-rev: REV
 
   # Show only new issues created in git patch with set file path.
-  new-from-patch: path/to/patch/file
+  #new-from-patch: path/to/patch/file
 

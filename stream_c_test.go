@@ -23,27 +23,27 @@ func TestStream_Concurrent_panicIfInvalidConcurrency(t *testing.T) {
 		wantPanic bool
 	}{
 		{
-			name: "Should panic if concurrency level < 2",
+			name: "Should panic if concurrency level < 0",
 			fields: fields{
 				stream: make(chan Entry, 10),
 			},
-			args:      args{1},
+			args:      args{-1},
 			wantPanic: true,
 		},
 		{
-			name: "Should accept concurrency level 2 (the minimum)",
+			name: "Should accept concurrency level 0 (the minimum - it is mapped to 1)",
 			fields: fields{
 				stream: make(chan Entry, 10),
 			},
-			args:      args{2},
+			args:      args{0},
 			wantPanic: false,
 		},
 		{
 			name: "Should accept high concurrency level",
 			fields: fields{
-				stream: make(chan Entry, 10),
+				stream: make(chan Entry, 100),
 			},
-			args:      args{500},
+			args:      args{50},
 			wantPanic: false,
 		},
 	}
@@ -90,7 +90,7 @@ func TestStream_ForEachC(t *testing.T) {
 func TestStream_concurrentDo_PanicsWhenInvalidConcurrency(t *testing.T) {
 	s := Stream{
 		stream:           nil,
-		concurrencyLevel: 1,
+		concurrencyLevel: -1,
 	}
 
 	assert.PanicsWithValue(t, PanicInvalidConcurrencyLevel, func() { s.concurrentDo(func() {}) })
