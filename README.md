@@ -90,19 +90,19 @@ go get github.com/seborama/fuego
 Or for a specific version:
 
 ```bash
-go get gopkg.in/seborama/fuego.v7
+go get gopkg.in/seborama/fuego.v8
 ```
 
 ### Import in your code
 
-You can import the package in the usua Go fashiom.
+You can import the package in the usual Go fashion.
 
 To simplify usage, you can use an alias:
 
 ```go
 package sample
 
-import ƒ "gopkg.in/seborama/fuego.v7"
+import ƒ "gopkg.in/seborama/fuego.v8"
 ```
 
 ...or import as an unqualified dot import:
@@ -110,7 +110,7 @@ import ƒ "gopkg.in/seborama/fuego.v7"
 ```go
 package sample
 
-import . "gopkg.in/seborama/fuego.v7"
+import . "gopkg.in/seborama/fuego.v8"
 ```
 
 [(toc)](#table-of-content)
