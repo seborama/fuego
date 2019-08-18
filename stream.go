@@ -162,11 +162,7 @@ func (s Stream) Concurrent(n int) Stream {
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 func (s Stream) Map(mapper Function) Stream {
-	fn := func(e Entry) Entry {
-		return mapper(e)
-	}
-
-	return NewConcurrentStream(s.orderlyConcurrentDo(fn), s.concurrencyLevel)
+	return NewConcurrentStream(s.orderlyConcurrentDo(mapper), s.concurrencyLevel)
 }
 
 // FlatMap takes a StreamFunction to flatten the entries
@@ -177,42 +173,7 @@ func (s Stream) Map(mapper Function) Stream {
 //
 // See: example_stream_test.go
 func (s Stream) FlatMap(mapper StreamFunction) Stream {
-	outstream := make(chan Entry, cap(s.stream))
-
-	go func() {
-		defer close(outstream)
-		if s.stream == nil {
-			return
-		}
-
-		pipelineCh := make(chan chan Stream, s.concurrencyLevel)
-
-		pipelineWriter := func(pipelineWCh chan chan Stream) {
-			defer close(pipelineWCh)
-
-			for val := range s.stream {
-				resultCh := make(chan Stream, 1)
-				pipelineWCh <- resultCh
-				go func(resultCh chan<- Stream, val Entry) {
-					defer close(resultCh)
-					resultCh <- mapper(val)
-				}(resultCh, val)
-			}
-		}
-
-		go func() {
-			pipelineWriter(pipelineCh)
-		}()
-
-		for resultCh := range pipelineCh {
-			val := <-resultCh
-			val.ForEach(func(e Entry) {
-				outstream <- e
-			})
-		}
-	}()
-
-	return NewConcurrentStream(outstream, s.concurrencyLevel)
+	return NewConcurrentStream(s.orderlyConcurrentDoStream(mapper), s.concurrencyLevel)
 }
 
 // Filter returns a stream consisting of the elements of this stream that
@@ -1002,6 +963,51 @@ func (s Stream) Distinct() Stream {
 	}()
 
 	return NewConcurrentStream(outstream, s.concurrencyLevel)
+}
+
+// orderlyConcurrentDoStream executes a StreamFunction on the stream.
+// Execution is concurrent and order is preserved.
+func (s Stream) orderlyConcurrentDoStream(streamfn StreamFunction) chan Entry {
+	outstream := make(chan Entry, cap(s.stream))
+
+	go func() {
+		defer close(outstream)
+
+		if s.stream == nil {
+			return
+		}
+
+		pipelineCh := make(chan chan Stream, s.concurrencyLevel)
+
+		pipelineWriter := func(pipelineWCh chan chan Stream) {
+			defer close(pipelineWCh)
+
+			for val := range s.stream {
+				resultCh := make(chan Stream, 1)
+				pipelineWCh <- resultCh
+				go func(resultCh chan<- Stream, val Entry) {
+					defer close(resultCh)
+					resultCh <- streamfn(val)
+				}(resultCh, val)
+			}
+		}
+
+		go func() {
+			pipelineWriter(pipelineCh)
+		}()
+
+		pipelineReader := func(pipelineRCh chan chan Stream) {
+			for resultCh := range pipelineRCh {
+				val := <-resultCh
+				val.ForEach(func(e Entry) {
+					outstream <- e
+				})
+			}
+		}
+		pipelineReader(pipelineCh)
+	}()
+
+	return outstream
 }
 
 // orderlyConcurrentDo executes a Function on the stream.
