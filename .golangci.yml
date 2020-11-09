@@ -177,7 +177,10 @@ linters:
   #  - golint
   enable-all: true
   disable:
+    - gomnd
     - lll
+    - nlreturn
+    - wsl
   disable-all: false
   #presets:
   #  - bugs
@@ -198,9 +201,10 @@ issues:
     # Exclude some linters from running on tests files.
     - path: _test\.go
       linters:
-        - gocyclo
-        - errcheck
         - dupl
+        - errcheck
+        - gocyclo
+        - gomnd
         - gosec
 
     # Ease some gocritic warnings on test files.
@@ -219,6 +223,11 @@ issues:
       text: "Write\\` is not checked"
       linters:
         - errcheck
+
+    - path: \.go
+      text: "(TODO)"
+      linters:
+        - godox
 
     # Ease linting on benchmarking code.
     - path: cmd/stun-bench/
@@ -251,4 +260,3 @@ issues:
 
   # Show only new issues created in git patch with set file path.
   #new-from-patch: path/to/patch/file
-

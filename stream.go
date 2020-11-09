@@ -35,7 +35,7 @@ const PanicMissingChannel = "stream creation requires a channel"
 //
 // A Stream is a wrapper over a Go channel ('nil' channels are prohibited).
 //
-// NOTE
+// NOTE:
 //
 // Concurrent streams are challenging to implement owing to
 // ordering issues in parallel processing. At the moment, the view
@@ -58,7 +58,7 @@ const PanicMissingChannel = "stream creation requires a channel"
 // Streams created from a slice do not suffer from this issue because
 // they are closed when the slice content is fully pushed to the Stream.
 //
-// Example
+// Example:
 //
 //  ƒ.NewStreamFromSlice([]ƒ.Entry{
 //      ƒ.EntryInt(1),
@@ -171,7 +171,7 @@ func (s Stream) Map(mapper Function) Stream {
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
-// See: example_stream_test.go
+// See: example_stream_test.go.
 func (s Stream) FlatMap(mapper StreamFunction) Stream {
 	return NewConcurrentStream(s.orderlyConcurrentDoStream(mapper), s.concurrencyLevel)
 }
@@ -182,7 +182,7 @@ func (s Stream) FlatMap(mapper StreamFunction) Stream {
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
-// Example
+// Example:
 //
 //  s := ƒ.NewStreamFromSlice([]ƒ.Entry{
 //      ƒ.EntryInt(1),
@@ -220,7 +220,7 @@ func (s Stream) Filter(predicate Predicate) Stream {
 // the producer to close the stream in order to complete (or
 // it will block).
 //
-// Example
+// Example:
 //
 //  total := 0
 //
@@ -272,7 +272,7 @@ func (s Stream) Peek(consumer Consumer) Stream {
 // the producer to close the stream in order to complete (or
 // it will block).
 //
-// Example
+// Example:
 //
 //  ƒ.NewStreamFromSlice([]ƒ.Entry{
 //      ƒ.EntryString("four"),
@@ -308,7 +308,7 @@ func (s Stream) Reduce(f2 BiFunction) Entry {
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
-// Example
+// Example:
 //
 //  ƒ.NewStreamFromSlice([]ƒ.Entry{
 //      ƒ.EntryString("three"),
@@ -343,7 +343,7 @@ func (s Stream) Intersperse(e Entry) Stream {
 // the producer to close the stream in order to complete (or
 // it will block).
 //
-// See: example_stream_test.go
+// See: example_stream_test.go.
 func (s Stream) GroupBy(classifier Function) EntryMap {
 	resultMap := EntryMap{}
 
@@ -379,7 +379,6 @@ func (s Stream) MapToInt(toInt ToIntFunction) IntStream {
 	}()
 
 	return NewConcurrentIntStream(outstream, s.concurrencyLevel)
-
 }
 
 // MapToFloat produces an EntryFloat stream.
@@ -430,7 +429,7 @@ func (s Stream) Count() int {
 // the producer to close the stream in order to complete (or
 // it will block).
 //
-// Example
+// Example:
 //
 //  ƒ.NewStreamFromSlice([]ƒ.Entry{
 //      ƒ.EntryString("three"),
@@ -462,7 +461,7 @@ func (s Stream) AllMatch(p Predicate) bool {
 // the producer to close the stream in order to complete (or
 // it will block).
 //
-// Example
+// Example:
 //
 //  ƒ.NewStreamFromSlice([]ƒ.Entry{
 //      ƒ.EntryString("three"),
@@ -494,7 +493,7 @@ func (s Stream) AnyMatch(p Predicate) bool {
 // the producer to close the stream in order to complete (or
 // it will block).
 //
-// Example
+// Example:
 //
 //  ƒ.NewStreamFromSlice([]ƒ.Entry{
 //      ƒ.EntryString("three"),
@@ -512,7 +511,7 @@ func (s Stream) NoneMatch(p Predicate) bool {
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
-// Example
+// Example:
 //
 //  ƒ.NewStreamFromSlice([]ƒ.Entry{
 //      ƒ.EntryString("three"),
@@ -537,7 +536,7 @@ func (s Stream) Drop(n uint64) Stream {
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
-// Example
+// Example:
 //
 //  ƒ.NewStreamFromSlice([]ƒ.Entry{
 //      ƒ.EntryString("three"),
@@ -581,7 +580,7 @@ func (s Stream) DropWhile(p Predicate) Stream {
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
-// Example
+// Example:
 //
 //  ƒ.NewStreamFromSlice([]ƒ.Entry{
 //      ƒ.EntryString("three"),
@@ -601,7 +600,7 @@ func (s Stream) DropUntil(p Predicate) Stream {
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
-// Example
+// Example:
 //
 //  ƒ.NewStreamFromSlice([]ƒ.Entry{
 //      ƒ.EntryString("three"),
@@ -619,7 +618,7 @@ func (s Stream) Last() Entry {
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
-// Example
+// Example:
 //
 //  ƒ.NewStreamFromSlice([]ƒ.Entry{
 //      ƒ.EntryString("three"),
@@ -668,7 +667,7 @@ func (s Stream) LastN(n uint64) EntrySlice {
 //
 // This function only consumes at most one element from the stream.
 //
-// Example
+// Example:
 //
 //  ƒ.NewStreamFromSlice([]ƒ.Entry{
 //      ƒ.EntryString("three"),
@@ -689,7 +688,7 @@ func (s Stream) Head() Entry {
 //
 // This function only consumes at most 'n' elements from the stream.
 //
-// Example
+// Example:
 //
 //  ƒ.NewStreamFromSlice([]ƒ.Entry{
 //      ƒ.EntryString("three"),
@@ -716,7 +715,7 @@ func (s Stream) HeadN(n uint64) EntrySlice {
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
-// Example
+// Example:
 //
 //  ƒ.NewStreamFromSlice([]ƒ.Entry{
 //      ƒ.EntryString("three"),
@@ -759,7 +758,7 @@ func (s Stream) EndsWith(slice EntrySlice) bool {
 // is necessary to prove (or disprove) it starts with the supplied
 // slice data.
 //
-// Example
+// Example:
 //
 //  ƒ.NewStreamFromSlice([]ƒ.Entry{
 //      ƒ.EntryString("three"),
@@ -789,7 +788,7 @@ func (s Stream) StartsWith(slice EntrySlice) bool {
 // or the in-stream  is closed at which point the out-stream
 // will be closed too.
 //
-// Example
+// Example:
 //
 //  ƒ.NewStreamFromSlice([]ƒ.Entry{
 //      ƒ.EntryString("three"),
@@ -820,7 +819,7 @@ func (s Stream) Limit(n uint64) Stream {
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
-// Example
+// Example:
 //
 //  ƒ.NewStreamFromSlice([]ƒ.Entry{
 //      ƒ.EntryString("three"),
@@ -856,7 +855,7 @@ func (s Stream) TakeWhile(p Predicate) Stream {
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
-// Example
+// Example:
 //
 //  ƒ.NewStreamFromSlice([]ƒ.Entry{
 //      ƒ.EntryString("three"),
@@ -884,7 +883,7 @@ func (s Stream) TakeUntil(p Predicate) Stream {
 // the producer to close the stream in order to complete (or
 // it will block).
 //
-// Example
+// Example:
 //
 //  strs := EntrySlice{
 //  	EntryString("a"),

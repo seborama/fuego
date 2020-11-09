@@ -136,6 +136,25 @@ func TestCollector_Collect_Reducing(t *testing.T) {
 	assert.Equal(t, EntryInt(35), got)
 }
 
+func TestCollector_Collect_ToEntryMap(t *testing.T) {
+	employees := getEmployeesSample()
+
+	employeeNameByID :=
+		NewStreamFromSlice(employees, 0).
+			Collect(
+				ToEntryMap(employeeID, employeeName))
+
+	expected := EntryMap{
+		EntryInt(1): EntryString("One"),
+		EntryInt(2): EntryString("Two"),
+		EntryInt(3): EntryString("Three"),
+		EntryInt(4): EntryString("Four"),
+		EntryInt(5): EntryString("Five"),
+	}
+
+	assert.EqualValues(t, expected, employeeNameByID)
+}
+
 func TestIdentityFinisher(t *testing.T) {
 	type args struct {
 		e Entry
@@ -175,8 +194,44 @@ func TestIdentityFinisher(t *testing.T) {
 	}
 }
 
+func getEmployeesSample() EntrySlice {
+	return EntrySlice{
+		employee{
+			id:         1,
+			name:       "One",
+			department: "Marketing",
+			salary:     1500,
+		},
+		employee{
+			id:         2,
+			name:       "Two",
+			department: "IT",
+			salary:     2500,
+		},
+		employee{
+			id:         3,
+			name:       "Three",
+			department: "IT",
+			salary:     2200,
+		},
+		employee{
+			id:         4,
+			name:       "Four",
+			department: "HR",
+			salary:     1800,
+		},
+		employee{
+			id:         5,
+			name:       "Five",
+			department: "HR",
+			salary:     2300,
+		},
+	}
+}
+
 type employee struct {
 	id         uint32
+	name       string
 	department string
 	salary     float32
 }
@@ -193,6 +248,14 @@ func (e employee) Equal(other Entry) bool {
 	return ok && (e.Hash() == other.Hash())
 }
 
+func (e employee) ID() EntryInt {
+	return EntryInt(e.id)
+}
+
+func (e employee) Name() EntryString {
+	return EntryString(e.name)
+}
+
 func (e employee) Department() EntryString {
 	return EntryString(e.department)
 }
@@ -201,38 +264,24 @@ func (e employee) Salary() EntryFloat {
 	return EntryFloat(e.salary)
 }
 
+var employeeID = func(e Entry) Entry {
+	return e.(employee).ID()
+}
+
+var employeeName = func(e Entry) Entry {
+	return e.(employee).Name()
+}
+
 var employeeDepartment = func(e Entry) Entry {
 	return e.(employee).Department()
 }
 
+var employeeSalary = func(e Entry) Entry {
+	return e.(employee).Salary()
+}
+
 func TestCollector_Filtering(t *testing.T) {
-	employees := EntrySlice{
-		employee{
-			id:         1,
-			department: "Marketing",
-			salary:     1500,
-		},
-		employee{
-			id:         2,
-			department: "IT",
-			salary:     2500,
-		},
-		employee{
-			id:         3,
-			department: "IT",
-			salary:     2200,
-		},
-		employee{
-			id:         4,
-			department: "HR",
-			salary:     1800,
-		},
-		employee{
-			id:         5,
-			department: "HR",
-			salary:     2300,
-		},
-	}
+	employees := getEmployeesSample()
 
 	highestPaidEmployeesByDepartment :=
 		NewStreamFromSlice(employees, 0).Collect(
@@ -246,17 +295,20 @@ func TestCollector_Filtering(t *testing.T) {
 		EntryString("HR"): EntrySlice{
 			employee{
 				id:         5,
+				name:       "Five",
 				department: "HR",
 				salary:     2300,
 			}},
 		EntryString("IT"): EntrySlice{
 			employee{
 				id:         2,
+				name:       "Two",
 				department: "IT",
 				salary:     2500,
 			},
 			employee{
 				id:         3,
+				name:       "Three",
 				department: "IT",
 				salary:     2200,
 			}},

@@ -33,7 +33,7 @@ func (es EntrySlice) Equal(e Entry) bool {
 	return es.Hash() == e.Hash()
 }
 
-// Append an Entry to this EntrySlice
+// Append an Entry to this EntrySlice.
 func (es EntrySlice) Append(e Entry) EntrySlice {
 	return append(es, e)
 }
