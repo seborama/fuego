@@ -39,7 +39,7 @@ func NewConcurrentIntStream(c chan EntryInt, n int) IntStream {
 	}()
 
 	return IntStream{
-		NewConcurrentStream(ic, n),
+		Stream: NewConcurrentStream(ic, n),
 	}
 }
 

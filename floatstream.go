@@ -39,7 +39,7 @@ func NewConcurrentFloatStream(c chan EntryFloat, n int) FloatStream {
 	}()
 
 	return FloatStream{
-		NewConcurrentStream(ic, n),
+		Stream: NewConcurrentStream(ic, n),
 	}
 }
 

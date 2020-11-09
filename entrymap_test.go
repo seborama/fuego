@@ -62,8 +62,8 @@ func TestEntryMapHas_DiffersWhenEntrySliceValuesAreSameButInDifferentOrder(t *te
 
 func TestEntryMapEqual(t *testing.T) {
 	type fields struct {
-		slice1 EntryMap
-		slice2 Entry
+		map1 EntryMap
+		map2 Entry
 	}
 	tests := []struct {
 		name   string
@@ -73,35 +73,35 @@ func TestEntryMapEqual(t *testing.T) {
 		{
 			name: "Should return false for when comparee is not an EntryMap",
 			fields: fields{
-				slice1: EntryMap{},
-				slice2: EntrySlice{}},
+				map1: EntryMap{},
+				map2: EntrySlice{}},
 			want: false,
 		},
 		{
-			name: "Should return true for two empty slices",
+			name: "Should return true for two empty maps",
 			fields: fields{
-				slice1: EntryMap{},
-				slice2: EntryMap{}},
+				map1: EntryMap{},
+				map2: EntryMap{}},
 			want: true,
 		},
 		{
 			name: "Should return false for one empty entrymap and one non-empty entrymap",
 			fields: fields{
-				slice1: EntryMap{},
-				slice2: EntryMap{
+				map1: EntryMap{},
+				map2: EntryMap{
 					EntryInt(7): EntrySlice{EntryString("seven")},
 				}},
 			want: false,
 		},
 		{
-			name: "Should return true for two identical multi-item slices",
+			name: "Should return true for two identical multi-item maps",
 			fields: fields{
-				slice1: EntryMap{
+				map1: EntryMap{
 					EntryInt(7):  EntrySlice{EntryString("seven"), EntryInt(7)},
 					EntryInt(13): EntrySlice{EntryString("thirteen")},
 					EntryInt(28): EntrySlice{EntryString("twenty eight")},
 				},
-				slice2: EntryMap{
+				map2: EntryMap{
 					EntryInt(7):  EntrySlice{EntryString("seven"), EntryInt(7)},
 					EntryInt(13): EntrySlice{EntryString("thirteen")},
 					EntryInt(28): EntrySlice{EntryString("twenty eight")},
@@ -110,14 +110,14 @@ func TestEntryMapEqual(t *testing.T) {
 			want: true,
 		},
 		{
-			name: "Should return true for two slices with same items but in different key order",
+			name: "Should return true for two maps with same items but in different key order",
 			fields: fields{
-				slice1: EntryMap{
+				map1: EntryMap{
 					EntryInt(7):  EntrySlice{EntryString("seven"), EntryInt(7)},
 					EntryInt(13): EntrySlice{EntryString("thirteen")},
 					EntryInt(28): EntrySlice{EntryString("twenty eight")},
 				},
-				slice2: EntryMap{
+				map2: EntryMap{
 					EntryInt(13): EntrySlice{EntryString("thirteen")},
 					EntryInt(7):  EntrySlice{EntryString("seven"), EntryInt(7)},
 					EntryInt(28): EntrySlice{EntryString("twenty eight")},
@@ -126,14 +126,14 @@ func TestEntryMapEqual(t *testing.T) {
 			want: true,
 		},
 		{
-			name: "Should return true for two slices with same items but in different key and value order",
+			name: "Should return true for two maps with same items but in different key and value order",
 			fields: fields{
-				slice1: EntryMap{
+				map1: EntryMap{
 					EntryInt(7):  EntrySlice{EntryInt(7), EntryString("seven")},
 					EntryInt(13): EntrySlice{EntryString("thirteen")},
 					EntryInt(28): EntrySlice{EntryString("twenty eight")},
 				},
-				slice2: EntryMap{
+				map2: EntryMap{
 					EntryInt(13): EntrySlice{EntryString("thirteen")},
 					EntryInt(7):  EntrySlice{EntryString("seven"), EntryInt(7)},
 					EntryInt(28): EntrySlice{EntryString("twenty eight")},
@@ -145,7 +145,7 @@ func TestEntryMapEqual(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, tt.fields.slice1.Equal(tt.fields.slice2))
+			assert.Equal(t, tt.want, tt.fields.map1.Equal(tt.fields.map2))
 		})
 	}
 }
@@ -214,22 +214,22 @@ func TestEntryMap_Len(t *testing.T) {
 		want int
 	}{
 		{
-			name: "Should return 0 for nil slice",
+			name: "Should return 0 for nil map",
 			em:   nil,
 			want: 0,
 		},
 		{
-			name: "Should return 0 for empty slice",
+			name: "Should return 0 for empty map",
 			em:   EntryMap{},
 			want: 0,
 		},
 		{
-			name: "Should return 1 for slice of 1 Entry",
+			name: "Should return 1 for map of 1 Entry",
 			em:   EntryMap{EntryInt(1): EntryInt(123)},
 			want: 1,
 		},
 		{
-			name: "Should return 3 for slice of 3 Entries",
+			name: "Should return 3 for map of 3 Entries",
 			em: EntryMap{
 				EntryInt(1): EntrySlice{
 					EntryInt(123),
@@ -246,6 +246,64 @@ func TestEntryMap_Len(t *testing.T) {
 			if got := tt.em.Len(); got != tt.want {
 				t.Errorf("EntryMap.Len() = %v, want %v", got, tt.want)
 			}
+		})
+	}
+}
+
+func TestEntryMap_Has(t *testing.T) {
+	m := EntryMap{
+		EntryInt(1): EntryString("one"),
+	}
+
+	assert.True(t, m.HasKey(EntryInt(1)))
+	assert.False(t, m.HasKey(EntryInt(2)))
+}
+
+func TestEntryMap_Append(t *testing.T) {
+	entryToAdd := Tuple2{
+		E1: EntryInt(1),
+		E2: EntryString("one"),
+	}
+	tests := []struct {
+		name  string
+		em    EntryMap
+		want  EntryMap
+		panic string
+	}{
+		{
+			name: "Appends when empty map",
+			em:   EntryMap{},
+			want: EntryMap{
+				EntryInt(1): EntryString("one"),
+			},
+		},
+		{
+			name: "Appends when of 1 Entry",
+			em: EntryMap{
+				EntryInt(2): EntryString("two"),
+			},
+			want: EntryMap{
+				EntryInt(1): EntryString("one"),
+				EntryInt(2): EntryString("two"),
+			},
+		},
+		{
+			name: "Does NOT append when entry exists in map",
+			em: EntryMap{
+				EntryInt(1): EntryString("one"),
+			},
+			want:  nil,
+			panic: PanicDuplicateKey + ": 1",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.panic != "" {
+				assert.PanicsWithValue(t, tt.panic, func() { tt.em.Append(entryToAdd) })
+				return
+			}
+			got := tt.em.Append(entryToAdd)
+			assert.EqualValues(t, tt.want, got)
 		})
 	}
 }

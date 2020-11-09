@@ -1,6 +1,8 @@
 package fuego
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // NOTICE:
 // The code in this file was inspired by Java Collectors,
@@ -30,7 +32,7 @@ import "fmt"
 // It should be noted that the `finisher` function is
 // optional (i.e. it may acceptably be `nil`).
 //
-// Example
+// Example:
 //
 //  strs := EntrySlice{
 //      EntryString("a"),
@@ -176,20 +178,26 @@ func Reducing(f2 BiFunction) Collector {
 	return NewCollector(supplier, accumulator, finisher)
 }
 
-// func ToEntryMap() Collector {
-// 	var supplier = func() Entry { // TODO: use chan Entry instead with a finisher that converts to slice?
-// 		return EntryMap{}
-// 	}
+// ToEntryMap returns a collector that accumulates the input
+// entries into an EntryMap.
+func ToEntryMap(keyMapper, valueMapper Function) Collector {
+	supplier := func() Entry { // TODO: use chan Entry instead with a finisher that converts to map?
+		return EntryMap{}
+	}
 
-// 	accumulator := func(supplier, entry Entry) Entry {
-// 		log.Printf("DEBUG - ToEntryMap - %+v\n", entry)
-// 		return supplier.(EntryMap).Append(entry.(Tuple2))
-// 	}
+	accumulator := func(supplier, entry Entry) Entry {
+		key := keyMapper(entry)
+		value := valueMapper(entry)
+		return supplier.(EntryMap).Append(Tuple2{
+			E1: key,
+			E2: value,
+		})
+	}
 
-// 	finisher := IdentityFinisher
+	finisher := IdentityFinisher
 
-// 	return NewCollector(supplier, accumulator, finisher)
-// }
+	return NewCollector(supplier, accumulator, finisher)
+}
 
 // ToEntrySlice returns a collector that accumulates the input
 // entries into an EntrySlice.
