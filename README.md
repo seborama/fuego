@@ -19,9 +19,6 @@
   <a href="http://goreportcard.com/report/seborama/fuego">
     <img src="https://img.shields.io/badge/go%20report-A%2B-brightgreen.svg" alt="goreportcard">
   </a>
-  <a href="https://cover.run/go?tag=golang-1.9&repo=github.com%2Fseborama%2Ffuego">
-    <img src="https://cover.run/go/github.com/seborama/fuego.svg?style=flat&tag=golang-1.9" alt="cover.run">
-  </a>
 </p>
 
 <p align="center">
