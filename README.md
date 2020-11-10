@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  <a href="https://pkg.go.dev/github.com/seborama/fuego">
+  <a href="https://pkg.go.dev/github.com/seborama/fuego/v9">
     <img src="https://img.shields.io/badge/godoc-reference-blue.svg" alt="fuego">
   </a>
   <a href="http://goreportcard.com/report/seborama/fuego">
