@@ -1,4 +1,4 @@
-module github.com/seborama/fuego
+module github.com/seborama/fuego/v9
 
 go 1.15
 
