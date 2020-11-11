@@ -3,7 +3,7 @@ package fuego_test
 import (
 	"fmt"
 
-	. "github.com/seborama/fuego"
+	. "github.com/seborama/fuego/v10"
 )
 
 // ExampleStream_GroupBy shows a use of Stream's with GroupBy.

@@ -16,7 +16,7 @@
   <a href="https://pkg.go.dev/github.com/seborama/fuego/v9">
     <img src="https://img.shields.io/badge/godoc-reference-blue.svg" alt="fuego">
   </a>
-  <a href="http://goreportcard.com/report/seborama/fuego">
+  <a href="http://goreportcard.com/report/seborama/fuego/v10">
     <img src="https://img.shields.io/badge/go%20report-A%2B-brightgreen.svg" alt="goreportcard">
   </a>
 </p>
