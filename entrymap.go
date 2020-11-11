@@ -1,7 +1,6 @@
 package fuego
 
 import (
-	"fmt"
 	"sort"
 )
 
@@ -78,29 +77,22 @@ func (em EntryMap) HasKey(key Entry) bool {
 	return false
 }
 
-// UniqueKeyMapAppender appends entry 'e' to map 'm' e.E1 is not a key
-// of 'm' or it panics.
-// nolint: gochecknoglobals
-var UniqueKeyMapAppender = func(m, e Entry) Entry {
-	if m.(EntryMap).HasKey(e.(Tuple2).E1) {
-		panic(fmt.Sprintf("%s: %v", PanicDuplicateKey, e.(Tuple2).E1))
-	}
-	m.(EntryMap)[e.(Tuple2).E1] = e.(Tuple2).E2
-	return m
-}
-
-// Append an Entry to this EntryMap.
-func (em EntryMap) Append(e Entry) EntryMap {
-	return em.AppendMerge(e, UniqueKeyMapAppender)
-}
-
-// AppendMerge appends an Entry to this EntryMap as with Append but
-// calls the merge function when this map already contains the key.
-func (em EntryMap) AppendMerge(e Entry, mergeFunction BiFunction) EntryMap {
-	return mergeFunction(em, e).(EntryMap)
-}
-
 // Len returns the number of Entries in this EntryMap.
 func (em EntryMap) Len() int {
 	return len(em)
+}
+
+// Merge performs a value merge on the specified key in this EntryMap.
+// If the supplied key does not exist in this EntryMap, the supplied value
+// is assigned.
+// If the supplied key already exists, mergeFunction is called to determine the new value
+// that will replace the current.
+func (em EntryMap) Merge(key, value Entry, mergeFunction BiFunction) EntryMap {
+	if !em.HasKey(key) {
+		em[key] = value
+		return em
+	}
+
+	em[key] = mergeFunction(em[key], value)
+	return em
 }

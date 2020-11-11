@@ -188,10 +188,26 @@ func ToEntryMap(keyMapper, valueMapper Function) Collector {
 	accumulator := func(supplier, entry Entry) Entry {
 		key := keyMapper(entry)
 		value := valueMapper(entry)
-		return supplier.(EntryMap).Append(Tuple2{
-			E1: key,
-			E2: value,
-		})
+		return supplier.(EntryMap).Merge(key, value, func(v1, v2 Entry) Entry { panic(fmt.Sprintf("%s: '%v'", PanicDuplicateKey, key)) })
+	}
+
+	finisher := IdentityFinisher
+
+	return NewCollector(supplier, accumulator, finisher)
+}
+
+// ToEntryMapWithKeyMerge returns a collector that accumulates the input
+// entries into an EntryMap. Duplicate keys are managed by mergeFunction.
+// See EntryMap.AppendWithKeyMerge() for details about the mergeFunction.
+func ToEntryMapWithKeyMerge(keyMapper, valueMapper Function, mergeFunction BiFunction) Collector {
+	supplier := func() Entry { // TODO: use chan Entry instead with a finisher that converts to EntryMap?
+		return EntryMap{}
+	}
+
+	accumulator := func(supplier, entry Entry) Entry {
+		key := keyMapper(entry)
+		value := valueMapper(entry)
+		return supplier.(EntryMap).Merge(key, value, mergeFunction)
 	}
 
 	finisher := IdentityFinisher
@@ -202,7 +218,7 @@ func ToEntryMap(keyMapper, valueMapper Function) Collector {
 // ToEntrySlice returns a collector that accumulates the input
 // entries into an EntrySlice.
 func ToEntrySlice() Collector {
-	supplier := func() Entry { // TODO: use chan Entry instead with a finisher that converts to slice?
+	supplier := func() Entry { // TODO: use chan Entry instead with a finisher that converts to EntrySlice?
 		return EntrySlice{}
 	}
 

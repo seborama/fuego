@@ -137,19 +137,72 @@ func TestCollector_Collect_Reducing(t *testing.T) {
 }
 
 func TestCollector_Collect_ToEntryMap(t *testing.T) {
+	tt := map[string]struct {
+		inputData     EntrySlice
+		expected      EntryMap
+		expectedPanic string
+	}{
+		"panics when key exists": {
+			inputData: EntrySlice{
+				employee{
+					id:   1,
+					name: "One",
+				},
+				employee{
+					id:   1000,
+					name: "One",
+				},
+			},
+			expectedPanic: PanicDuplicateKey + ": 'One'",
+		},
+		"returns a map of employee (name, id)": {
+			inputData: getEmployeesSample(),
+			expected: EntryMap{
+				EntryString("One"):   EntryInt(1),
+				EntryString("Two"):   EntryInt(2),
+				EntryString("Three"): EntryInt(3),
+				EntryString("Four"):  EntryInt(4),
+				EntryString("Five"):  EntryInt(5),
+			},
+		},
+	}
+
+	for name, tc := range tt {
+		name := name
+		tc := tc
+		t.Run(name, func(t *testing.T) {
+			employeeNameByID := func() EntryMap {
+				return NewStreamFromSlice(tc.inputData, 0).
+					Collect(
+						ToEntryMap(employeeName, employeeID)).(EntryMap)
+			}
+
+			if tc.expectedPanic != "" {
+				assert.PanicsWithValue(t, tc.expectedPanic, func() { _ = employeeNameByID() })
+				return
+			}
+
+			assert.EqualValues(t, tc.expected, employeeNameByID())
+		})
+	}
+}
+
+func TestCollector_Collect_ToEntryMapWithKeyMerge(t *testing.T) {
 	employees := getEmployeesSample()
+
+	overwriteKeyMergeFn := func(v1, v2 Entry) Entry {
+		return v2
+	}
 
 	employeeNameByID :=
 		NewStreamFromSlice(employees, 0).
 			Collect(
-				ToEntryMap(employeeID, employeeName))
+				ToEntryMapWithKeyMerge(employeeDepartment, employeeID, overwriteKeyMergeFn))
 
 	expected := EntryMap{
-		EntryInt(1): EntryString("One"),
-		EntryInt(2): EntryString("Two"),
-		EntryInt(3): EntryString("Three"),
-		EntryInt(4): EntryString("Four"),
-		EntryInt(5): EntryString("Five"),
+		EntryString("HR"):        EntryInt(5),
+		EntryString("IT"):        EntryInt(3),
+		EntryString("Marketing"): EntryInt(1),
 	}
 
 	assert.EqualValues(t, expected, employeeNameByID)
@@ -193,6 +246,52 @@ func TestIdentityFinisher(t *testing.T) {
 		})
 	}
 }
+
+func TestCollector_Filtering(t *testing.T) {
+	employees := getEmployeesSample()
+
+	highestPaidEmployeesByDepartment :=
+		NewStreamFromSlice(employees, 0).Collect(
+			GroupingBy(employeeDepartment,
+				Filtering(func(e Entry) bool {
+					return e.(employee).Salary() > 2000
+				},
+					ToEntrySlice())))
+
+	expected := EntryMap{
+		EntryString("HR"): EntrySlice{
+			employee{
+				id:         5,
+				name:       "Five",
+				department: "HR",
+				salary:     2300,
+			}},
+		EntryString("IT"): EntrySlice{
+			employee{
+				id:         2,
+				name:       "Two",
+				department: "IT",
+				salary:     2500,
+			},
+			employee{
+				id:         3,
+				name:       "Three",
+				department: "IT",
+				salary:     2200,
+			}},
+		EntryString("Marketing"): EntrySlice{},
+	}
+
+	assert.EqualValues(t, expected, highestPaidEmployeesByDepartment)
+}
+
+var (
+	salary1 float32 = 10.0
+	salary2 float32 = 20.0
+	salary3 float32 = 30.0
+	salary4 float32 = 40.0
+	salary5 float32 = 50.0
+)
 
 func getEmployeesSample() EntrySlice {
 	return EntrySlice{
@@ -278,42 +377,4 @@ var employeeDepartment = func(e Entry) Entry {
 
 var employeeSalary = func(e Entry) Entry {
 	return e.(employee).Salary()
-}
-
-func TestCollector_Filtering(t *testing.T) {
-	employees := getEmployeesSample()
-
-	highestPaidEmployeesByDepartment :=
-		NewStreamFromSlice(employees, 0).Collect(
-			GroupingBy(employeeDepartment,
-				Filtering(func(e Entry) bool {
-					return e.(employee).Salary() > 2000
-				},
-					ToEntrySlice())))
-
-	expected := EntryMap{
-		EntryString("HR"): EntrySlice{
-			employee{
-				id:         5,
-				name:       "Five",
-				department: "HR",
-				salary:     2300,
-			}},
-		EntryString("IT"): EntrySlice{
-			employee{
-				id:         2,
-				name:       "Two",
-				department: "IT",
-				salary:     2500,
-			},
-			employee{
-				id:         3,
-				name:       "Three",
-				department: "IT",
-				salary:     2200,
-			}},
-		EntryString("Marketing"): EntrySlice{},
-	}
-
-	assert.EqualValues(t, expected, highestPaidEmployeesByDepartment)
 }

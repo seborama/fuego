@@ -259,50 +259,50 @@ func TestEntryMap_Has(t *testing.T) {
 	assert.False(t, m.HasKey(EntryInt(2)))
 }
 
-func TestEntryMap_Append(t *testing.T) {
-	entryToAdd := Tuple2{
-		E1: EntryInt(1),
-		E2: EntryString("one"),
-	}
+func TestEntryMap_Merge(t *testing.T) {
+	const (
+		keyToAdd   = EntryInt(1)
+		valueToAdd = EntryString("new_one")
+	)
+
 	tests := []struct {
-		name  string
-		em    EntryMap
-		want  EntryMap
-		panic string
+		name string
+		em   EntryMap
+		want EntryMap
 	}{
 		{
-			name: "Appends when empty map",
+			name: "empty map",
 			em:   EntryMap{},
 			want: EntryMap{
-				EntryInt(1): EntryString("one"),
+				EntryInt(1): EntryString("new_one"),
 			},
 		},
 		{
-			name: "Appends when of 1 Entry",
+			name: "new key",
 			em: EntryMap{
 				EntryInt(2): EntryString("two"),
 			},
 			want: EntryMap{
-				EntryInt(1): EntryString("one"),
+				EntryInt(1): EntryString("new_one"),
 				EntryInt(2): EntryString("two"),
 			},
 		},
 		{
-			name: "Does NOT append when entry exists in map",
+			name: "existing key",
 			em: EntryMap{
 				EntryInt(1): EntryString("one"),
 			},
-			want:  nil,
-			panic: PanicDuplicateKey + ": 1",
+			want: EntryMap{
+				EntryInt(1): EntryString("new_one"),
+			},
 		},
 	}
+
+	biIdentity := func(e1, e2 Entry) Entry { return e2 }
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.panic != "" {
-				assert.PanicsWithValue(t, tt.panic, func() { tt.em.Append(entryToAdd) })
-				return
-			}
-			got := tt.em.Append(entryToAdd)
+			got := tt.em.Merge(keyToAdd, valueToAdd, biIdentity)
 			assert.EqualValues(t, tt.want, got)
 		})
 	}

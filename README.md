@@ -235,6 +235,7 @@ Collectors:
 - Reducing
 - ToEntrySlice
 - ToEntryMap
+- ToEntryMapWithKeyMerge
 
 Check the [godoc](http://godoc.org/github.com/seborama/fuego) for full details.
 

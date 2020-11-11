@@ -4,7 +4,6 @@ package fuego
 type Entry interface {
 	Hash() uint32 // TODO: remove Hash() since the project no longer includes collections? Hashes suffer from collision.
 	Equal(Entry) bool
-	// Value() Entry
 }
 
 // EntriesEqual checks the equality of 2 Entry objects.
