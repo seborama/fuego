@@ -198,7 +198,7 @@ func ToEntryMap(keyMapper, valueMapper Function) Collector {
 
 // ToEntryMapWithKeyMerge returns a collector that accumulates the input
 // entries into an EntryMap. Duplicate keys are managed by mergeFunction.
-// See EntryMap.AppendWithKeyMerge() for details about the mergeFunction.
+// See EntryMap.Merge() for details about the mergeFunction.
 func ToEntryMapWithKeyMerge(keyMapper, valueMapper Function, mergeFunction BiFunction) Collector {
 	supplier := func() Entry { // TODO: use chan Entry instead with a finisher that converts to EntryMap?
 		return EntryMap{}
