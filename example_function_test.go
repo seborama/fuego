@@ -3,7 +3,7 @@ package fuego_test
 import (
 	"fmt"
 
-	. "github.com/seborama/fuego"
+	. "github.com/seborama/fuego/v10"
 )
 
 // ExampleFunction shows how to use Function's.

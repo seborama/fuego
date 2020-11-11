@@ -1,7 +1,7 @@
 package fuego_test
 
 import (
-	ƒ "github.com/seborama/fuego"
+	ƒ "github.com/seborama/fuego/v10"
 )
 
 // concatenateStringsBiFunc returns a ƒ.BiFunction that
