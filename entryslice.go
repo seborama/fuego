@@ -1,7 +1,6 @@
 package fuego
 
-// var _ Entry[EntryInt] = EntrySlice[EntryInt]{}
-var _ Entry[EntrySlice[EntryInt]] = EntrySlice[EntryInt]{}
+var _ Entry[EntrySlice[EntryInt]] = EntrySlice[EntryInt]{0}
 
 // EntrySlice is a slice of type E.
 type EntrySlice[E Entry[E]] []E

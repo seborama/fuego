@@ -1,5 +1,7 @@
 package fuego
 
+var _ Entry[EntryBool] = EntryBool(false)
+
 // EntryBool is an Entry for 'bool'.
 type EntryBool bool
 

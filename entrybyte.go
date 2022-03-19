@@ -1,5 +1,7 @@
 package fuego
 
+var _ Entry[EntryByte] = EntryByte(0)
+
 // EntryByte is an Entry for 'byte'.
 type EntryByte byte
 
@@ -9,6 +11,6 @@ func (i EntryByte) Hash() uint32 {
 }
 
 // Equal returns true if 'e' and 'i' are equal.
-func (i EntryByte) Equal(e Entry) bool {
+func (i EntryByte) Equal(e EntryByte) bool {
 	return i == e
 }

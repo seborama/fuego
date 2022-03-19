@@ -4,21 +4,18 @@ import (
 	"sort"
 )
 
+var _ Entry[EntryMap[EntryString, EntryInt]] = EntryMap[EntryString, EntryInt](
+	map[Entry[EntryString]]EntryInt{
+		EntryString("one"): 1,
+	},
+)
+
 const (
 	// PanicDuplicateKey signifies that the key already exists for this map.
 	PanicDuplicateKey = "duplicate key"
 )
 
-type comparableEntry[E Entry[E]] interface {
-	Entry[E]
-}
-type ComparableEntry[E comparableEntry[E]] interface {
-	comparable
-	comparableEntry[E]
-}
-
 // EntryMap is a map of type E.
-// type EntryMap[K ComparableEntry[K], V Entry[V]] map[Entry[V]]V
 type EntryMap[K Entry[K], V Entry[V]] map[Entry[K]]V
 
 // Stream returns a stream of tuples the elements of the EntryMap.
@@ -67,7 +64,7 @@ func (em EntryMap[K, V]) Hash() uint32 {
 }
 
 // Equal returns true if this type is equal to 'e'.
-func (em EntryMap[K, V]) Equal(e V) bool {
+func (em EntryMap[K, V]) Equal(e EntryMap[K, V]) bool {
 	return em.Hash() == e.Hash()
 }
 

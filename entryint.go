@@ -1,5 +1,7 @@
 package fuego
 
+var _ Entry[EntryInt] = EntryInt(0)
+
 // EntryInt is an Entry for 'int'.
 type EntryInt int
 
