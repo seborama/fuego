@@ -8,12 +8,12 @@ import (
 func TestTuple0_Hash(t *testing.T) {
 	tests := []struct {
 		name string
-		t    Tuple0
+		t    Tuple0[EntryInt]
 		want uint32
 	}{
 		{
 			name: "Should return 1 for Tuple0",
-			t:    Tuple0{},
+			t:    Tuple0[EntryInt]{},
 			want: 1,
 		},
 	}
@@ -27,13 +27,13 @@ func TestTuple0_Hash(t *testing.T) {
 }
 
 func TestTuple0_Equal(t *testing.T) {
-	refTuple := Tuple0{}
+	refTuple := Tuple0[EntryInt]{}
 	type args struct {
-		o Entry
+		o Tuple0[EntryInt]
 	}
 	tests := []struct {
 		name string
-		t    Tuple0
+		t    Tuple0[EntryInt]
 		args args
 		want bool
 	}{
@@ -45,8 +45,8 @@ func TestTuple0_Equal(t *testing.T) {
 		},
 		{
 			name: "Should not be equal",
-			t:    Tuple0{},
-			args: args{o: Tuple0{}},
+			t:    Tuple0[EntryInt]{},
+			args: args{o: Tuple0[EntryInt]{}},
 			want: false,
 		},
 	}
@@ -62,12 +62,12 @@ func TestTuple0_Equal(t *testing.T) {
 func TestTuple0_Arity(t *testing.T) {
 	tests := []struct {
 		name string
-		t    Tuple0
+		t    Tuple0[EntryInt]
 		want int
 	}{
 		{
 			name: "Should return 0 for Tuple0",
-			t:    Tuple0{},
+			t:    Tuple0[EntryInt]{},
 			want: 0,
 		},
 	}
@@ -83,13 +83,13 @@ func TestTuple0_Arity(t *testing.T) {
 func TestTuple0_ToSlice(t *testing.T) {
 	tests := []struct {
 		name string
-		t    Tuple0
-		want EntrySlice
+		t    Tuple0[EntryInt]
+		want EntrySlice[EntryInt]
 	}{
 		{
 			name: "Should return empty set for Tuple0",
-			t:    Tuple0{},
-			want: EntrySlice{},
+			t:    Tuple0[EntryInt]{},
+			want: EntrySlice[EntryInt]{},
 		},
 	}
 	for _, tt := range tests {

@@ -9,29 +9,22 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func functionTimesTwo() Function {
-	return func(i Entry) Entry {
-		num := int(i.(EntryInt))
-		return EntryInt(2 * num)
-	}
-}
+// func functionTimesTwo() Function {
+// 	return func(i EntryInt) EntryInt {
+// 		return EntryInt(2 * i)
+// 	}
+// }
 
-func functionSlowTimesTwo() Function {
-	return func(i Entry) Entry {
-		num := int(i.(EntryInt))
+func functionSlowTimesTwo() Function[EntryInt] {
+	return func(i EntryInt) EntryInt {
 		time.Sleep(50 * time.Millisecond)
-		return EntryInt(2 * num)
+		return EntryInt(2 * i)
 	}
 }
 
 func entryIntEqualsTo(number EntryInt) Function {
-	return func(subject Entry) Entry {
-		subjectEntryInt, ok := subject.(EntryInt)
-		if !ok {
-			return EntryBool(false)
-		}
-
-		return EntryBool(number.Equal(subjectEntryInt))
+	return func(subject EntryInt) Entry[bool] {
+		return EntryBool(number.Equal(subject))
 	}
 }
 

@@ -2,8 +2,8 @@ package fuego
 
 // Consumer that accepts one argument and does not
 // return any value.
-type Consumer func(i Entry)
+type Consumer[E Entry] func(i E)
 
 // BiConsumer that accepts two arguments and does not
 // return any value.
-type BiConsumer func(i, j Entry)
+type BiConsumer[E Entry] func(i, j E)

@@ -1,12 +1,15 @@
 package fuego
 
-// EntrySlice is an Entry for '[]Entry'.
-type EntrySlice []Entry
+// var _ Entry[EntryInt] = EntrySlice[EntryInt]{}
+var _ Entry[EntrySlice[EntryInt]] = EntrySlice[EntryInt]{}
+
+// EntrySlice is a slice of type E.
+type EntrySlice[E Entry[E]] []E
 
 // TODO: implement Stream() (see EntryMap)
 
 // Hash returns a hash for this Entry.
-func (es EntrySlice) Hash() uint32 {
+func (es EntrySlice[E]) Hash() uint32 {
 	if len(es) == 0 {
 		return 0
 	}
@@ -14,10 +17,7 @@ func (es EntrySlice) Hash() uint32 {
 	result := uint32(1)
 
 	for _, element := range es {
-		var h uint32
-		if element != nil {
-			h = element.Hash()
-		}
+		h := element.Hash()
 		result = 31*result + h
 	}
 
@@ -25,20 +25,16 @@ func (es EntrySlice) Hash() uint32 {
 }
 
 // Equal returns true if this type is equal to 'e'.
-func (es EntrySlice) Equal(e Entry) bool {
-	if _, ok := e.(EntrySlice); !ok {
-		return false
-	}
-
-	return es.Hash() == e.Hash()
+func (es EntrySlice[E]) Equal(other EntrySlice[E]) bool {
+	return es.Hash() == other.Hash()
 }
 
 // Append an Entry to this EntrySlice.
-func (es EntrySlice) Append(e Entry) EntrySlice {
+func (es EntrySlice[E]) Append(e E) EntrySlice[E] {
 	return append(es, e)
 }
 
 // Len returns the number of Entries in this EntrySlice.
-func (es EntrySlice) Len() int {
+func (es EntrySlice[E]) Len() int {
 	return len(es)
 }

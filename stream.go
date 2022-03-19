@@ -75,27 +75,64 @@ const PanicMissingChannel = "stream creation requires a channel"
 //      // c <- ...
 //  }()
 //  NewStream(c)
-type Stream struct {
-	stream           chan Entry
+type Stream[E Entry[E]] struct {
+	stream           chan E
 	concurrencyLevel int
+}
+type Stream2[E Entry[E]] struct {
+	stream           chan Entry[E]
+	concurrencyLevel int
+}
+
+func _() {
+	var b = Stream[EntrySlice[EntryInt]]{
+		stream: make(chan EntrySlice[EntryInt]),
+	}
+	b.stream <- EntrySlice[EntryInt]{1, 2}
+	val := <-b.stream
+	val.Equal(EntrySlice[EntryInt]{3, 4})
+
+	var x = Stream2[EntrySlice[EntryInt]]{
+		stream: make(chan Entry[EntrySlice[EntryInt]]),
+	}
+	x.stream <- EntrySlice[EntryInt](EntrySlice[EntryInt]{1, 2})
+	valx := <-x.stream
+	valx.Equal(EntrySlice[EntryInt]{3, 4})
+
+	var y = Stream2[EntryInt]{
+		stream: make(chan Entry[EntryInt]),
+	}
+	y.stream <- EntryInt(9)
 }
 
 // NewStream creates a new Stream.
 //
 // This function leaves the provided channel is the same state
 // of openness.
-func NewStream(c chan Entry) Stream {
+func NewStream[E Entry[E]](c chan E) Stream[E] {
 	return NewConcurrentStream(c, 0)
 }
 
+///////////////// TODO: REMOVE /////////////////////////////////////
+///////////////// TODO: REMOVE /////////////////////////////////////
+///////////////// TODO: REMOVE /////////////////////////////////////
+///////////////// TODO: REMOVE /////////////////////////////////////
+
+var _ = NewStream[EntryInt](make(chan EntryInt))
+
+///////////////// TODO: REMOVE /////////////////////////////////////
+///////////////// TODO: REMOVE /////////////////////////////////////
+///////////////// TODO: REMOVE /////////////////////////////////////
+///////////////// TODO: REMOVE /////////////////////////////////////
+
 // NewConcurrentStream creates a new Stream with a degree
 // of concurrency of n.
-func NewConcurrentStream(c chan Entry, n int) Stream {
+func NewConcurrentStream[E Entry[E]](c chan E, n int) Stream[E] {
 	if c == nil {
 		panic(PanicMissingChannel)
 	}
 
-	s := Stream{
+	s := Stream[E]{
 		stream:           c,
 		concurrencyLevel: n,
 	}
@@ -108,8 +145,8 @@ func NewConcurrentStream(c chan Entry, n int) Stream {
 //
 // The slice data is published to the stream after which the
 // stream is closed.
-func NewStreamFromSlice(slice EntrySlice, bufsize int) Stream {
-	c := make(chan Entry, bufsize)
+func NewStreamFromSlice[E Entry[E]](slice EntrySlice[E], bufsize int) Stream[E] {
+	c := make(chan E, bufsize)
 
 	go func() {
 		defer close(c) // slices have finite size: close stream after all data was read.
@@ -149,7 +186,7 @@ func NewStreamFromSlice(slice EntrySlice, bufsize int) Stream {
 // If latency is too low or next to none, using concurrency will
 // likely be slower than without, particularly when no CPU core is
 // available.
-func (s Stream) Concurrent(n int) Stream {
+func (s Stream[E]) Concurrent(n int) Stream[E] {
 	// This is not accurate but improves performance (by avoiding the
 	// creation of a new channel and iterating through this one).
 	// It should be safe.
@@ -161,7 +198,7 @@ func (s Stream) Concurrent(n int) Stream {
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
-func (s Stream) Map(mapper Function) Stream {
+func (s Stream[E]) Map(mapper Function[E, E]) Stream[E] {
 	return NewConcurrentStream(s.orderlyConcurrentDo(mapper), s.concurrencyLevel)
 }
 
@@ -172,7 +209,7 @@ func (s Stream) Map(mapper Function) Stream {
 // which point the out-stream will be closed too.
 //
 // See: example_stream_test.go.
-func (s Stream) FlatMap(mapper StreamFunction) Stream {
+func (s Stream[E]) FlatMap(mapper StreamFunction[E]) Stream[E] {
 	return NewConcurrentStream(s.orderlyConcurrentDoStream(mapper), s.concurrencyLevel)
 }
 
@@ -196,8 +233,8 @@ func (s Stream) FlatMap(mapper StreamFunction) Stream {
 //                  FunctionPredicate(entryIntEqualsTo(ƒ.EntryInt(3)))),
 //  )
 //  // Result: []ƒ.EntryInt{1,3}
-func (s Stream) Filter(predicate Predicate) Stream {
-	outstream := make(chan Entry, cap(s.stream))
+func (s Stream[E]) Filter(predicate Predicate) Stream[E] {
+	outstream := make(chan E, cap(s.stream))
 
 	go func() {
 		defer close(outstream)
@@ -235,7 +272,7 @@ func (s Stream) Filter(predicate Predicate) Stream {
 //  }, 0).
 //      ForEach(calculateSumTotal)
 //  // Result: total == 6
-func (s Stream) ForEach(consumer Consumer) {
+func (s Stream[E]) ForEach(consumer Consumer[E]) {
 	if s.stream == nil {
 		return
 	}
@@ -251,12 +288,12 @@ func (s Stream) ForEach(consumer Consumer) {
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
-func (s Stream) Peek(consumer Consumer) Stream {
-	outstream := make(chan Entry, cap(s.stream))
+func (s Stream[E]) Peek(consumer Consumer[E]) Stream[E] {
+	outstream := make(chan E, cap(s.stream))
 
 	go func() {
 		defer close(outstream)
-		s.ForEach(func(e Entry) {
+		s.ForEach(func(e E) {
 			consumer(e)
 			outstream <- e
 		})
@@ -283,9 +320,10 @@ func (s Stream) Peek(consumer Consumer) Stream {
 //  }, 1e3).
 //      Reduce(concatenateStringsBiFunc)
 //  // Result: ƒ.EntryString("four-twelve-one-six-three")
-func (s Stream) LeftReduce(f2 BiFunction) Entry {
+func (s Stream[E]) LeftReduce(f2 BiFunction[E, E, E]) E {
 	if s.stream == nil {
-		return nil // TODO: return Maybe
+		var e E
+		return e // TODO: return Maybe
 	}
 
 	res := <-s.stream
@@ -299,7 +337,7 @@ func (s Stream) LeftReduce(f2 BiFunction) Entry {
 // Reduce is an alias for LeftReduce.
 //
 // See LeftReduce for more info.
-func (s Stream) Reduce(f2 BiFunction) Entry {
+func (s Stream[E]) Reduce(f2 BiFunction[E, E, E]) E {
 	return s.LeftReduce(f2)
 }
 
@@ -317,17 +355,18 @@ func (s Stream) Reduce(f2 BiFunction) Entry {
 //  }, 1e3).
 //      Intersperse(ƒ.EntryString(" - "))
 //  // Result: "three - two - four"
-func (s Stream) Intersperse(e Entry) Stream {
-	outstream := make(chan Entry, cap(s.stream))
+func (s Stream[E]) Intersperse(e E) Stream[E] {
+	outstream := make(chan E, cap(s.stream))
 
 	go func() {
 		defer close(outstream)
 		if s.stream == nil {
 			return
 		}
-		if val := <-s.stream; val != nil {
-			outstream <- val
-		}
+		// not sure why this block was added ¯\_(ツ)_/¯
+		// if val := <-s.stream; Entry[E](val) != nil { // not sure Entry[E](val) != nil really works as intended
+		// 	outstream <- val
+		// }
 		for val := range s.stream {
 			outstream <- e
 			outstream <- val
@@ -344,16 +383,16 @@ func (s Stream) Intersperse(e Entry) Stream {
 // it will block).
 //
 // See: example_stream_test.go.
-func (s Stream) GroupBy(classifier Function) EntryMap {
-	resultMap := EntryMap{}
+func (s Stream[E]) GroupBy(classifier Function[E, E]) EntryMap[E, EntrySlice[E]] {
+	resultMap := EntryMap[E, EntrySlice[E]]{}
 
 	if s.stream != nil {
 		for val := range s.stream {
 			k := classifier(val)
-			if resultMap[k] == nil {
-				resultMap[k] = EntrySlice{}
-			}
-			resultMap[k] = append(resultMap[k].(EntrySlice), val)
+			// if resultMap[k] == nil {
+			resultMap[k] = EntrySlice[E]{}
+			// }
+			resultMap[k] = append(resultMap[k], val)
 			// TODO?: resultMap = resultMap.Append(Tuple2{k, val})
 		}
 	}
@@ -365,7 +404,7 @@ func (s Stream) GroupBy(classifier Function) EntryMap {
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
-func (s Stream) MapToInt(toInt ToIntFunction) IntStream {
+func (s Stream[E]) MapToInt(toInt ToIntFunction) IntStream {
 	outstream := make(chan EntryInt, cap(s.stream))
 
 	go func() {
@@ -385,7 +424,7 @@ func (s Stream) MapToInt(toInt ToIntFunction) IntStream {
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
-func (s Stream) MapToFloat(toFloat ToFloatFunction) FloatStream {
+func (s Stream[E]) MapToFloat(toFloat ToFloatFunction) FloatStream {
 	outstream := make(chan EntryFloat, cap(s.stream))
 
 	go func() {
@@ -409,7 +448,7 @@ func (s Stream) MapToFloat(toFloat ToFloatFunction) FloatStream {
 // This is a continuous terminal operation and hence expects
 // the producer to close the stream in order to complete (or
 // it will block).
-func (s Stream) Count() int {
+func (s Stream[E]) Count() int {
 	if s.stream == nil {
 		return 0
 	}
@@ -440,7 +479,7 @@ func (s Stream) Count() int {
 //          return strings.Contains(string(e.(ƒ.EntryString)), "t")
 //      })
 //  // Result: true
-func (s Stream) AllMatch(p Predicate) bool {
+func (s Stream[E]) AllMatch(p Predicate) bool {
 	if s.stream == nil {
 		return false
 	}
@@ -472,7 +511,7 @@ func (s Stream) AllMatch(p Predicate) bool {
 //          return e.Equal(ƒ.EntryString("three"))
 //      })
 //  // Result: true
-func (s Stream) AnyMatch(p Predicate) bool {
+func (s Stream[E]) AnyMatch(p Predicate) bool {
 	if s.stream == nil {
 		return false
 	}
@@ -502,7 +541,7 @@ func (s Stream) AnyMatch(p Predicate) bool {
 //  }, 1e3).
 //      NoneMatch(func(e ƒ.Entry) bool { return e.Equal(ƒ.EntryString("nothing like this")) })
 //  // Result: true
-func (s Stream) NoneMatch(p Predicate) bool {
+func (s Stream[E]) NoneMatch(p Predicate) bool {
 	return !s.AnyMatch(p)
 }
 
@@ -520,10 +559,10 @@ func (s Stream) NoneMatch(p Predicate) bool {
 //  }, 1e3).
 //      Drop(2)
 //  // Result: Stream of ƒ.EntryString("fourth")
-func (s Stream) Drop(n uint64) Stream {
-	return s.DropWhile(func() func(e Entry) bool {
+func (s Stream[E]) Drop(n uint64) Stream[E] {
+	return s.DropWhile(func() func(e E) bool {
 		count := uint64(0)
-		return func(e Entry) bool {
+		return func(e E) bool {
 			count++
 			return count <= n
 		}
@@ -547,8 +586,8 @@ func (s Stream) Drop(n uint64) Stream {
 //          return e.Equal(ƒ.EntryString("three"))
 //      })
 //  // Result: Stream of ƒ.EntryString("two") and ƒ.EntryString("fourth")
-func (s Stream) DropWhile(p Predicate) Stream {
-	outstream := make(chan Entry, cap(s.stream))
+func (s Stream[E]) DropWhile(p Predicate) Stream[E] {
+	outstream := make(chan E, cap(s.stream))
 
 	go func() {
 		defer close(outstream)
@@ -591,7 +630,7 @@ func (s Stream) DropWhile(p Predicate) Stream {
 //          return e.Equal(ƒ.EntryString("fourth"))
 //      })
 //  // Result: Stream of ƒ.EntryString("three") and ƒ.EntryString("two")
-func (s Stream) DropUntil(p Predicate) Stream {
+func (s Stream[E]) DropUntil(p Predicate) Stream[E] {
 	return s.DropWhile(p.Negate())
 }
 
@@ -609,7 +648,7 @@ func (s Stream) DropUntil(p Predicate) Stream {
 //  }, 1e3).
 //      Last()
 //  // Result: ƒ.EntryString("fourth")
-func (s Stream) Last() Entry {
+func (s Stream[E]) Last() E {
 	return s.LastN(1)[0]
 }
 
@@ -627,7 +666,7 @@ func (s Stream) Last() Entry {
 //  }, 1e3).
 //      LastN(2)
 //  // Result: []ƒ.Entry{ƒ.EntryString("two"), ƒ.EntryString("fourth")}
-func (s Stream) LastN(n uint64) EntrySlice {
+func (s Stream[E]) LastN(n uint64) EntrySlice[E] {
 	s.panicIfNilChannel()
 
 	if n < 1 {
@@ -639,7 +678,7 @@ func (s Stream) LastN(n uint64) EntrySlice {
 		panic(PanicNoSuchElement)
 	}
 
-	result := EntrySlice{val}
+	result := EntrySlice[E]{val}
 
 	count := uint64(result.Len())
 	flushTrigger := uint64(100)
@@ -676,7 +715,7 @@ func (s Stream) LastN(n uint64) EntrySlice {
 //  }, 1e3).
 //      Head()
 //  // Result: ƒ.EntryString("three")
-func (s Stream) Head() Entry {
+func (s Stream[E]) Head() E {
 	head := s.HeadN(1)
 	if head.Len() != 1 {
 		panic(PanicNoSuchElement)
@@ -697,13 +736,14 @@ func (s Stream) Head() Entry {
 //  }, 1e3).
 //      HeadN(2)
 //  // Result: []ƒ.Entry{ƒ.EntryString("three"), ƒ.EntryString("two")}
-func (s Stream) HeadN(n uint64) EntrySlice {
-	return s.Take(n).Collect(
-		NewCollector(
-			func() Entry { return EntrySlice{} },
-			func(e1, e2 Entry) Entry { return e1.(EntrySlice).Append(e2) },
+func (s Stream[E]) HeadN(n uint64) EntrySlice[E] {
+	c :=
+		NewCollector[T[E], A[E], R[E]](
+			func() A[E] { return EntrySlice[E]{} },
+			func(e1 A[E], e2 T[E]) R[E] { return e1.(EntrySlice[E]).Append(e2.(E)) },
 			nil,
-		)).(EntrySlice)
+		)
+	return s.Take(n).Collect(c).(EntrySlice[E])
 }
 
 // EndsWith returns true when this stream ends
@@ -724,12 +764,12 @@ func (s Stream) HeadN(n uint64) EntrySlice {
 //  }, 1e3).
 //      EndsWith([]ƒ.Entry{ƒ.EntryString("two"), ƒ.EntryString("fourth")})
 //  // Result: true
-func (s Stream) EndsWith(slice EntrySlice) bool {
+func (s Stream[E]) EndsWith(slice EntrySlice[E]) bool {
 	if slice.Len() == 0 {
 		return false
 	}
 
-	endElements := func() EntrySlice {
+	endElements := func() EntrySlice[E] {
 		defer func() {
 			// TODO: this doesn't look great... Need to re-write LastN like HeadN as a collect of TakeRight (to be implemented)
 			_ = recover()
@@ -767,7 +807,7 @@ func (s Stream) EndsWith(slice EntrySlice) bool {
 //  }, 1e3).
 //      StartsWith([]ƒ.Entry{ƒ.EntryString("three"), ƒ.EntryString("two")})
 //  // Result: true
-func (s Stream) StartsWith(slice EntrySlice) bool {
+func (s Stream[E]) StartsWith(slice EntrySlice[E]) bool {
 	startElements := s.HeadN(uint64(slice.Len()))
 	if slice.Len() == 0 || startElements.Len() != slice.Len() {
 		return false
@@ -797,10 +837,10 @@ func (s Stream) StartsWith(slice EntrySlice) bool {
 //  }, 1e3).
 //      Take(2)
 //  // Result: Stream of []ƒ.Entry{ƒ.EntryString("three"), ƒ.EntryString("two")}
-func (s Stream) Take(n uint64) Stream {
+func (s Stream[E]) Take(n uint64) Stream[E] {
 	counterIsLessThanOrEqualTo := func(maxCount uint64) Predicate {
 		counter := uint64(0)
-		return func(t Entry) bool {
+		return func(t E) bool {
 			counter++
 			return counter <= maxCount
 		}
@@ -809,7 +849,7 @@ func (s Stream) Take(n uint64) Stream {
 }
 
 // Limit is a synonym for Take.
-func (s Stream) Limit(n uint64) Stream {
+func (s Stream[E]) Limit(n uint64) Stream[E] {
 	return s.Take(n)
 }
 
@@ -830,10 +870,10 @@ func (s Stream) Limit(n uint64) Stream {
 //          return strings.HasPrefix(string(e.(ƒ.EntryString)), "t")
 //      })
 //  // Result: Stream of []ƒ.Entry{ƒ.EntryString("three"), ƒ.EntryString("two")}
-func (s Stream) TakeWhile(p Predicate) Stream {
+func (s Stream[E]) TakeWhile(p Predicate) Stream[E] {
 	s.panicIfNilChannel()
 
-	outstream := make(chan Entry, cap(s.stream))
+	outstream := make(chan E, cap(s.stream))
 
 	go func() {
 		defer close(outstream)
@@ -866,7 +906,7 @@ func (s Stream) TakeWhile(p Predicate) Stream {
 //          return e.Equal(ƒ.EntryString("fourth"))
 //      })
 //  // Result: Stream of []ƒ.Entry{ƒ.EntryString("three"), ƒ.EntryString("two")}
-func (s Stream) TakeUntil(p Predicate) Stream {
+func (s Stream[E]) TakeUntil(p Predicate) Stream[E] {
 	return s.TakeWhile(p.Negate())
 }
 
@@ -902,7 +942,11 @@ func (s Stream) TakeUntil(p Predicate) Stream {
 //                      stringLengthGreaterThan(1),
 //                      ToEntrySlice()))))
 //  // Result: map[1:[] 2:[BB CC] 3:[DDD]]
-func (s Stream) Collect(c Collector) interface{} {
+type T[E any] any
+type A[E any] any
+type R[E any] any
+
+func (s Stream[E]) Collect(c Collector[T[E], A[E], R[E]]) R[E] {
 	s.panicIfNilChannel()
 
 	result := c.supplier()
@@ -923,8 +967,8 @@ func (s Stream) Collect(c Collector) interface{} {
 // This is a continuous terminal operation and hence expects
 // the producer to close the stream in order to complete (or
 // it will block).
-func (s Stream) ToSlice() EntrySlice {
-	result := EntrySlice{}
+func (s Stream[E]) ToSlice() EntrySlice[E] {
+	result := EntrySlice[E]{}
 	if s.stream != nil {
 		for val := range s.stream {
 			result = append(result, val)
@@ -941,10 +985,10 @@ func (s Stream) ToSlice() EntrySlice {
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
-func (s Stream) Distinct() Stream {
+func (s Stream[E]) Distinct() Stream[E] {
 	s.panicIfNilChannel()
 
-	outstream := make(chan Entry, cap(s.stream))
+	outstream := make(chan E, cap(s.stream))
 
 	go func() {
 		defer close(outstream)
@@ -966,8 +1010,8 @@ func (s Stream) Distinct() Stream {
 
 // orderlyConcurrentDoStream executes a StreamFunction on the stream.
 // Execution is concurrent and order is preserved.
-func (s Stream) orderlyConcurrentDoStream(streamfn StreamFunction) chan Entry {
-	outstream := make(chan Entry, cap(s.stream))
+func (s Stream[E]) orderlyConcurrentDoStream(streamfn StreamFunction[E]) chan E {
+	outstream := make(chan E, cap(s.stream))
 
 	go func() {
 		defer close(outstream)
@@ -976,15 +1020,15 @@ func (s Stream) orderlyConcurrentDoStream(streamfn StreamFunction) chan Entry {
 			return
 		}
 
-		pipelineCh := make(chan chan Stream, s.concurrencyLevel)
+		pipelineCh := make(chan chan Stream[E], s.concurrencyLevel)
 
-		pipelineWriter := func(pipelineWCh chan chan Stream) {
+		pipelineWriter := func(pipelineWCh chan chan Stream[E]) {
 			defer close(pipelineWCh)
 
 			for val := range s.stream {
-				resultCh := make(chan Stream, 1)
+				resultCh := make(chan Stream[E], 1)
 				pipelineWCh <- resultCh
-				go func(resultCh chan<- Stream, val Entry) {
+				go func(resultCh chan<- Stream[E], val E) {
 					defer close(resultCh)
 					resultCh <- streamfn(val)
 				}(resultCh, val)
@@ -995,10 +1039,10 @@ func (s Stream) orderlyConcurrentDoStream(streamfn StreamFunction) chan Entry {
 			pipelineWriter(pipelineCh)
 		}()
 
-		pipelineReader := func(pipelineRCh chan chan Stream) {
+		pipelineReader := func(pipelineRCh chan chan Stream[E]) {
 			for resultCh := range pipelineRCh {
 				val := <-resultCh
-				val.ForEach(func(e Entry) {
+				val.ForEach(func(e E) {
 					outstream <- e
 				})
 			}
@@ -1011,8 +1055,8 @@ func (s Stream) orderlyConcurrentDoStream(streamfn StreamFunction) chan Entry {
 
 // orderlyConcurrentDo executes a Function on the stream.
 // Execution is concurrent and order is preserved.
-func (s Stream) orderlyConcurrentDo(fn Function) chan Entry {
-	outstream := make(chan Entry, cap(s.stream))
+func (s Stream[E]) orderlyConcurrentDo(fn Function[E, E]) chan E {
+	outstream := make(chan E, cap(s.stream))
 
 	go func() {
 		defer close(outstream)
@@ -1021,15 +1065,15 @@ func (s Stream) orderlyConcurrentDo(fn Function) chan Entry {
 			return
 		}
 
-		pipelineCh := make(chan chan Entry, s.concurrencyLevel)
+		pipelineCh := make(chan chan E, s.concurrencyLevel)
 
-		pipelineWriter := func(pipelineWCh chan chan Entry) {
+		pipelineWriter := func(pipelineWCh chan chan E) {
 			defer close(pipelineWCh)
 
 			for val := range s.stream {
-				resultCh := make(chan Entry, 1)
+				resultCh := make(chan E, 1)
 				pipelineWCh <- resultCh
-				go func(resultCh chan<- Entry, val Entry) {
+				go func(resultCh chan<- E, val E) {
 					defer close(resultCh)
 					resultCh <- fn(val)
 				}(resultCh, val)
@@ -1040,7 +1084,7 @@ func (s Stream) orderlyConcurrentDo(fn Function) chan Entry {
 			pipelineWriter(pipelineCh)
 		}()
 
-		pipelineReader := func(pipelineRCh chan chan Entry) {
+		pipelineReader := func(pipelineRCh chan chan E) {
 			for resultCh := range pipelineRCh {
 				outstream <- <-resultCh
 			}
@@ -1052,7 +1096,7 @@ func (s Stream) orderlyConcurrentDo(fn Function) chan Entry {
 }
 
 // panicIfNilChannel panics if s.stream is nil.
-func (s Stream) panicIfNilChannel() {
+func (s Stream[E]) panicIfNilChannel() {
 	if s.stream == nil {
 		panic(PanicMissingChannel)
 	}
@@ -1063,7 +1107,7 @@ const PanicInvalidConcurrencyLevel = "stream concurrency must be at least 0"
 
 // panicIfInvalidConcurrency panics if the concurrency level
 // is not valid.
-func (s Stream) panicIfInvalidConcurrency() {
+func (s Stream[E]) panicIfInvalidConcurrency() {
 	if s.concurrencyLevel < 0 {
 		panic(PanicInvalidConcurrencyLevel)
 	}

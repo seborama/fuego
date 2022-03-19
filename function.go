@@ -1,7 +1,9 @@
 package fuego
 
 // Function that accepts one argument and produces a result.
-type Function func(e Entry) Entry
+// TODO: is this correct?? Should it be Function[E2,R] where is defined as Function[E1,E2 any] func(e E1) E2
+// TODO: in the same line of thoughts, all *Function's should be re-written to accommodate the specification of the result type.
+type Function[T, R any] func(T) R
 
 // StreamFunction that accepts one argument and produces a stream.
 //
@@ -12,10 +14,10 @@ type Function func(e Entry) Entry
 //
 // This effectively is a one to many operation, such as exploding
 // the individual values of an EntrySlice into a Stream.
-type StreamFunction func(e Entry) Stream
+type StreamFunction[E Entry[E]] func(e E) Stream[E]
 
 // BiFunction that accepts two arguments and produces a result.
-type BiFunction func(e1, e2 Entry) Entry
+type BiFunction[T, U, R any] func(T, U) R
 
 // A PartialFunction applies a function to a type if the value
 // is within the domain of the partial function.
@@ -24,15 +26,15 @@ type BiFunction func(e1, e2 Entry) Entry
 // type PartialFunction func(e Entry, p Predicate) Entry
 
 // ToIntFunction that accepts one argument and produces an EntryInt result.
-type ToIntFunction func(e Entry) EntryInt
+type ToIntFunction[E Entry] func(e E) EntryInt
 
 // ToFloatFunction that accepts one argument and produces an EntryFloat result.
-type ToFloatFunction func(e Entry) EntryFloat
+type ToFloatFunction[E Entry] func(e E) EntryFloat
 
 // FlattenEntrySliceToEntry is a StreamFunction that flattens
 // an EntrySlice to a Stream of its elements.
-func FlattenEntrySliceToEntry(bufsize int) StreamFunction {
-	return func(e Entry) Stream {
+func FlattenEntrySliceToEntry[E Entry](bufsize int) StreamFunction[E] {
+	return func(e E) Stream[E] {
 		return NewStreamFromSlice(e.(EntrySlice), bufsize)
 	}
 }

@@ -1,46 +1,49 @@
 package fuego
 
 // Tuple1 is a tuple with 1 element.
-type Tuple1 struct {
-	E1 Entry
+type Tuple1[E Entry[E]] struct {
+	E1 E
 }
 
 // Hash returns the hash of this tuple.
-func (t Tuple1) Hash() uint32 {
-	if t.E1 == nil {
-		return 0
-	}
-	return t.E1.Hash()
+// The result is unpredictable when the value is nil.
+func (t Tuple1[E]) Hash() uint32 {
+	var tHash1 uint32
+
+	tHash1 = t.E1.Hash()
+
+	result := uint32(1)
+	result = 31*result + tHash1
+
+	return result
 }
 
 // Equal returns true if 'o' and 't' are equal.
-func (t Tuple1) Equal(o Entry) bool {
-	if oT, ok := o.(Tuple1); ok {
-		return EntriesEqual(t.E1, oT.E1)
-	}
-	return false
+// The result is unpredictable when the value is nil.
+func (t Tuple1[E]) Equal(o Tuple1[E]) bool {
+	return t.Hash() == o.Hash() // TODO: return t.E1.Equal(o.E1) && t.E2.Equal(o.E2)
 }
 
 // Arity is the number of elements in this tuple.
-func (t Tuple1) Arity() int {
+func (t Tuple1[E]) Arity() int {
 	return 1
 }
 
 // Map applies the supplied mapper to the element of this Tuple
 // and returns a new Tuple.
-func (t Tuple1) Map(mapper Function) Tuple1 {
-	return Tuple1{
+func (t Tuple1[E]) Map(mapper Function[E, E]) Tuple1[E] {
+	return Tuple1[E]{
 		E1: mapper(t.E1),
 	}
 }
 
 // MapMulti applies the supplied mappers one for each element
 // of this Tuple and returns a new Tuple.
-func (t Tuple1) MapMulti(mapper1 Function) Tuple1 {
+func (t Tuple1[E]) MapMulti(mapper1 Function[E, E]) Tuple1[E] {
 	return t.Map(mapper1)
 }
 
 // ToSlice returns the elements of this tuple as a Go slice.
-func (t Tuple1) ToSlice() EntrySlice {
-	return EntrySlice{t.E1}
+func (t Tuple1[E]) ToSlice() EntrySlice[E] {
+	return EntrySlice[E]{t.E1}
 }

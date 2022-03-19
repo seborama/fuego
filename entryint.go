@@ -9,6 +9,6 @@ func (i EntryInt) Hash() uint32 {
 }
 
 // Equal returns true if 'e' and 'i' are equal.
-func (i EntryInt) Equal(e Entry) bool {
+func (i EntryInt) Equal(e EntryInt) bool {
 	return i == e
 }

@@ -49,16 +49,16 @@ import (
 //                  stringToUpper,
 //                  ToEntryMap())))
 //  // Result: map[1:[A] 2:[BB CC] 3:[DDD]]
-type Collector struct {
-	supplier    Supplier
-	accumulator BiFunction // TODO: this should be a BiConsumer but is it against pure functional design?
+type Collector[T, A, R any] struct {
+	supplier    Supplier[A]
+	accumulator BiFunction[A, T, R] // TODO: this should be a BiConsumer but is it against pure functional design?
 	// combiner BiFunction/BiOperator // this is for joining parallel collectors
-	finisher Function
+	finisher Function[A, R] // TODO: is this correct?? Should it be Function[A,R] where is defined as Function[T,A any] func(e T) E2
 }
 
 // NewCollector creates a new Collector.
-func NewCollector(supplier Supplier, accumulator BiFunction, finisher Function) Collector {
-	return Collector{
+func NewCollector[T, A, R any](supplier Supplier[A], accumulator BiFunction[A, T, R], finisher Function[A, R]) Collector[T, A, R] {
+	return Collector[T, A, R]{
 		supplier:    supplier,
 		accumulator: accumulator,
 		finisher:    finisher,
@@ -70,8 +70,8 @@ func NewCollector(supplier Supplier, accumulator BiFunction, finisher Function) 
 
 // GroupingBy groups the elements of the downstream Collector
 // by classifying them with the provided classifier function.
-func GroupingBy(classifier Function, downstream Collector) Collector {
-	supplier := func() Entry { return EntryMap{} }
+func GroupingBy[E Entry[E]](classifier Function[E], downstream Collector[E]) Collector[E] {
+	supplier := func() E { return EntryMap[E]{} }
 
 	accumulator := func(supplierA Entry, entry Entry) Entry {
 		k := classifier(entry)
@@ -116,14 +116,14 @@ func Mapping(mapper Function, collector Collector) Collector {
 // FlatMapping adapts the Entries a Collector accepts to another type
 // by applying a flat mapping function which maps input elements to a
 // `Stream`.
-func FlatMapping(mapper StreamFunction, collector Collector) Collector {
+func FlatMapping[E Entry](mapper StreamFunction[E], collector Collector[E]) Collector[E] {
 	supplier := collector.supplier
 
-	accumulator := func(supplierA Entry, entry Entry) Entry {
+	accumulator := func(supplierA E, entry E) E {
 		container := supplierA
 		stream := mapper(entry)
 		stream.ForEach(
-			func(e Entry) {
+			func(e E) {
 				container = collector.accumulator(container, e)
 			})
 		return container
@@ -136,10 +136,10 @@ func FlatMapping(mapper StreamFunction, collector Collector) Collector {
 
 // Filtering adapts the Entries a Collector accepts to a subset
 // that satisfies the given predicate.
-func Filtering(predicate Predicate, collector Collector) Collector {
+func Filtering[E Entry](predicate Predicate[E], collector Collector[E]) Collector[E] {
 	supplier := collector.supplier
 
-	accumulator := func(supplier Entry, entry Entry) Entry {
+	accumulator := func(supplier E, entry E) E {
 		if predicate(entry) {
 			return collector.accumulator(supplier, entry)
 		}

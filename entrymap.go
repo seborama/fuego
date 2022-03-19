@@ -9,18 +9,27 @@ const (
 	PanicDuplicateKey = "duplicate key"
 )
 
-// EntryMap is an Entry for 'map[Entry]Entry'.
-type EntryMap map[Entry]Entry
+type comparableEntry[E Entry[E]] interface {
+	Entry[E]
+}
+type ComparableEntry[E comparableEntry[E]] interface {
+	comparable
+	comparableEntry[E]
+}
+
+// EntryMap is a map of type E.
+// type EntryMap[K ComparableEntry[K], V Entry[V]] map[Entry[V]]V
+type EntryMap[K Entry[K], V Entry[V]] map[Entry[K]]V
 
 // Stream returns a stream of tuples the elements of the EntryMap.
-func (em EntryMap) Stream(bufsize int) Stream {
-	c := make(chan Entry, bufsize)
+func (em EntryMap[K, V]) Stream(bufsize int) Stream[Tuple2[K, V]] {
+	c := make(chan Tuple2[K, V], bufsize)
 
 	go func() {
 		defer close(c)
 
 		for k, v := range em {
-			c <- Tuple2{E1: k, E2: v}
+			c <- Tuple2[K, V]{E1: k.(K), E2: v}
 		}
 	}()
 
@@ -28,9 +37,9 @@ func (em EntryMap) Stream(bufsize int) Stream {
 }
 
 // Hash returns a hash for this Entry.
-func (em EntryMap) Hash() uint32 {
+func (em EntryMap[K, V]) Hash() uint32 {
 	type tuple2 struct {
-		key  Entry
+		key  K
 		hash uint32
 	}
 
@@ -41,7 +50,7 @@ func (em EntryMap) Hash() uint32 {
 	sortedKeyHashes := []tuple2{}
 	for k := range em {
 		sortedKeyHashes = append(sortedKeyHashes, tuple2{
-			key:  k,
+			key:  k.(K),
 			hash: k.Hash(),
 		})
 	}
@@ -58,16 +67,12 @@ func (em EntryMap) Hash() uint32 {
 }
 
 // Equal returns true if this type is equal to 'e'.
-func (em EntryMap) Equal(e Entry) bool {
-	if _, ok := e.(EntryMap); !ok {
-		return false
-	}
-
+func (em EntryMap[K, V]) Equal(e V) bool {
 	return em.Hash() == e.Hash()
 }
 
 // HasKey returns true if this map has the supplied key.
-func (em EntryMap) HasKey(key Entry) bool {
+func (em EntryMap[K, V]) HasKey(key K) bool {
 	for k := range em {
 		if k.Equal(key) {
 			return true
@@ -78,7 +83,7 @@ func (em EntryMap) HasKey(key Entry) bool {
 }
 
 // Len returns the number of Entries in this EntryMap.
-func (em EntryMap) Len() int {
+func (em EntryMap[K, V]) Len() int {
 	return len(em)
 }
 
@@ -87,7 +92,7 @@ func (em EntryMap) Len() int {
 // is assigned.
 // If the supplied key already exists, mergeFunction is called to determine the new value
 // that will replace the current.
-func (em EntryMap) Merge(key, value Entry, mergeFunction BiFunction) EntryMap {
+func (em EntryMap[K, V]) Merge(key K, value V, mergeFunction BiFunction[V, V, V]) EntryMap[K, V] {
 	if !em.HasKey(key) {
 		em[key] = value
 		return em

@@ -76,7 +76,7 @@ func TestCollector_GroupingBy_Mapping_FlatMapping_Filtering_Mapping_Reducing(t *
 		func(e Entry) Entry {
 			return e.(EntryString).MapToEntryBytes(0).
 				Map(func(e Entry) Entry {
-					return EntryString(byte(e.(EntryByte)))
+					return EntryString(string(e.(EntryByte)))
 				}).
 				Collect(ToEntrySlice()).(EntrySlice)
 		}
