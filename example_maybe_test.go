@@ -3,7 +3,7 @@ package fuego_test
 import (
 	"fmt"
 
-	. "github.com/seborama/fuego/v10"
+	. "github.com/seborama/fuego/v11"
 	"github.com/stretchr/testify/assert"
 )
 

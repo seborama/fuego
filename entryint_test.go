@@ -3,7 +3,7 @@ package fuego_test
 import (
 	"testing"
 
-	ƒ "github.com/seborama/fuego/v10"
+	ƒ "github.com/seborama/fuego/v11"
 	"github.com/stretchr/testify/assert"
 )
 

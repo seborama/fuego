@@ -3,7 +3,7 @@ package fuego_test
 import (
 	"fmt"
 
-	ƒ "github.com/seborama/fuego/v10" // using ƒ as a short alias of fuego
+	ƒ "github.com/seborama/fuego/v11" // using ƒ as a short alias of fuego
 )
 
 // ExamplePredicate shows how to use and combine Predicates.

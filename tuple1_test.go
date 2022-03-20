@@ -9,7 +9,7 @@ import (
 
 func TestTuple1_Hash(t *testing.T) {
 	type fields struct {
-		E1 Entry
+		E1 *EntryString
 	}
 	tests := []struct {
 		name   string
@@ -23,13 +23,13 @@ func TestTuple1_Hash(t *testing.T) {
 		},
 		{
 			name:   `Should return hash for Tuple1`,
-			fields: fields{E1: EntryString("hello")},
+			fields: fields{E1: ptr(EntryString("hello"))},
 			want:   907060870,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t1 := Tuple1{
+			t1 := Tuple1[*EntryString]{
 				E1: tt.fields.E1,
 			}
 			if got := t1.Hash(); got != tt.want {
@@ -210,4 +210,8 @@ var timesN = func(multiplier int) func(e Entry) Entry {
 	return func(e Entry) Entry {
 		return e.(EntryInt) * EntryInt(multiplier)
 	}
+}
+
+func ptr[T any](v T) *T {
+	return &v
 }

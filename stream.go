@@ -79,6 +79,15 @@ type Stream[E Entry[E]] struct {
 	stream           chan E
 	concurrencyLevel int
 }
+
+//////////////// DELETE
+//////////////// DELETE
+//////////////// DELETE
+//////////////// DELETE
+//////////////// DELETE
+//////////////// DELETE
+//////////////// DELETE
+//////////////// DELETE
 type Stream2[E Entry[E]] struct {
 	stream           chan Entry[E]
 	concurrencyLevel int
@@ -104,6 +113,15 @@ func _() {
 	}
 	y.stream <- EntryInt(9)
 }
+
+//////////////// DELETE
+//////////////// DELETE
+//////////////// DELETE
+//////////////// DELETE
+//////////////// DELETE
+//////////////// DELETE
+//////////////// DELETE
+//////////////// DELETE
 
 // NewStream creates a new Stream.
 //
@@ -389,9 +407,9 @@ func (s Stream[E]) GroupBy(classifier Function[E, E]) EntryMap[E, EntrySlice[E]]
 	if s.stream != nil {
 		for val := range s.stream {
 			k := classifier(val)
-			// if resultMap[k] == nil {
-			resultMap[k] = EntrySlice[E]{}
-			// }
+			if resultMap[k] == nil {
+				resultMap[k] = EntrySlice[E]{}
+			}
 			resultMap[k] = append(resultMap[k], val)
 			// TODO?: resultMap = resultMap.Append(Tuple2{k, val})
 		}

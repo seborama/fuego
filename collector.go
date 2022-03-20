@@ -70,29 +70,29 @@ func NewCollector[T, A, R any](supplier Supplier[A], accumulator BiFunction[A, T
 
 // GroupingBy groups the elements of the downstream Collector
 // by classifying them with the provided classifier function.
-func GroupingBy[E Entry[E]](classifier Function[E], downstream Collector[E]) Collector[E] {
-	supplier := func() E { return EntryMap[E]{} }
+func GroupingBy[E Entry[E]](classifier Function[T[E], R[E]], downstream Collector[T[E], A[E], R[E]]) Collector[T[E], A[E], R[E]] {
+	supplier := func() A[E] { return EntryMap[E, E]{} }
 
-	accumulator := func(supplierA Entry, entry Entry) Entry {
+	accumulator := func(supplierA A[E], entry T[E]) R[E] {
 		k := classifier(entry)
-		container, ok := supplierA.(EntryMap)[k]
+		container, ok := supplierA.(EntryMap[E, E])[k.(E)]
 		if !ok {
-			container = downstream.supplier()
+			container = downstream.supplier().(E)
 		}
-		container = downstream.accumulator(container, entry)
-		supplierA.(EntryMap)[k] = container
+		container = downstream.accumulator(container, entry).(E)
+		supplierA.(EntryMap[E, E])[k.(E)] = container
 		return supplierA
 	}
 
-	finisher := func(e Entry) Entry {
+	finisher := func(e A[E]) R[E] {
 		if downstream.finisher == nil ||
-			fmt.Sprintf("%p", downstream.finisher) == fmt.Sprintf("%p", IdentityFinisher) /* i.e. downstream.finisher is the IdentityFinisher */ {
+			fmt.Sprintf("DEBUG - %p", downstream.finisher) == fmt.Sprintf("DEBUG - %p", IdentityFinisher[E]) /* i.e. downstream.finisher is the IdentityFinisher */ {
 			return IdentityFinisher(e)
 		}
 
 		m := supplier()
-		for k, v := range e.(EntryMap) {
-			m.(EntryMap)[k] = downstream.finisher(v)
+		for k, v := range e.(EntryMap[E, E]) {
+			m.(EntryMap[E, E])[k] = downstream.finisher(v).(E)
 		}
 		return m
 	}
@@ -100,139 +100,139 @@ func GroupingBy[E Entry[E]](classifier Function[E], downstream Collector[E]) Col
 	return NewCollector(supplier, accumulator, finisher)
 }
 
-// Mapping adapts the Entries a Collector accepts to another type.
-func Mapping(mapper Function, collector Collector) Collector {
-	supplier := collector.supplier
+// // Mapping adapts the Entries a Collector accepts to another type.
+// func Mapping(mapper Function, collector Collector) Collector {
+// 	supplier := collector.supplier
 
-	accumulator := func(supplier Entry, entry Entry) Entry {
-		return collector.accumulator(supplier, mapper(entry))
-	}
+// 	accumulator := func(supplier Entry, entry Entry) Entry {
+// 		return collector.accumulator(supplier, mapper(entry))
+// 	}
 
-	finisher := collector.finisher
+// 	finisher := collector.finisher
 
-	return NewCollector(supplier, accumulator, finisher)
-}
+// 	return NewCollector(supplier, accumulator, finisher)
+// }
 
-// FlatMapping adapts the Entries a Collector accepts to another type
-// by applying a flat mapping function which maps input elements to a
-// `Stream`.
-func FlatMapping[E Entry](mapper StreamFunction[E], collector Collector[E]) Collector[E] {
-	supplier := collector.supplier
+// // FlatMapping adapts the Entries a Collector accepts to another type
+// // by applying a flat mapping function which maps input elements to a
+// // `Stream`.
+// func FlatMapping[E Entry](mapper StreamFunction[E], collector Collector[E]) Collector[E] {
+// 	supplier := collector.supplier
 
-	accumulator := func(supplierA E, entry E) E {
-		container := supplierA
-		stream := mapper(entry)
-		stream.ForEach(
-			func(e E) {
-				container = collector.accumulator(container, e)
-			})
-		return container
-	}
+// 	accumulator := func(supplierA E, entry E) E {
+// 		container := supplierA
+// 		stream := mapper(entry)
+// 		stream.ForEach(
+// 			func(e E) {
+// 				container = collector.accumulator(container, e)
+// 			})
+// 		return container
+// 	}
 
-	finisher := collector.finisher
+// 	finisher := collector.finisher
 
-	return NewCollector(supplier, accumulator, finisher)
-}
+// 	return NewCollector(supplier, accumulator, finisher)
+// }
 
-// Filtering adapts the Entries a Collector accepts to a subset
-// that satisfies the given predicate.
-func Filtering[E Entry](predicate Predicate[E], collector Collector[E]) Collector[E] {
-	supplier := collector.supplier
+// // Filtering adapts the Entries a Collector accepts to a subset
+// // that satisfies the given predicate.
+// func Filtering[E Entry](predicate Predicate[E], collector Collector[E]) Collector[E] {
+// 	supplier := collector.supplier
 
-	accumulator := func(supplier E, entry E) E {
-		if predicate(entry) {
-			return collector.accumulator(supplier, entry)
-		}
-		return supplier
-	}
+// 	accumulator := func(supplier E, entry E) E {
+// 		if predicate(entry) {
+// 			return collector.accumulator(supplier, entry)
+// 		}
+// 		return supplier
+// 	}
 
-	finisher := collector.finisher
+// 	finisher := collector.finisher
 
-	return NewCollector(supplier, accumulator, finisher)
-}
+// 	return NewCollector(supplier, accumulator, finisher)
+// }
 
-// Reducing returns a collector that performs a reduction of
-// its input elements using the provided BiFunction.
-func Reducing(f2 BiFunction) Collector {
-	supplier := func() Entry { // TODO: use chan Entry instead with a finisher that converts to slice?
-		return Tuple2{E1: EntryBool(false), E2: nil}
-	}
+// // Reducing returns a collector that performs a reduction of
+// // its input elements using the provided BiFunction.
+// func Reducing(f2 BiFunction) Collector {
+// 	supplier := func() Entry { // TODO: use chan Entry instead with a finisher that converts to slice?
+// 		return Tuple2{E1: EntryBool(false), E2: nil}
+// 	}
 
-	accumulator := func(supplierA Entry, entry Entry) Entry {
-		present := supplierA.(Tuple2).E1.(EntryBool)
-		result := supplierA.(Tuple2).E2
+// 	accumulator := func(supplierA Entry, entry Entry) Entry {
+// 		present := supplierA.(Tuple2).E1.(EntryBool)
+// 		result := supplierA.(Tuple2).E2
 
-		if present {
-			result = f2(result, entry)
-		} else {
-			present = true
-			result = entry
-		}
-		return Tuple2{E1: present, E2: result}
-	}
+// 		if present {
+// 			result = f2(result, entry)
+// 		} else {
+// 			present = true
+// 			result = entry
+// 		}
+// 		return Tuple2{E1: present, E2: result}
+// 	}
 
-	finisher := func(e Entry) Entry {
-		return e.(Tuple2).E2
-	}
+// 	finisher := func(e Entry) Entry {
+// 		return e.(Tuple2).E2
+// 	}
 
-	return NewCollector(supplier, accumulator, finisher)
-}
+// 	return NewCollector(supplier, accumulator, finisher)
+// }
 
-// ToEntryMap returns a collector that accumulates the input
-// entries into an EntryMap.
-func ToEntryMap(keyMapper, valueMapper Function) Collector {
-	supplier := func() Entry { // TODO: use chan Entry instead with a finisher that converts to map?
-		return EntryMap{}
-	}
+// // ToEntryMap returns a collector that accumulates the input
+// // entries into an EntryMap.
+// func ToEntryMap(keyMapper, valueMapper Function) Collector {
+// 	supplier := func() Entry { // TODO: use chan Entry instead with a finisher that converts to map?
+// 		return EntryMap{}
+// 	}
 
-	accumulator := func(supplier, entry Entry) Entry {
-		key := keyMapper(entry)
-		value := valueMapper(entry)
-		return supplier.(EntryMap).Merge(key, value, func(v1, v2 Entry) Entry { panic(fmt.Sprintf("%s: '%v'", PanicDuplicateKey, key)) })
-	}
+// 	accumulator := func(supplier, entry Entry) Entry {
+// 		key := keyMapper(entry)
+// 		value := valueMapper(entry)
+// 		return supplier.(EntryMap).Merge(key, value, func(v1, v2 Entry) Entry { panic(fmt.Sprintf("%s: '%v'", PanicDuplicateKey, key)) })
+// 	}
 
-	finisher := IdentityFinisher
+// 	finisher := IdentityFinisher
 
-	return NewCollector(supplier, accumulator, finisher)
-}
+// 	return NewCollector(supplier, accumulator, finisher)
+// }
 
-// ToEntryMapWithKeyMerge returns a collector that accumulates the input
-// entries into an EntryMap. Duplicate keys are managed by mergeFunction.
-// See EntryMap.Merge() for details about the mergeFunction.
-func ToEntryMapWithKeyMerge(keyMapper, valueMapper Function, mergeFunction BiFunction) Collector {
-	supplier := func() Entry { // TODO: use chan Entry instead with a finisher that converts to EntryMap?
-		return EntryMap{}
-	}
+// // ToEntryMapWithKeyMerge returns a collector that accumulates the input
+// // entries into an EntryMap. Duplicate keys are managed by mergeFunction.
+// // See EntryMap.Merge() for details about the mergeFunction.
+// func ToEntryMapWithKeyMerge(keyMapper, valueMapper Function, mergeFunction BiFunction) Collector {
+// 	supplier := func() Entry { // TODO: use chan Entry instead with a finisher that converts to EntryMap?
+// 		return EntryMap{}
+// 	}
 
-	accumulator := func(supplier, entry Entry) Entry {
-		key := keyMapper(entry)
-		value := valueMapper(entry)
-		return supplier.(EntryMap).Merge(key, value, mergeFunction)
-	}
+// 	accumulator := func(supplier, entry Entry) Entry {
+// 		key := keyMapper(entry)
+// 		value := valueMapper(entry)
+// 		return supplier.(EntryMap).Merge(key, value, mergeFunction)
+// 	}
 
-	finisher := IdentityFinisher
+// 	finisher := IdentityFinisher
 
-	return NewCollector(supplier, accumulator, finisher)
-}
+// 	return NewCollector(supplier, accumulator, finisher)
+// }
 
 // ToEntrySlice returns a collector that accumulates the input
 // entries into an EntrySlice.
-func ToEntrySlice() Collector {
-	supplier := func() Entry { // TODO: use chan Entry instead with a finisher that converts to EntrySlice?
-		return EntrySlice{}
+func ToEntrySlice[E Entry[E]]() Collector[T[E], A[E], R[E]] {
+	supplier := func() A[E] { // TODO: use chan Entry instead with a finisher that converts to EntrySlice?
+		return EntrySlice[E]{}
 	}
 
-	accumulator := func(supplier, entry Entry) Entry {
-		return supplier.(EntrySlice).Append(entry)
+	accumulator := func(supplierA A[E], entry T[E]) R[E] {
+		return supplierA.(EntrySlice[E]).Append(entry.(E))
 	}
 
-	finisher := IdentityFinisher
+	finisher := IdentityFinisher[E]
 
 	return NewCollector(supplier, accumulator, finisher)
 }
 
 // IdentityFinisher is a basic finisher that returns the
 // original value passed to it, unmodified.
-func IdentityFinisher(e Entry) Entry {
+func IdentityFinisher[E any](e A[E]) R[E] {
 	return e
 }

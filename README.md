@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  <a href="https://pkg.go.dev/github.com/seborama/fuego/v10">
+  <a href="https://pkg.go.dev/github.com/seborama/fuego/v11">
     <img src="https://img.shields.io/badge/godoc-reference-blue.svg" alt="fuego">
   </a>
   <a href="http://goreportcard.com/report/seborama/fuego">
@@ -66,7 +66,7 @@ Have fun!!
 
 ## [Documentation](#documentation)
 
-The code documentation and some examples can be found on [godoc](https://pkg.go.dev/github.com/seborama/fuego/v10).
+The code documentation and some examples can be found on [godoc](https://pkg.go.dev/github.com/seborama/fuego/v11).
 
 The tests form the best source of documentation. ___ƒuego___ comes with a good collection of unit tests and testable Go examples. Don't be shy, open them up and read them and tinker with them!
 
@@ -189,7 +189,7 @@ Several Entry implementations are provided:
 - EntrySlice
 - Tuples
 
-Check the [godoc](https://pkg.go.dev/github.com/seborama/fuego/v10) for additional methods each of these may provide.
+Check the [godoc](https://pkg.go.dev/github.com/seborama/fuego/v11) for additional methods each of these may provide.
 
 [(toc)](#table-of-content)
 
@@ -237,7 +237,7 @@ Collectors:
 - ToEntryMap
 - ToEntryMapWithKeyMerge
 
-Check the [godoc](https://pkg.go.dev/github.com/seborama/fuego/v10) for full details.
+Check the [godoc](https://pkg.go.dev/github.com/seborama/fuego/v11) for full details.
 
 [(toc)](#table-of-content)
 
@@ -251,7 +251,7 @@ This is not possible yet with all Stream methods but is available with e.g. `Str
 
 Concurrent streams are challenging to implement owing to ordering issues in parallel processing. At the moment, the view is that the most sensible approach is to delegate control to users. Multiple ___ƒuego___ streams can be created and data distributed across as desired. This empowers users of ___ƒuego___ to implement the desired behaviour of their pipelines.
 
-`Stream` has some methods that fan out (e.g. `ForEachC`). See the [godoc](https://pkg.go.dev/github.com/seborama/fuego/v10) for further information and limitations.
+`Stream` has some methods that fan out (e.g. `ForEachC`). See the [godoc](https://pkg.go.dev/github.com/seborama/fuego/v11) for further information and limitations.
 
 I recommend Rob Pike's slides on Go concurrency patterns:
 
