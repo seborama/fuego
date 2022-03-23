@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestC(t *testing.T) {
@@ -57,123 +58,135 @@ func TestSC(t *testing.T) {
 	}
 }
 
-// func TestStream_Map(t *testing.T) {
-// 	tt := map[string]struct {
-// 		stream Stream[int]
-// 		mapper Function[int, int]
-// 		want   []int
-// 	}{
-// 		"Should return an empty Stream": {
-
-// 			stream: Stream[int]{stream: nil},
-// 			mapper: functionTimesTwo(),
-// 			want:   []int{},
-// 		},
-// 		"Should return a Stream of doubled integers": {
-// 			stream: Stream[int]{
-// 				stream: func() chan int {
-// 					c := make(chan int, 1)
-// 					go func() {
-// 						defer close(c)
-// 						c <- 1
-// 						c <- 3
-// 						c <- 2
-// 					}()
-// 					return c
-// 				}()},
-// 			mapper: functionTimesTwo(),
-// 			want: []int{
-// 				2,
-// 				6,
-// 				4,
-// 			},
-// 		},
-// 	}
-
-// 	for name, tc := range tt {
-// 		tc := tc
-// 		t.Run(name, func(t *testing.T) {
-// 			var got []int
-// 			var resultStream Stream[int] = tc.stream.Map(tc.mapper)
-// 			if gotStream := resultStream.stream; gotStream != nil {
-// 				for val := range gotStream {
-// 					got = append(got, val)
-// 				}
-// 			}
-
-// 			if !reflect.DeepEqual(got, tc.want) {
-// 				t.Errorf("Stream.Map() = %v, want %v", got, tc.want)
-// 			}
-// 		})
-// 	}
-// }
-
-// func TestStream_Map_Concurrent(t *testing.T) {
-// 	const numEntries = 300
-// 	const concurrencyLevel = numEntries / 10
-
-// 	sourceStream := func() chan Entry {
-// 		c := make(chan Entry, 10)
-// 		go func() {
-// 			defer close(c)
-// 			for i := 0; i < numEntries; i++ {
-// 				c <- EntryInt(i)
-// 			}
-// 		}()
-// 		return c
-// 	}()
-
-// 	want := func() EntrySlice {
-// 		es := EntrySlice{}
-// 		for i := 0; i < numEntries; i++ {
-// 			es = es.Append(functionTimesTwo()(EntryInt(i)))
-// 		}
-// 		return es
-// 	}()
-
-// 	unitStream := Stream{
-// 		stream: sourceStream,
-// 	}
-
-// 	// functionSlowTimesTwo: use slow function to illustrate the performance improvement
-// 	gotStream := unitStream.Concurrent(concurrencyLevel).Map(functionSlowTimesTwo()).ToSlice()
-
-// 	if !reflect.DeepEqual(gotStream, want) {
-// 		t.Errorf("Stream.Map() = %v, want %v", gotStream, want)
-// 	}
-// }
-
-func float2int(f float32) R {
-	return int(f)
-}
-
-func int2string(i int) R {
-	return fmt.Sprintf("%d", i)
-}
-
-func string2int(s string) R {
-	i, err := strconv.Atoi(s)
-	if err != nil {
-		panic(err)
+func TestStream_Map(t *testing.T) {
+	tt := map[string]struct {
+		stream Stream[int]
+		mapper Function[int, R]
+		want   []int
+	}{
+		"Should return an empty Stream": {
+			stream: Stream[int]{stream: nil},
+			mapper: functionTimesTwo,
+			want:   nil,
+		},
+		"Should return a Stream of doubled integers": {
+			stream: Stream[int]{
+				stream: func() chan int {
+					c := make(chan int, 1)
+					go func() {
+						defer close(c)
+						c <- 1
+						c <- 3
+						c <- 2
+					}()
+					return c
+				}()},
+			mapper: functionTimesTwo,
+			want: []int{
+				2,
+				6,
+				4,
+			},
+		},
 	}
-	return i
+
+	for name, tc := range tt {
+		tc := tc
+		t.Run(name, func(t *testing.T) {
+			var got []int
+			var resultStream Stream[int] = C(tc.stream.Map(tc.mapper), Int)
+			if gotStream := resultStream.stream; gotStream != nil {
+				for val := range gotStream {
+					got = append(got, val)
+				}
+			}
+
+			if !cmp.Equal(tc.want, got) {
+				t.Error(cmp.Diff(tc.want, got))
+			}
+		})
+	}
 }
 
-func functionTimesTwo() Function[int, int] {
-	return func(i int) int {
+func TestStream_Map_Concurrent(t *testing.T) {
+	const numEntries = 300
+	const concurrencyLevel = numEntries / 10
+
+	sourceStream := func() chan int {
+		c := make(chan int, 10)
+		go func() {
+			defer close(c)
+			for i := 0; i < numEntries; i++ {
+				c <- i
+			}
+		}()
+		return c
+	}()
+
+	want := func() []int {
+		ints := []int{}
+		for i := 0; i < numEntries; i++ {
+			ints = append(ints, functionTimesTwo(i).(int))
+		}
+		return ints
+	}()
+
+	unitStream := Stream[int]{
+		stream: sourceStream,
+	}
+
+	result := []int{}
+
+	start := time.Now()
+
+	// functionSlowTimesTwo: use slow function to illustrate the performance improvement
+	C(unitStream.
+		Concurrent(concurrencyLevel).
+		Map(functionSlowTimesTwo), Int).
+		ForEach(func(i int) { result = append(result, i) })
+
+	end := time.Now()
+
+	if !cmp.Equal(want, result) {
+		t.Error(cmp.Diff(want, result))
+	}
+
+	// if concurrency is not effective, the test will take 15 seconds for concurrency of 0 or
+	// 7.5 seconds for a concurrency of 1.
+	assert.WithinDuration(t, end, start, 3*time.Second) // 3 seconds should be plenty enough...
+}
+
+var float2int = func() Function[float32, R] {
+	return func(f float32) R {
+		return int(f)
+	}
+}()
+
+var int2string = func() Function[int, R] {
+	return func(i int) R {
+		return fmt.Sprintf("%d", i)
+	}
+}()
+
+var string2int = func() Function[string, R] {
+	return func(s string) R {
+		i, err := strconv.Atoi(s)
+		if err != nil {
+			panic(err)
+		}
+		return i
+	}
+}()
+
+var functionTimesTwo = func() Function[int, R] {
+	return func(i int) R {
 		return 2 * i
 	}
-}
+}()
 
-func functionSlowTimesTwo() Function[int, int] {
-	return func(i int) int {
+var functionSlowTimesTwo = func() Function[int, R] {
+	return func(i int) R {
 		time.Sleep(50 * time.Millisecond)
 		return 2 * i
 	}
-}
-
-func entryIntEqualsTo(number int) Function[int, bool] {
-	return func(subject int) bool {
-		return number == subject
-	}
-}
+}()

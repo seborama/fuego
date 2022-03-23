@@ -1,7 +1,6 @@
 package fuego
 
 import (
-	"fmt"
 	"os"
 
 	"go.uber.org/zap"
@@ -24,9 +23,8 @@ type Logger interface {
 func init() {
 	level := os.Getenv("FUEGO_LOG_LEVEL")
 	if level == "" {
-		level = "info"
+		level = "error"
 	}
-	fmt.Println("LEVEL=", level)
 
 	initialiseZapGlobals(level)
 }

@@ -87,6 +87,41 @@ func (s Stream[T]) Concurrency() int {
 	return s.concurrency
 }
 
+// Concurrent sets the level of concurrency for this Stream.
+//
+// This is used for concurrent methods such as Stream.Map.
+//
+// Consumption is ordered by the stream's channel but output
+// may be unordered (a slow consumer will be "out-raced" by faster
+// consumers). Ordering is dependent on the implementation of
+// concurrency. For instance Stream.Map() is orderly but
+// Stream.ForEachC is not.
+//
+// Note that to switch off concurrency, you should provide n = 0.
+// With n = 1, concurrency is internal whereby the Stream writer
+// will not block on writing a single element (i.e. buffered
+// channel of 1). This already provides significant processing gains.
+//
+// Performance:
+//
+// Channels are inherently expensive to use owing to their internal
+// mutex lock.
+//
+// Benefits will ONLY be observed when the execution has a degree
+// of latency (at the very least, several dozens of nanoseconds).
+// The higher the latency, the better the gains from concurrency
+// (even on a single CPU core).
+//
+// If latency is too low or next to none, using concurrency will
+// likely be slower than without, particularly when no CPU core is
+// available.
+func (s Stream[T]) Concurrent(n int) Stream[T] {
+	// This is not accurate but improves performance (by avoiding the
+	// creation of a new channel and iterating through this one).
+	// It should be safe.
+	return NewConcurrentStream(s.stream, n)
+}
+
 // R is an alias for type `any`.
 type R any
 
