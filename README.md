@@ -38,6 +38,7 @@
 ## Table of content
 
 - [Overview](#overview)
+- [Type Parameters](#type-parameters)
 - [Documentation](#documentation)
 - [Installation](#installation)
 - [Example Stream](#example-stream)
@@ -63,6 +64,14 @@ I hope you will find it useful!
 Have fun!!
 
 [(toc)](#table-of-content)
+
+## [Type Parameters](#type-parameters)
+
+The next version of ___ƒuego___ (v11, not yet released), will use Go 1.18's [Type Parameters](https://go.googlesource.com/proposal/+/master/design/43651-type-parameters.md).
+
+It is a drastic design change and fundamentally incompatible with previous versions of ___ƒuego___!
+
+Use v10 or prior if you need the pre-Go1.18 version of ___ƒuego___ that is based on interface `Entry`.
 
 ## [Documentation](#documentation)
 
