@@ -1,4 +1,4 @@
-module github.com/seborama/fuego
+module github.com/seborama/fuego/v11
 
 go 1.18
 

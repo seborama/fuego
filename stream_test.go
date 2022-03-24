@@ -156,6 +156,33 @@ func TestStream_Map_Concurrent(t *testing.T) {
 	assert.WithinDuration(t, end, start, 3*time.Second) // 3 seconds should be plenty enough...
 }
 
+func TestStream_FlatMap(t *testing.T) {
+	a := []int{1, 2, 3}
+	b := []int{4, 5}
+	c := []int{6, 7, 8}
+
+	sliceOfSlicesOfInts := [][]int{a, b, c}
+
+	fmt.Printf("Before flattening: %+v\n", sliceOfSlicesOfInts)
+
+	result := []int{}
+
+	C(NewStreamFromSlice(sliceOfSlicesOfInts, 0).
+		FlatMap(FlattenSlice[int](0)), Int).
+		ForEach(func(i int) { result = append(result, i) })
+
+	// Before flattening: [[1 2 3] [4 5] [6 7 8]]
+	// After flattening: [1 2 3 4 5 6 7 8]
+	expected := []int{1, 2, 3, 4, 5, 6, 7, 8}
+	if !cmp.Equal(expected, result) {
+		t.Error(cmp.Diff(expected, result))
+	}
+}
+
+func TestStream_FlatMap_Concurrent(t *testing.T) {
+	t.Skip("TODO")
+}
+
 var float2int = func() Function[float32, R] {
 	return func(f float32) R {
 		return int(f)

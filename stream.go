@@ -177,6 +177,62 @@ func (s Stream[T]) orderlyConcurrentDo(fn Function[T, R]) chan R {
 	return outstream
 }
 
+// FlatMap takes a StreamFunction to flatten the entries
+// in this stream and produce a new stream.
+//
+// This function streams continuously until the in-stream is closed at
+// which point the out-stream will be closed too.
+//
+// See: example_stream_test.go.
+func (s Stream[T]) FlatMap(mapper StreamFunction[T, R]) Stream[R] {
+	return NewConcurrentStream(s.orderlyConcurrentDoStream(mapper), s.concurrency)
+}
+
+// orderlyConcurrentDoStream executes a StreamFunction on the stream.
+// Execution is concurrent and order is preserved.
+func (s Stream[T]) orderlyConcurrentDoStream(streamfn StreamFunction[T, R]) chan R {
+	outstream := make(chan R, cap(s.stream))
+
+	go func() {
+		defer close(outstream)
+
+		if s.stream == nil {
+			return
+		}
+
+		pipelineCh := make(chan chan Stream[R], s.concurrency)
+
+		pipelineWriter := func(pipelineWCh chan chan Stream[R]) {
+			defer close(pipelineWCh)
+
+			for val := range s.stream {
+				resultCh := make(chan Stream[R], 1)
+				pipelineWCh <- resultCh
+				go func(resultCh chan<- Stream[R], val T) {
+					defer close(resultCh)
+					resultCh <- streamfn(val)
+				}(resultCh, val)
+			}
+		}
+
+		go func() {
+			pipelineWriter(pipelineCh)
+		}()
+
+		pipelineReader := func(pipelineRCh chan chan Stream[R]) {
+			for resultCh := range pipelineRCh {
+				val := <-resultCh
+				val.ForEach(func(e R) {
+					outstream <- e
+				})
+			}
+		}
+		pipelineReader(pipelineCh)
+	}()
+
+	return outstream
+}
+
 // ForEach executes the given consumer function for each entry in this stream.
 //
 // This is a continuous terminal operation. It will only complete if the producer closes the stream.
@@ -202,4 +258,21 @@ func (s Stream[T]) ForEach(c Consumer[T]) {
 		zap.L().Debug("calling consumer", zap.Any("value", val))
 		c(val)
 	}
+}
+
+// StreamR returns this stream as a Stream[R]
+func (s Stream[T]) StreamR() Stream[R] {
+	rCh := make(chan R, cap(s.stream))
+
+	r := NewConcurrentStream(rCh, s.concurrency)
+
+	go func() {
+		defer close(rCh)
+
+		s.ForEach(func(el T) {
+			r.stream <- el
+		})
+	}()
+
+	return r
 }
