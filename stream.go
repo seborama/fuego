@@ -28,24 +28,6 @@ import (
 // Should the producer not close the channel unintentionally, the Go function will stray.
 //
 // Streams created from a slice are bounded since the slice has finite content.
-//
-// Example:
-//
-//  ƒ.NewStreamFromSlice([]ƒ.Entry{
-//      ƒ.EntryInt(1),
-//      ƒ.EntryInt(2),
-//      ƒ.EntryInt(3),
-//  }, 1e3)
-//  // or if you already have a channel of Entry:
-//  c := make(chan ƒ.Entry) // you could add a buffer size as a second arg, if desired
-//  go func() {
-//      defer close(c)
-//      c <- ƒ.EntryString("one")
-//      c <- ƒ.EntryString("two")
-//      c <- ƒ.EntryString("three")
-//      // c <- ...
-//  }()
-//  NewStream(c)
 type Stream[T any] struct {
 	stream      chan T
 	concurrency int
@@ -238,29 +220,16 @@ func (s Stream[T]) orderlyConcurrentDoStream(streamfn StreamFunction[T, R]) chan
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
-//
-// Example:
-//
-//  s := ƒ.NewStreamFromSlice([]ƒ.Entry{
-//      ƒ.EntryInt(1),
-//      ƒ.EntryInt(2),
-//      ƒ.EntryInt(3),
-//  }, 0)
-//
-//  s.Filter(
-//          FunctionPredicate(entryIntEqualsTo(ƒ.EntryInt(1))).
-//              Or(
-//                  FunctionPredicate(entryIntEqualsTo(ƒ.EntryInt(3)))),
-//  )
-//  // Result: []ƒ.EntryInt{1,3}
 func (s Stream[T]) Filter(predicate Predicate[T]) Stream[T] {
 	outstream := make(chan T, cap(s.stream))
 
 	go func() {
 		defer close(outstream)
+
 		if s.stream == nil {
 			return
 		}
+
 		for val := range s.stream {
 			if predicate(val) {
 				outstream <- val
@@ -274,18 +243,6 @@ func (s Stream[T]) Filter(predicate Predicate[T]) Stream[T] {
 // ForEach executes the given consumer function for each entry in this stream.
 //
 // This is a continuous terminal operation. It will only complete if the producer closes the stream.
-//
-// Example:
-// total := 0
-//
-// computeSumTotal := func(value int) {
-// 	total += value
-// }
-//
-// NewStreamFromSlice([]int{1, 3, 2}, 0).
-// 	ForEach(computeSumTotal)
-//
-// fmt.Println("total =", total) // total == 6
 func (s Stream[T]) ForEach(c Consumer[T]) {
 	if s.stream == nil {
 		zap.L().Debug("empty stream")
