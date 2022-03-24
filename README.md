@@ -300,15 +300,34 @@ ___ƒuego___ includes a casting function that reduces the visually leftward-grow
 while preserving a natural functional flow expression:
 
 ```go
-C(C(C(is.
+C(C(C(s.
   Map(float2int_), Int).
   Map(int2string_), String).
   Map(string2int_), Int).
   ForEach(print[int])
-// This is actually performing: iis.Map(float2int).Map(int2string).Map(string2int).ForEach(print)
+// This is actually performing: s.Map(float2int).Map(int2string).Map(string2int).ForEach(print)
 ```
 
 While not perfect, this is the best compromise I have obtained thus far.
+
+To aid with a better experience, `Stream` exposes specialist mappers for Go native types (full list in [mapto.go](mapto.go)):
+
+- MapToBool
+- MapToInt*
+- MapToUint*
+- MapToString
+- MapToS* (for slice of types)
+- ...
+
+The above example with the `C` cast function can be simplified to:
+
+```go
+Stream[float32]{}.
+  MapToInt(float2int).
+  MapToString(int2string).
+  MapToInt(string2int).
+  ForEach(print[int]) // Stream[int] also has .Max(), .Min(), etc
+```
 
 [(toc)](#table-of-content)
 
