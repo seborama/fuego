@@ -183,6 +183,51 @@ func TestStream_FlatMap_Concurrent(t *testing.T) {
 	t.Skip("TODO")
 }
 
+func TestStream_Filter(t *testing.T) {
+	tests := map[string]struct {
+		stream    chan int
+		predicate Predicate[int]
+		want      []int
+	}{
+		"Should return nil for an empty Stream": {
+			stream:    nil,
+			predicate: intGreaterThanPredicate(5),
+			want:      nil,
+		},
+		"Should give produce filtered values as per predicate": {
+			stream: func() chan int {
+				c := make(chan int, 1)
+				go func() {
+					defer close(c)
+					c <- 17
+					c <- 8
+					c <- 2
+				}()
+				return c
+			}(),
+			predicate: intGreaterThanPredicate(5),
+			want:      []int{17, 8},
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			s := Stream[int]{
+				stream: tt.stream,
+			}
+
+			var got []int
+			if gotStream := s.Filter(tt.predicate).stream; gotStream != nil {
+				for val := range gotStream {
+					got = append(got, val)
+				}
+			}
+
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
 var float2int = func() Function[float32, R] {
 	return func(f float32) R {
 		return int(f)

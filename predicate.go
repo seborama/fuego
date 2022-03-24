@@ -8,7 +8,7 @@ type Predicate[T any] func(t T) bool // TODO return EntryBool instead of bool??
 func (p Predicate[T]) And(other Predicate[T]) Predicate[T] {
 	return func(t T) bool {
 		if p == nil || other == nil {
-			return false
+			return False[T]()(t)
 		}
 		return p(t) && other(t)
 	}
@@ -19,7 +19,7 @@ func (p Predicate[T]) And(other Predicate[T]) Predicate[T] {
 func (p Predicate[T]) Or(other Predicate[T]) Predicate[T] {
 	return func(t T) bool {
 		if p == nil {
-			p = False[T]
+			p = False[T]()
 		}
 		if other == nil {
 			return p(t)
@@ -48,20 +48,12 @@ func (p Predicate[T]) Not() Predicate[T] {
 	}
 }
 
-// FunctionPredicate creates a Predicate from a Function.
-func FunctionPredicate[T any](f Function[T, bool]) Predicate[T] {
-	return func(t T) bool {
-		return f(t)
-	}
+// False returns a predicate that returns always false.
+func False[T any]() Predicate[T] {
+	return func(T) bool { return false }
 }
 
-// False is a predicate that returns always false.
-func False[T any](t T) bool {
-	return false
-}
-
-// True is a predicate that returns always true.
-func True[T any](t T) bool {
-	// return Predicate[T](False[T]).Negate()(t)
-	return true
+// True returns a predicate that returns always true.
+func True[T any]() Predicate[T] {
+	return False[T]().Negate()
 }

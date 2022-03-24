@@ -233,6 +233,44 @@ func (s Stream[T]) orderlyConcurrentDoStream(streamfn StreamFunction[T, R]) chan
 	return outstream
 }
 
+// Filter returns a stream consisting of the elements of this stream that
+// match the given predicate.
+//
+// This function streams continuously until the in-stream is closed at
+// which point the out-stream will be closed too.
+//
+// Example:
+//
+//  s := ƒ.NewStreamFromSlice([]ƒ.Entry{
+//      ƒ.EntryInt(1),
+//      ƒ.EntryInt(2),
+//      ƒ.EntryInt(3),
+//  }, 0)
+//
+//  s.Filter(
+//          FunctionPredicate(entryIntEqualsTo(ƒ.EntryInt(1))).
+//              Or(
+//                  FunctionPredicate(entryIntEqualsTo(ƒ.EntryInt(3)))),
+//  )
+//  // Result: []ƒ.EntryInt{1,3}
+func (s Stream[T]) Filter(predicate Predicate[T]) Stream[T] {
+	outstream := make(chan T, cap(s.stream))
+
+	go func() {
+		defer close(outstream)
+		if s.stream == nil {
+			return
+		}
+		for val := range s.stream {
+			if predicate(val) {
+				outstream <- val
+			}
+		}
+	}()
+
+	return NewConcurrentStream(outstream, s.concurrency)
+}
+
 // ForEach executes the given consumer function for each entry in this stream.
 //
 // This is a continuous terminal operation. It will only complete if the producer closes the stream.
@@ -260,7 +298,7 @@ func (s Stream[T]) ForEach(c Consumer[T]) {
 	}
 }
 
-// StreamR returns this stream as a Stream[R]
+// StreamR returns this stream as a Stream[R].
 func (s Stream[T]) StreamR() Stream[R] {
 	rCh := make(chan R, cap(s.stream))
 
