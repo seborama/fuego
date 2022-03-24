@@ -228,6 +228,56 @@ func TestStream_Filter(t *testing.T) {
 	}
 }
 
+func TestStream_LeftReduce(t *testing.T) {
+	tt := map[string]struct {
+		stream chan string
+		want   string
+	}{
+		"Should return nil for a Stream of nil": {
+			stream: nil,
+			want:   "",
+		},
+		"Should return reduction of set of single element": {
+			stream: func() chan string {
+				c := make(chan string)
+				go func() {
+					defer close(c)
+					c <- "three"
+				}()
+				return c
+			}(),
+			want: "three",
+		},
+		"Should return reduction of set of multiple elements": {
+			stream: func() chan string {
+				c := make(chan string)
+				go func() {
+					defer close(c)
+					c <- "four-"
+					c <- "twelve-"
+					c <- "one-"
+					c <- "six-"
+					c <- "three"
+				}()
+				return c
+			}(),
+			want: "four-twelve-one-six-three",
+		},
+	}
+
+	for name, tc := range tt {
+		tc := tc
+
+		t.Run(name, func(t *testing.T) {
+			s := Stream[string]{
+				stream: tc.stream,
+			}
+			got := s.Reduce(Sum[string])
+			assert.Exactly(t, tc.want, got)
+		})
+	}
+}
+
 func TestStream_ForEach(t *testing.T) {
 	computeSumTotal := func(callCount, total *int) Consumer[int] {
 		return func(value int) {

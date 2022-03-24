@@ -242,6 +242,31 @@ func (s Stream[T]) Filter(predicate Predicate[T]) Stream[T] {
 	return NewConcurrentStream(outstream, s.concurrency)
 }
 
+// LeftReduce accumulates the elements of this Stream by applying the given function.
+//
+// This is a continuous terminal operation. It will only complete if the producer closes the stream.
+func (s Stream[T]) LeftReduce(f2 BiFunction[T, T, T]) T {
+	if s.stream == nil {
+		var t T
+		return t // TODO: return Maybe
+	}
+
+	res := <-s.stream
+
+	for val := range s.stream {
+		res = f2(res, val)
+	}
+
+	return res
+}
+
+// Reduce is an alias for LeftReduce.
+//
+// See LeftReduce for more info.
+func (s Stream[T]) Reduce(f2 BiFunction[T, T, T]) T {
+	return s.LeftReduce(f2)
+}
+
 // ForEach executes the given consumer function for each entry in this stream.
 //
 // This is a continuous terminal operation. It will only complete if the producer closes the stream.

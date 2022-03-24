@@ -80,4 +80,43 @@ var (
 	SStringPtr     = []*string{}
 )
 
+// Comparable is a constraint that matches any type that supports the operators:
+// >= <= > < == !=
+type Comparable interface {
+	~int | ~int8 | ~int16 | ~int32 | ~int64 |
+		~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 |
+		~float32 | ~float64 |
+		string
+}
+
+// Addable is a constraint that matches any type that supports the operator '+'.
+type Addable interface {
+	~int | ~int8 | ~int16 | ~int32 | ~int64 |
+		~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 |
+		~float32 | ~float64 |
+		~complex64 | ~complex128 |
+		string
+}
+
+// Max is a BiFunction that returns the greatest of 2 values.
+func Max[T Comparable](n1, n2 T) T {
+	if n1 > n2 {
+		return n1
+	}
+	return n2
+}
+
+// Min is a BiFunction that returns the smallest of 2 values.
+func Min[T Comparable](n1, n2 T) T {
+	if n1 < n2 {
+		return n1
+	}
+	return n2
+}
+
+// Sum is a BiFunction that returns the sum of 2 values.
+func Sum[T Addable](n1, n2 T) T {
+	return n1 + n2
+}
+
 func ptr[T any](t T) *T { return &t }
