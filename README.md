@@ -74,6 +74,8 @@ It is a drastic design change and fundamentally incompatible with previous versi
 
 Use v10 or prior if you need the pre-Go1.18 version of ___ƒuego___ that is based on interface `Entry`.
 
+[(toc)](#table-of-content)
+
 ## [Documentation](#documentation)
 
 The code documentation and some examples can be found on [godoc](https://pkg.go.dev/github.com/seborama/fuego/v11).
@@ -127,6 +129,8 @@ Note: dot imports should work just fine but the logger may be disabled, unless y
 ## [Debugging](#debugging)
 
 Set environment variable `FUEGO_LOG_LEVEL` to enable logging to the desired level.
+
+[(toc)](#table-of-content)
 
 ## [Example Stream](#example-stream)
 
@@ -209,22 +213,13 @@ Functional Types:
 - Predicate:
   - True
   - False
-  - FunctionPredicate
 
 Functions:
 
 - Consumer / BiConsumer
-- Function:
-  - ToIntFunction
-  - ToFloatFunction
-- BiFunction
-- StreamFunction:
-  - FlattenEntrySliceToEntry
-- Predicate:
-  - Or
-  - Xor
-  - And
-  - Not / Negate
+- Function / BiFunction
+- StreamFunction
+- Predicate
 
 Collectors:
 
