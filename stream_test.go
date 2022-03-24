@@ -228,6 +228,64 @@ func TestStream_Filter(t *testing.T) {
 	}
 }
 
+func TestStream_ForEach(t *testing.T) {
+	computeSumTotal := func(callCount, total *int) Consumer[int] {
+		return func(value int) {
+			*callCount++
+			*total += value
+		}
+	}
+
+	type want struct {
+		total, count int
+	}
+	tt := map[string]struct {
+		stream   chan int
+		consumer func(callCount, total *int) Consumer[int]
+		want     want
+	}{
+		"Should not call consumer for a Stream of nil": {
+			stream:   nil,
+			consumer: computeSumTotal,
+			want: want{
+				count: 0,
+				total: 0,
+			},
+		},
+		"Should give produce filtered values as per predicate": {
+			stream: func() chan int {
+				c := make(chan int)
+				go func() {
+					defer close(c)
+					c <- 4
+					c <- 1
+					c <- 3
+				}()
+				return c
+			}(),
+			consumer: computeSumTotal,
+			want: want{
+				count: 3,
+				total: 8,
+			},
+		},
+	}
+
+	for name, tc := range tt {
+		tc := tc
+		t.Run(name, func(t *testing.T) {
+			callCount, total := 0, 0
+			s := Stream[int]{
+				stream: tc.stream,
+			}
+
+			s.ForEach(tc.consumer(&callCount, &total))
+			assert.Equal(t, tc.want.count, callCount)
+			assert.Equal(t, tc.want.total, total)
+		})
+	}
+}
+
 var float2int = func() Function[float32, R] {
 	return func(f float32) R {
 		return int(f)
