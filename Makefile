@@ -11,6 +11,11 @@ deps:
 test: deps
 	go test -timeout 5s -cover $(GORACE) -parallel 100
 
+.PHONY: generate
+generate: deps
+	go build -o bin/maptoXXX ./mapto/maptoXXX.go
+	go generate
+
 # .PHONY: lint
 # lint: deps
 # 	@echo "=~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~="

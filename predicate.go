@@ -1,7 +1,8 @@
 package fuego
 
 // Predicate represents a predicate (boolean-valued function) of one argument.
-type Predicate[T any] func(t T) bool // TODO return EntryBool instead of bool??
+// Could also be: `type Predicate[T any] Function[T, bool]`
+type Predicate[T any] func(t T) bool
 
 // And is a composed predicate that represents a short-circuiting logical
 // AND of this predicate and another.

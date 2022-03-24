@@ -1,0 +1,26 @@
+// MapTo{{ .Name }} produces an Stream[{{ .GoType }}].
+// It is provided as a convenience since Go 1.18 does not support parameterised methods.
+//
+// This is method equivalent of the cast functions C/SC:
+// C(s.StreamR, {{ .Name }}) or SC(s.StreamR, Stream[{{ .GoType }}])
+//
+// This function streams continuously until the in-stream is closed at
+// which point the out-stream will be closed too.
+func (s Stream[T]) MapTo{{ .Name }}(to{{ .Name }} Function[T, {{ .GoType }}]) Stream[{{ .GoType }}] {
+	outstream := make(chan {{ .GoType }}, cap(s.stream))
+
+	go func() {
+		defer close(outstream)
+
+		if s.stream == nil {
+			return
+		}
+		
+		for val := range s.stream {
+			outstream <- to{{ .Name }}(val)
+		}
+	}()
+
+	return NewConcurrentStream(outstream, s.concurrency)
+}
+{{ "\n" }}

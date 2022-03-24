@@ -1,5 +1,7 @@
 package fuego
 
+//go:generate ./bin/maptoXXX
+
 import (
 	"go.uber.org/zap"
 )
