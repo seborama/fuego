@@ -37,7 +37,7 @@ func TestNotPredicate(t *testing.T) {
 			},
 			want: true,
 		},
-		"Should return true when nil predicate": /* TODO: is that correct?*/ {
+		"Should return true when nil predicate": /* TODO: is that correct? */ {
 			args: args{
 				p: nil,
 				t: 2,

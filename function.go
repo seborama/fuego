@@ -19,3 +19,10 @@ func FlattenSlice[T any](bufsize int) StreamFunction[[]T, R] {
 		return NewStreamFromSlice(el, bufsize).StreamR()
 	}
 }
+
+// FlattenTypedSlice is a StreamFunction that flattens a []T slice to a Stream[T] of its elements.
+func FlattenTypedSlice[T any](bufsize int) StreamFunction[[]T, T] {
+	return func(el []T) Stream[T] {
+		return NewStreamFromSlice(el, bufsize)
+	}
+}

@@ -166,8 +166,6 @@ func orderlyConcurrentDo[T any, U any](s Stream[T], fn Function[T, U]) chan U {
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
-//
-// See: example_stream_test.go.
 func (s Stream[T]) FlatMap(mapper StreamFunction[T, R]) Stream[R] {
 	return NewConcurrentStream(orderlyConcurrentDoStream(s, mapper), s.concurrency)
 }

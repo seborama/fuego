@@ -163,8 +163,6 @@ func TestStream_FlatMap(t *testing.T) {
 
 	sliceOfSlicesOfInts := [][]int{a, b, c}
 
-	fmt.Printf("Before flattening: %+v\n", sliceOfSlicesOfInts)
-
 	result := []int{}
 
 	C(NewStreamFromSlice(sliceOfSlicesOfInts, 0).
@@ -180,7 +178,62 @@ func TestStream_FlatMap(t *testing.T) {
 }
 
 func TestStream_FlatMap_Concurrent(t *testing.T) {
-	t.Skip("TODO")
+	const numEntries = 300
+	const concurrencyLevel = numEntries / 10
+
+	sourceStream := func() chan []int {
+		c := make(chan []int, 10)
+		go func() {
+			defer close(c)
+			for i := 0; i < numEntries; i++ {
+				p1 := []int{1, 2, 3}
+				p2 := []int{4, 5}
+				p3 := []int{6, 7, 8}
+
+				c <- p1
+				c <- p2
+				c <- p3
+			}
+		}()
+		return c
+	}()
+
+	want := func() []int {
+		ints := []int{}
+		for i := 0; i < numEntries; i++ {
+			ints = append(ints, 1, 2, 3, 4, 5, 6, 7, 8)
+		}
+		return ints
+	}()
+
+	unitStream := Stream[[]int]{
+		stream: sourceStream,
+	}
+
+	result := []int{}
+
+	start := time.Now()
+
+	slowFlattening := func() StreamFunction[[]int, int] {
+		// slow down the execution to illustrate the performance improvement of the concurrent stream
+		time.Sleep(50 * time.Millisecond)
+		return FlattenTypedSlice[int](0)
+	}()
+
+	unitStream.
+		Concurrent(concurrencyLevel).
+		FlatMapToInt(slowFlattening).
+		ForEach(func(i int) { result = append(result, i) })
+
+	end := time.Now()
+
+	if !cmp.Equal(want, result) {
+		t.Error(cmp.Diff(want, result))
+	}
+
+	// if concurrency is not effective, the test will take 15 seconds for concurrency of 0 or
+	// 7.5 seconds for a concurrency of 1.
+	assert.WithinDuration(t, end, start, 3*time.Second) // 3 seconds should be plenty enough...
 }
 
 func TestStream_Filter(t *testing.T) {
@@ -366,6 +419,13 @@ var functionTimesTwo = func() Function[int, R] {
 
 var functionSlowTimesTwo = func() Function[int, R] {
 	return func(i int) R {
+		time.Sleep(50 * time.Millisecond)
+		return 2 * i
+	}
+}()
+
+var intFunctionSlowTimesTwo = func() Function[int, int] {
+	return func(i int) int {
 		time.Sleep(50 * time.Millisecond)
 		return 2 * i
 	}
