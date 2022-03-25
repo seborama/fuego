@@ -26,3 +26,29 @@ func FlattenTypedSlice[T any](bufsize int) StreamFunction[[]T, T] {
 		return NewStreamFromSlice(el, bufsize)
 	}
 }
+
+// Max is a BiFunction that returns the greatest of 2 values.
+func Max[T Comparable](a, b T) T {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+// Min is a BiFunction that returns the smallest of 2 values.
+func Min[T Comparable](a, b T) T {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+// Sum is a BiFunction that returns the sum of 2 values.
+func Sum[T Addable](a, b T) T {
+	return a + b
+}
+
+// Identity is a basic Function that returns the original value passed to it, unmodified.
+func Identity[T any](v T) T {
+	return v
+}

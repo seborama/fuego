@@ -3,15 +3,16 @@
 package fuego
 
 // MapToBool produces a new Stream[bool] applying the
-//provided Function[T, bool] to the elements of the stream.
+// provided Function[T, bool] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToBool(mapper Function[T, bool]) Stream[bool] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToBool(mapper Function[T, bool])Stream[bool] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return st
 }
 
 // FlatMapToBool produces a new Stream[bool] applying the
@@ -27,15 +28,16 @@ func (s Stream[T]) FlatMapToBool(mapper StreamFunction[T, bool]) Stream[bool] {
 }
 
 // MapToSBool produces a new Stream[[]bool] applying the
-//provided Function[T, []bool] to the elements of the stream.
+// provided Function[T, []bool] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToSBool(mapper Function[T, []bool]) Stream[[]bool] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToSBool(mapper Function[T, []bool])Stream[[]bool] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return st
 }
 
 // FlatMapToSBool produces a new Stream[[]bool] applying the
@@ -51,15 +53,16 @@ func (s Stream[T]) FlatMapToSBool(mapper StreamFunction[T, []bool]) Stream[[]boo
 }
 
 // MapToBoolPtr produces a new Stream[*bool] applying the
-//provided Function[T, *bool] to the elements of the stream.
+// provided Function[T, *bool] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToBoolPtr(mapper Function[T, *bool]) Stream[*bool] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToBoolPtr(mapper Function[T, *bool])Stream[*bool] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return st
 }
 
 // FlatMapToBoolPtr produces a new Stream[*bool] applying the
@@ -75,15 +78,16 @@ func (s Stream[T]) FlatMapToBoolPtr(mapper StreamFunction[T, *bool]) Stream[*boo
 }
 
 // MapToSBoolPtr produces a new Stream[[]*bool] applying the
-//provided Function[T, []*bool] to the elements of the stream.
+// provided Function[T, []*bool] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToSBoolPtr(mapper Function[T, []*bool]) Stream[[]*bool] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToSBoolPtr(mapper Function[T, []*bool])Stream[[]*bool] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return st
 }
 
 // FlatMapToSBoolPtr produces a new Stream[[]*bool] applying the
@@ -99,15 +103,16 @@ func (s Stream[T]) FlatMapToSBoolPtr(mapper StreamFunction[T, []*bool]) Stream[[
 }
 
 // MapToInt produces a new Stream[int] applying the
-//provided Function[T, int] to the elements of the stream.
+// provided Function[T, int] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToInt(mapper Function[T, int]) Stream[int] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToInt(mapper Function[T, int])ComparableStream[int] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return ComparableStream[int]{st}
 }
 
 // FlatMapToInt produces a new Stream[int] applying the
@@ -123,15 +128,16 @@ func (s Stream[T]) FlatMapToInt(mapper StreamFunction[T, int]) Stream[int] {
 }
 
 // MapToSInt produces a new Stream[[]int] applying the
-//provided Function[T, []int] to the elements of the stream.
+// provided Function[T, []int] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToSInt(mapper Function[T, []int]) Stream[[]int] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToSInt(mapper Function[T, []int])Stream[[]int] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return st
 }
 
 // FlatMapToSInt produces a new Stream[[]int] applying the
@@ -147,15 +153,16 @@ func (s Stream[T]) FlatMapToSInt(mapper StreamFunction[T, []int]) Stream[[]int] 
 }
 
 // MapToIntPtr produces a new Stream[*int] applying the
-//provided Function[T, *int] to the elements of the stream.
+// provided Function[T, *int] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToIntPtr(mapper Function[T, *int]) Stream[*int] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToIntPtr(mapper Function[T, *int])Stream[*int] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return st
 }
 
 // FlatMapToIntPtr produces a new Stream[*int] applying the
@@ -171,15 +178,16 @@ func (s Stream[T]) FlatMapToIntPtr(mapper StreamFunction[T, *int]) Stream[*int] 
 }
 
 // MapToSIntPtr produces a new Stream[[]*int] applying the
-//provided Function[T, []*int] to the elements of the stream.
+// provided Function[T, []*int] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToSIntPtr(mapper Function[T, []*int]) Stream[[]*int] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToSIntPtr(mapper Function[T, []*int])Stream[[]*int] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return st
 }
 
 // FlatMapToSIntPtr produces a new Stream[[]*int] applying the
@@ -195,15 +203,16 @@ func (s Stream[T]) FlatMapToSIntPtr(mapper StreamFunction[T, []*int]) Stream[[]*
 }
 
 // MapToInt8 produces a new Stream[int8] applying the
-//provided Function[T, int8] to the elements of the stream.
+// provided Function[T, int8] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToInt8(mapper Function[T, int8]) Stream[int8] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToInt8(mapper Function[T, int8])ComparableStream[int8] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return ComparableStream[int8]{st}
 }
 
 // FlatMapToInt8 produces a new Stream[int8] applying the
@@ -219,15 +228,16 @@ func (s Stream[T]) FlatMapToInt8(mapper StreamFunction[T, int8]) Stream[int8] {
 }
 
 // MapToSInt8 produces a new Stream[[]int8] applying the
-//provided Function[T, []int8] to the elements of the stream.
+// provided Function[T, []int8] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToSInt8(mapper Function[T, []int8]) Stream[[]int8] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToSInt8(mapper Function[T, []int8])Stream[[]int8] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return st
 }
 
 // FlatMapToSInt8 produces a new Stream[[]int8] applying the
@@ -243,15 +253,16 @@ func (s Stream[T]) FlatMapToSInt8(mapper StreamFunction[T, []int8]) Stream[[]int
 }
 
 // MapToInt8Ptr produces a new Stream[*int8] applying the
-//provided Function[T, *int8] to the elements of the stream.
+// provided Function[T, *int8] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToInt8Ptr(mapper Function[T, *int8]) Stream[*int8] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToInt8Ptr(mapper Function[T, *int8])Stream[*int8] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return st
 }
 
 // FlatMapToInt8Ptr produces a new Stream[*int8] applying the
@@ -267,15 +278,16 @@ func (s Stream[T]) FlatMapToInt8Ptr(mapper StreamFunction[T, *int8]) Stream[*int
 }
 
 // MapToSInt8Ptr produces a new Stream[[]*int8] applying the
-//provided Function[T, []*int8] to the elements of the stream.
+// provided Function[T, []*int8] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToSInt8Ptr(mapper Function[T, []*int8]) Stream[[]*int8] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToSInt8Ptr(mapper Function[T, []*int8])Stream[[]*int8] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return st
 }
 
 // FlatMapToSInt8Ptr produces a new Stream[[]*int8] applying the
@@ -291,15 +303,16 @@ func (s Stream[T]) FlatMapToSInt8Ptr(mapper StreamFunction[T, []*int8]) Stream[[
 }
 
 // MapToInt16 produces a new Stream[int16] applying the
-//provided Function[T, int16] to the elements of the stream.
+// provided Function[T, int16] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToInt16(mapper Function[T, int16]) Stream[int16] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToInt16(mapper Function[T, int16])ComparableStream[int16] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return ComparableStream[int16]{st}
 }
 
 // FlatMapToInt16 produces a new Stream[int16] applying the
@@ -315,15 +328,16 @@ func (s Stream[T]) FlatMapToInt16(mapper StreamFunction[T, int16]) Stream[int16]
 }
 
 // MapToSInt16 produces a new Stream[[]int16] applying the
-//provided Function[T, []int16] to the elements of the stream.
+// provided Function[T, []int16] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToSInt16(mapper Function[T, []int16]) Stream[[]int16] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToSInt16(mapper Function[T, []int16])Stream[[]int16] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return st
 }
 
 // FlatMapToSInt16 produces a new Stream[[]int16] applying the
@@ -339,15 +353,16 @@ func (s Stream[T]) FlatMapToSInt16(mapper StreamFunction[T, []int16]) Stream[[]i
 }
 
 // MapToInt16Ptr produces a new Stream[*int16] applying the
-//provided Function[T, *int16] to the elements of the stream.
+// provided Function[T, *int16] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToInt16Ptr(mapper Function[T, *int16]) Stream[*int16] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToInt16Ptr(mapper Function[T, *int16])Stream[*int16] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return st
 }
 
 // FlatMapToInt16Ptr produces a new Stream[*int16] applying the
@@ -363,15 +378,16 @@ func (s Stream[T]) FlatMapToInt16Ptr(mapper StreamFunction[T, *int16]) Stream[*i
 }
 
 // MapToSInt16Ptr produces a new Stream[[]*int16] applying the
-//provided Function[T, []*int16] to the elements of the stream.
+// provided Function[T, []*int16] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToSInt16Ptr(mapper Function[T, []*int16]) Stream[[]*int16] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToSInt16Ptr(mapper Function[T, []*int16])Stream[[]*int16] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return st
 }
 
 // FlatMapToSInt16Ptr produces a new Stream[[]*int16] applying the
@@ -387,15 +403,16 @@ func (s Stream[T]) FlatMapToSInt16Ptr(mapper StreamFunction[T, []*int16]) Stream
 }
 
 // MapToInt32 produces a new Stream[int32] applying the
-//provided Function[T, int32] to the elements of the stream.
+// provided Function[T, int32] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToInt32(mapper Function[T, int32]) Stream[int32] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToInt32(mapper Function[T, int32])Stream[int32] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return st
 }
 
 // FlatMapToInt32 produces a new Stream[int32] applying the
@@ -411,15 +428,16 @@ func (s Stream[T]) FlatMapToInt32(mapper StreamFunction[T, int32]) Stream[int32]
 }
 
 // MapToSInt32 produces a new Stream[[]int32] applying the
-//provided Function[T, []int32] to the elements of the stream.
+// provided Function[T, []int32] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToSInt32(mapper Function[T, []int32]) Stream[[]int32] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToSInt32(mapper Function[T, []int32])Stream[[]int32] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return st
 }
 
 // FlatMapToSInt32 produces a new Stream[[]int32] applying the
@@ -435,15 +453,16 @@ func (s Stream[T]) FlatMapToSInt32(mapper StreamFunction[T, []int32]) Stream[[]i
 }
 
 // MapToInt32Ptr produces a new Stream[*int32] applying the
-//provided Function[T, *int32] to the elements of the stream.
+// provided Function[T, *int32] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToInt32Ptr(mapper Function[T, *int32]) Stream[*int32] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToInt32Ptr(mapper Function[T, *int32])Stream[*int32] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return st
 }
 
 // FlatMapToInt32Ptr produces a new Stream[*int32] applying the
@@ -459,15 +478,16 @@ func (s Stream[T]) FlatMapToInt32Ptr(mapper StreamFunction[T, *int32]) Stream[*i
 }
 
 // MapToSInt32Ptr produces a new Stream[[]*int32] applying the
-//provided Function[T, []*int32] to the elements of the stream.
+// provided Function[T, []*int32] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToSInt32Ptr(mapper Function[T, []*int32]) Stream[[]*int32] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToSInt32Ptr(mapper Function[T, []*int32])Stream[[]*int32] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return st
 }
 
 // FlatMapToSInt32Ptr produces a new Stream[[]*int32] applying the
@@ -483,15 +503,16 @@ func (s Stream[T]) FlatMapToSInt32Ptr(mapper StreamFunction[T, []*int32]) Stream
 }
 
 // MapToInt64 produces a new Stream[int64] applying the
-//provided Function[T, int64] to the elements of the stream.
+// provided Function[T, int64] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToInt64(mapper Function[T, int64]) Stream[int64] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToInt64(mapper Function[T, int64])Stream[int64] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return st
 }
 
 // FlatMapToInt64 produces a new Stream[int64] applying the
@@ -507,15 +528,16 @@ func (s Stream[T]) FlatMapToInt64(mapper StreamFunction[T, int64]) Stream[int64]
 }
 
 // MapToSInt64 produces a new Stream[[]int64] applying the
-//provided Function[T, []int64] to the elements of the stream.
+// provided Function[T, []int64] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToSInt64(mapper Function[T, []int64]) Stream[[]int64] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToSInt64(mapper Function[T, []int64])Stream[[]int64] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return st
 }
 
 // FlatMapToSInt64 produces a new Stream[[]int64] applying the
@@ -531,15 +553,16 @@ func (s Stream[T]) FlatMapToSInt64(mapper StreamFunction[T, []int64]) Stream[[]i
 }
 
 // MapToInt64Ptr produces a new Stream[*int64] applying the
-//provided Function[T, *int64] to the elements of the stream.
+// provided Function[T, *int64] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToInt64Ptr(mapper Function[T, *int64]) Stream[*int64] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToInt64Ptr(mapper Function[T, *int64])Stream[*int64] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return st
 }
 
 // FlatMapToInt64Ptr produces a new Stream[*int64] applying the
@@ -555,15 +578,16 @@ func (s Stream[T]) FlatMapToInt64Ptr(mapper StreamFunction[T, *int64]) Stream[*i
 }
 
 // MapToSInt64Ptr produces a new Stream[[]*int64] applying the
-//provided Function[T, []*int64] to the elements of the stream.
+// provided Function[T, []*int64] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToSInt64Ptr(mapper Function[T, []*int64]) Stream[[]*int64] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToSInt64Ptr(mapper Function[T, []*int64])Stream[[]*int64] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return st
 }
 
 // FlatMapToSInt64Ptr produces a new Stream[[]*int64] applying the
@@ -579,15 +603,16 @@ func (s Stream[T]) FlatMapToSInt64Ptr(mapper StreamFunction[T, []*int64]) Stream
 }
 
 // MapToUint produces a new Stream[uint] applying the
-//provided Function[T, uint] to the elements of the stream.
+// provided Function[T, uint] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToUint(mapper Function[T, uint]) Stream[uint] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToUint(mapper Function[T, uint])ComparableStream[uint] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return ComparableStream[uint]{st}
 }
 
 // FlatMapToUint produces a new Stream[uint] applying the
@@ -603,15 +628,16 @@ func (s Stream[T]) FlatMapToUint(mapper StreamFunction[T, uint]) Stream[uint] {
 }
 
 // MapToSUint produces a new Stream[[]uint] applying the
-//provided Function[T, []uint] to the elements of the stream.
+// provided Function[T, []uint] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToSUint(mapper Function[T, []uint]) Stream[[]uint] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToSUint(mapper Function[T, []uint])Stream[[]uint] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return st
 }
 
 // FlatMapToSUint produces a new Stream[[]uint] applying the
@@ -627,15 +653,16 @@ func (s Stream[T]) FlatMapToSUint(mapper StreamFunction[T, []uint]) Stream[[]uin
 }
 
 // MapToUintPtr produces a new Stream[*uint] applying the
-//provided Function[T, *uint] to the elements of the stream.
+// provided Function[T, *uint] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToUintPtr(mapper Function[T, *uint]) Stream[*uint] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToUintPtr(mapper Function[T, *uint])Stream[*uint] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return st
 }
 
 // FlatMapToUintPtr produces a new Stream[*uint] applying the
@@ -651,15 +678,16 @@ func (s Stream[T]) FlatMapToUintPtr(mapper StreamFunction[T, *uint]) Stream[*uin
 }
 
 // MapToSUintPtr produces a new Stream[[]*uint] applying the
-//provided Function[T, []*uint] to the elements of the stream.
+// provided Function[T, []*uint] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToSUintPtr(mapper Function[T, []*uint]) Stream[[]*uint] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToSUintPtr(mapper Function[T, []*uint])Stream[[]*uint] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return st
 }
 
 // FlatMapToSUintPtr produces a new Stream[[]*uint] applying the
@@ -675,15 +703,16 @@ func (s Stream[T]) FlatMapToSUintPtr(mapper StreamFunction[T, []*uint]) Stream[[
 }
 
 // MapToUint8 produces a new Stream[uint8] applying the
-//provided Function[T, uint8] to the elements of the stream.
+// provided Function[T, uint8] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToUint8(mapper Function[T, uint8]) Stream[uint8] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToUint8(mapper Function[T, uint8])ComparableStream[uint8] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return ComparableStream[uint8]{st}
 }
 
 // FlatMapToUint8 produces a new Stream[uint8] applying the
@@ -699,15 +728,16 @@ func (s Stream[T]) FlatMapToUint8(mapper StreamFunction[T, uint8]) Stream[uint8]
 }
 
 // MapToSUint8 produces a new Stream[[]uint8] applying the
-//provided Function[T, []uint8] to the elements of the stream.
+// provided Function[T, []uint8] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToSUint8(mapper Function[T, []uint8]) Stream[[]uint8] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToSUint8(mapper Function[T, []uint8])Stream[[]uint8] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return st
 }
 
 // FlatMapToSUint8 produces a new Stream[[]uint8] applying the
@@ -723,15 +753,16 @@ func (s Stream[T]) FlatMapToSUint8(mapper StreamFunction[T, []uint8]) Stream[[]u
 }
 
 // MapToUint8Ptr produces a new Stream[*uint8] applying the
-//provided Function[T, *uint8] to the elements of the stream.
+// provided Function[T, *uint8] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToUint8Ptr(mapper Function[T, *uint8]) Stream[*uint8] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToUint8Ptr(mapper Function[T, *uint8])Stream[*uint8] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return st
 }
 
 // FlatMapToUint8Ptr produces a new Stream[*uint8] applying the
@@ -747,15 +778,16 @@ func (s Stream[T]) FlatMapToUint8Ptr(mapper StreamFunction[T, *uint8]) Stream[*u
 }
 
 // MapToSUint8Ptr produces a new Stream[[]*uint8] applying the
-//provided Function[T, []*uint8] to the elements of the stream.
+// provided Function[T, []*uint8] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToSUint8Ptr(mapper Function[T, []*uint8]) Stream[[]*uint8] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToSUint8Ptr(mapper Function[T, []*uint8])Stream[[]*uint8] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return st
 }
 
 // FlatMapToSUint8Ptr produces a new Stream[[]*uint8] applying the
@@ -771,15 +803,16 @@ func (s Stream[T]) FlatMapToSUint8Ptr(mapper StreamFunction[T, []*uint8]) Stream
 }
 
 // MapToUint16 produces a new Stream[uint16] applying the
-//provided Function[T, uint16] to the elements of the stream.
+// provided Function[T, uint16] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToUint16(mapper Function[T, uint16]) Stream[uint16] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToUint16(mapper Function[T, uint16])ComparableStream[uint16] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return ComparableStream[uint16]{st}
 }
 
 // FlatMapToUint16 produces a new Stream[uint16] applying the
@@ -795,15 +828,16 @@ func (s Stream[T]) FlatMapToUint16(mapper StreamFunction[T, uint16]) Stream[uint
 }
 
 // MapToSUint16 produces a new Stream[[]uint16] applying the
-//provided Function[T, []uint16] to the elements of the stream.
+// provided Function[T, []uint16] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToSUint16(mapper Function[T, []uint16]) Stream[[]uint16] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToSUint16(mapper Function[T, []uint16])Stream[[]uint16] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return st
 }
 
 // FlatMapToSUint16 produces a new Stream[[]uint16] applying the
@@ -819,15 +853,16 @@ func (s Stream[T]) FlatMapToSUint16(mapper StreamFunction[T, []uint16]) Stream[[
 }
 
 // MapToUint16Ptr produces a new Stream[*uint16] applying the
-//provided Function[T, *uint16] to the elements of the stream.
+// provided Function[T, *uint16] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToUint16Ptr(mapper Function[T, *uint16]) Stream[*uint16] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToUint16Ptr(mapper Function[T, *uint16])Stream[*uint16] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return st
 }
 
 // FlatMapToUint16Ptr produces a new Stream[*uint16] applying the
@@ -843,15 +878,16 @@ func (s Stream[T]) FlatMapToUint16Ptr(mapper StreamFunction[T, *uint16]) Stream[
 }
 
 // MapToSUint16Ptr produces a new Stream[[]*uint16] applying the
-//provided Function[T, []*uint16] to the elements of the stream.
+// provided Function[T, []*uint16] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToSUint16Ptr(mapper Function[T, []*uint16]) Stream[[]*uint16] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToSUint16Ptr(mapper Function[T, []*uint16])Stream[[]*uint16] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return st
 }
 
 // FlatMapToSUint16Ptr produces a new Stream[[]*uint16] applying the
@@ -867,15 +903,16 @@ func (s Stream[T]) FlatMapToSUint16Ptr(mapper StreamFunction[T, []*uint16]) Stre
 }
 
 // MapToUint32 produces a new Stream[uint32] applying the
-//provided Function[T, uint32] to the elements of the stream.
+// provided Function[T, uint32] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToUint32(mapper Function[T, uint32]) Stream[uint32] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToUint32(mapper Function[T, uint32])ComparableStream[uint32] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return ComparableStream[uint32]{st}
 }
 
 // FlatMapToUint32 produces a new Stream[uint32] applying the
@@ -891,15 +928,16 @@ func (s Stream[T]) FlatMapToUint32(mapper StreamFunction[T, uint32]) Stream[uint
 }
 
 // MapToSUint32 produces a new Stream[[]uint32] applying the
-//provided Function[T, []uint32] to the elements of the stream.
+// provided Function[T, []uint32] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToSUint32(mapper Function[T, []uint32]) Stream[[]uint32] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToSUint32(mapper Function[T, []uint32])Stream[[]uint32] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return st
 }
 
 // FlatMapToSUint32 produces a new Stream[[]uint32] applying the
@@ -915,15 +953,16 @@ func (s Stream[T]) FlatMapToSUint32(mapper StreamFunction[T, []uint32]) Stream[[
 }
 
 // MapToUint32Ptr produces a new Stream[*uint32] applying the
-//provided Function[T, *uint32] to the elements of the stream.
+// provided Function[T, *uint32] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToUint32Ptr(mapper Function[T, *uint32]) Stream[*uint32] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToUint32Ptr(mapper Function[T, *uint32])Stream[*uint32] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return st
 }
 
 // FlatMapToUint32Ptr produces a new Stream[*uint32] applying the
@@ -939,15 +978,16 @@ func (s Stream[T]) FlatMapToUint32Ptr(mapper StreamFunction[T, *uint32]) Stream[
 }
 
 // MapToSUint32Ptr produces a new Stream[[]*uint32] applying the
-//provided Function[T, []*uint32] to the elements of the stream.
+// provided Function[T, []*uint32] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToSUint32Ptr(mapper Function[T, []*uint32]) Stream[[]*uint32] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToSUint32Ptr(mapper Function[T, []*uint32])Stream[[]*uint32] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return st
 }
 
 // FlatMapToSUint32Ptr produces a new Stream[[]*uint32] applying the
@@ -963,15 +1003,16 @@ func (s Stream[T]) FlatMapToSUint32Ptr(mapper StreamFunction[T, []*uint32]) Stre
 }
 
 // MapToUint64 produces a new Stream[uint64] applying the
-//provided Function[T, uint64] to the elements of the stream.
+// provided Function[T, uint64] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToUint64(mapper Function[T, uint64]) Stream[uint64] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToUint64(mapper Function[T, uint64])ComparableStream[uint64] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return ComparableStream[uint64]{st}
 }
 
 // FlatMapToUint64 produces a new Stream[uint64] applying the
@@ -987,15 +1028,16 @@ func (s Stream[T]) FlatMapToUint64(mapper StreamFunction[T, uint64]) Stream[uint
 }
 
 // MapToSUint64 produces a new Stream[[]uint64] applying the
-//provided Function[T, []uint64] to the elements of the stream.
+// provided Function[T, []uint64] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToSUint64(mapper Function[T, []uint64]) Stream[[]uint64] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToSUint64(mapper Function[T, []uint64])Stream[[]uint64] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return st
 }
 
 // FlatMapToSUint64 produces a new Stream[[]uint64] applying the
@@ -1011,15 +1053,16 @@ func (s Stream[T]) FlatMapToSUint64(mapper StreamFunction[T, []uint64]) Stream[[
 }
 
 // MapToUint64Ptr produces a new Stream[*uint64] applying the
-//provided Function[T, *uint64] to the elements of the stream.
+// provided Function[T, *uint64] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToUint64Ptr(mapper Function[T, *uint64]) Stream[*uint64] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToUint64Ptr(mapper Function[T, *uint64])Stream[*uint64] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return st
 }
 
 // FlatMapToUint64Ptr produces a new Stream[*uint64] applying the
@@ -1035,15 +1078,16 @@ func (s Stream[T]) FlatMapToUint64Ptr(mapper StreamFunction[T, *uint64]) Stream[
 }
 
 // MapToSUint64Ptr produces a new Stream[[]*uint64] applying the
-//provided Function[T, []*uint64] to the elements of the stream.
+// provided Function[T, []*uint64] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToSUint64Ptr(mapper Function[T, []*uint64]) Stream[[]*uint64] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToSUint64Ptr(mapper Function[T, []*uint64])Stream[[]*uint64] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return st
 }
 
 // FlatMapToSUint64Ptr produces a new Stream[[]*uint64] applying the
@@ -1059,15 +1103,16 @@ func (s Stream[T]) FlatMapToSUint64Ptr(mapper StreamFunction[T, []*uint64]) Stre
 }
 
 // MapToFloat32 produces a new Stream[float32] applying the
-//provided Function[T, float32] to the elements of the stream.
+// provided Function[T, float32] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToFloat32(mapper Function[T, float32]) Stream[float32] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToFloat32(mapper Function[T, float32])ComparableStream[float32] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return ComparableStream[float32]{st}
 }
 
 // FlatMapToFloat32 produces a new Stream[float32] applying the
@@ -1083,15 +1128,16 @@ func (s Stream[T]) FlatMapToFloat32(mapper StreamFunction[T, float32]) Stream[fl
 }
 
 // MapToSFloat32 produces a new Stream[[]float32] applying the
-//provided Function[T, []float32] to the elements of the stream.
+// provided Function[T, []float32] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToSFloat32(mapper Function[T, []float32]) Stream[[]float32] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToSFloat32(mapper Function[T, []float32])Stream[[]float32] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return st
 }
 
 // FlatMapToSFloat32 produces a new Stream[[]float32] applying the
@@ -1107,15 +1153,16 @@ func (s Stream[T]) FlatMapToSFloat32(mapper StreamFunction[T, []float32]) Stream
 }
 
 // MapToFloat32Ptr produces a new Stream[*float32] applying the
-//provided Function[T, *float32] to the elements of the stream.
+// provided Function[T, *float32] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToFloat32Ptr(mapper Function[T, *float32]) Stream[*float32] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToFloat32Ptr(mapper Function[T, *float32])Stream[*float32] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return st
 }
 
 // FlatMapToFloat32Ptr produces a new Stream[*float32] applying the
@@ -1131,15 +1178,16 @@ func (s Stream[T]) FlatMapToFloat32Ptr(mapper StreamFunction[T, *float32]) Strea
 }
 
 // MapToSFloat32Ptr produces a new Stream[[]*float32] applying the
-//provided Function[T, []*float32] to the elements of the stream.
+// provided Function[T, []*float32] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToSFloat32Ptr(mapper Function[T, []*float32]) Stream[[]*float32] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToSFloat32Ptr(mapper Function[T, []*float32])Stream[[]*float32] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return st
 }
 
 // FlatMapToSFloat32Ptr produces a new Stream[[]*float32] applying the
@@ -1155,15 +1203,16 @@ func (s Stream[T]) FlatMapToSFloat32Ptr(mapper StreamFunction[T, []*float32]) St
 }
 
 // MapToFloat64 produces a new Stream[float64] applying the
-//provided Function[T, float64] to the elements of the stream.
+// provided Function[T, float64] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToFloat64(mapper Function[T, float64]) Stream[float64] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToFloat64(mapper Function[T, float64])ComparableStream[float64] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return ComparableStream[float64]{st}
 }
 
 // FlatMapToFloat64 produces a new Stream[float64] applying the
@@ -1179,15 +1228,16 @@ func (s Stream[T]) FlatMapToFloat64(mapper StreamFunction[T, float64]) Stream[fl
 }
 
 // MapToSFloat64 produces a new Stream[[]float64] applying the
-//provided Function[T, []float64] to the elements of the stream.
+// provided Function[T, []float64] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToSFloat64(mapper Function[T, []float64]) Stream[[]float64] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToSFloat64(mapper Function[T, []float64])Stream[[]float64] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return st
 }
 
 // FlatMapToSFloat64 produces a new Stream[[]float64] applying the
@@ -1203,15 +1253,16 @@ func (s Stream[T]) FlatMapToSFloat64(mapper StreamFunction[T, []float64]) Stream
 }
 
 // MapToFloat64Ptr produces a new Stream[*float64] applying the
-//provided Function[T, *float64] to the elements of the stream.
+// provided Function[T, *float64] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToFloat64Ptr(mapper Function[T, *float64]) Stream[*float64] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToFloat64Ptr(mapper Function[T, *float64])Stream[*float64] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return st
 }
 
 // FlatMapToFloat64Ptr produces a new Stream[*float64] applying the
@@ -1227,15 +1278,16 @@ func (s Stream[T]) FlatMapToFloat64Ptr(mapper StreamFunction[T, *float64]) Strea
 }
 
 // MapToSFloat64Ptr produces a new Stream[[]*float64] applying the
-//provided Function[T, []*float64] to the elements of the stream.
+// provided Function[T, []*float64] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToSFloat64Ptr(mapper Function[T, []*float64]) Stream[[]*float64] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToSFloat64Ptr(mapper Function[T, []*float64])Stream[[]*float64] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return st
 }
 
 // FlatMapToSFloat64Ptr produces a new Stream[[]*float64] applying the
@@ -1251,15 +1303,16 @@ func (s Stream[T]) FlatMapToSFloat64Ptr(mapper StreamFunction[T, []*float64]) St
 }
 
 // MapToComplex64 produces a new Stream[complex128] applying the
-//provided Function[T, complex128] to the elements of the stream.
+// provided Function[T, complex128] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToComplex64(mapper Function[T, complex128]) Stream[complex128] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToComplex64(mapper Function[T, complex128])Stream[complex128] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return st
 }
 
 // FlatMapToComplex64 produces a new Stream[complex128] applying the
@@ -1275,15 +1328,16 @@ func (s Stream[T]) FlatMapToComplex64(mapper StreamFunction[T, complex128]) Stre
 }
 
 // MapToSComplex64 produces a new Stream[[]complex128] applying the
-//provided Function[T, []complex128] to the elements of the stream.
+// provided Function[T, []complex128] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToSComplex64(mapper Function[T, []complex128]) Stream[[]complex128] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToSComplex64(mapper Function[T, []complex128])Stream[[]complex128] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return st
 }
 
 // FlatMapToSComplex64 produces a new Stream[[]complex128] applying the
@@ -1299,15 +1353,16 @@ func (s Stream[T]) FlatMapToSComplex64(mapper StreamFunction[T, []complex128]) S
 }
 
 // MapToComplex64Ptr produces a new Stream[*complex128] applying the
-//provided Function[T, *complex128] to the elements of the stream.
+// provided Function[T, *complex128] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToComplex64Ptr(mapper Function[T, *complex128]) Stream[*complex128] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToComplex64Ptr(mapper Function[T, *complex128])Stream[*complex128] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return st
 }
 
 // FlatMapToComplex64Ptr produces a new Stream[*complex128] applying the
@@ -1323,15 +1378,16 @@ func (s Stream[T]) FlatMapToComplex64Ptr(mapper StreamFunction[T, *complex128]) 
 }
 
 // MapToSComplex64Ptr produces a new Stream[[]*complex128] applying the
-//provided Function[T, []*complex128] to the elements of the stream.
+// provided Function[T, []*complex128] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToSComplex64Ptr(mapper Function[T, []*complex128]) Stream[[]*complex128] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToSComplex64Ptr(mapper Function[T, []*complex128])Stream[[]*complex128] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return st
 }
 
 // FlatMapToSComplex64Ptr produces a new Stream[[]*complex128] applying the
@@ -1347,15 +1403,16 @@ func (s Stream[T]) FlatMapToSComplex64Ptr(mapper StreamFunction[T, []*complex128
 }
 
 // MapToComplex128 produces a new Stream[complex128] applying the
-//provided Function[T, complex128] to the elements of the stream.
+// provided Function[T, complex128] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToComplex128(mapper Function[T, complex128]) Stream[complex128] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToComplex128(mapper Function[T, complex128])Stream[complex128] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return st
 }
 
 // FlatMapToComplex128 produces a new Stream[complex128] applying the
@@ -1371,15 +1428,16 @@ func (s Stream[T]) FlatMapToComplex128(mapper StreamFunction[T, complex128]) Str
 }
 
 // MapToSComplex128 produces a new Stream[[]complex128] applying the
-//provided Function[T, []complex128] to the elements of the stream.
+// provided Function[T, []complex128] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToSComplex128(mapper Function[T, []complex128]) Stream[[]complex128] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToSComplex128(mapper Function[T, []complex128])Stream[[]complex128] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return st
 }
 
 // FlatMapToSComplex128 produces a new Stream[[]complex128] applying the
@@ -1395,15 +1453,16 @@ func (s Stream[T]) FlatMapToSComplex128(mapper StreamFunction[T, []complex128]) 
 }
 
 // MapToComplex128Ptr produces a new Stream[*complex128] applying the
-//provided Function[T, *complex128] to the elements of the stream.
+// provided Function[T, *complex128] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToComplex128Ptr(mapper Function[T, *complex128]) Stream[*complex128] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToComplex128Ptr(mapper Function[T, *complex128])Stream[*complex128] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return st
 }
 
 // FlatMapToComplex128Ptr produces a new Stream[*complex128] applying the
@@ -1419,15 +1478,16 @@ func (s Stream[T]) FlatMapToComplex128Ptr(mapper StreamFunction[T, *complex128])
 }
 
 // MapToSComplex128Ptr produces a new Stream[[]*complex128] applying the
-//provided Function[T, []*complex128] to the elements of the stream.
+// provided Function[T, []*complex128] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToSComplex128Ptr(mapper Function[T, []*complex128]) Stream[[]*complex128] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToSComplex128Ptr(mapper Function[T, []*complex128])Stream[[]*complex128] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return st
 }
 
 // FlatMapToSComplex128Ptr produces a new Stream[[]*complex128] applying the
@@ -1443,15 +1503,16 @@ func (s Stream[T]) FlatMapToSComplex128Ptr(mapper StreamFunction[T, []*complex12
 }
 
 // MapToString produces a new Stream[string] applying the
-//provided Function[T, string] to the elements of the stream.
+// provided Function[T, string] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToString(mapper Function[T, string]) Stream[string] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToString(mapper Function[T, string])ComparableStream[string] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return ComparableStream[string]{st}
 }
 
 // FlatMapToString produces a new Stream[string] applying the
@@ -1467,15 +1528,16 @@ func (s Stream[T]) FlatMapToString(mapper StreamFunction[T, string]) Stream[stri
 }
 
 // MapToSString produces a new Stream[[]string] applying the
-//provided Function[T, []string] to the elements of the stream.
+// provided Function[T, []string] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToSString(mapper Function[T, []string]) Stream[[]string] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToSString(mapper Function[T, []string])Stream[[]string] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return st
 }
 
 // FlatMapToSString produces a new Stream[[]string] applying the
@@ -1491,15 +1553,16 @@ func (s Stream[T]) FlatMapToSString(mapper StreamFunction[T, []string]) Stream[[
 }
 
 // MapToStringPtr produces a new Stream[*string] applying the
-//provided Function[T, *string] to the elements of the stream.
+// provided Function[T, *string] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToStringPtr(mapper Function[T, *string]) Stream[*string] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToStringPtr(mapper Function[T, *string])Stream[*string] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return st
 }
 
 // FlatMapToStringPtr produces a new Stream[*string] applying the
@@ -1515,15 +1578,16 @@ func (s Stream[T]) FlatMapToStringPtr(mapper StreamFunction[T, *string]) Stream[
 }
 
 // MapToSStringPtr produces a new Stream[[]*string] applying the
-//provided Function[T, []*string] to the elements of the stream.
+// provided Function[T, []*string] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapToSStringPtr(mapper Function[T, []*string]) Stream[[]*string] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapToSStringPtr(mapper Function[T, []*string])Stream[[]*string] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	return st
 }
 
 // FlatMapToSStringPtr produces a new Stream[[]*string] applying the

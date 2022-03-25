@@ -11,7 +11,7 @@ import (
 )
 
 func TestC(t *testing.T) {
-	is := Stream[float32]{
+	s := Stream[float32]{
 		stream: func() chan float32 {
 			c := make(chan float32)
 			go func() { defer close(c); c <- 1.1; c <- 2.2; c <- 7.7; c <- 4.4 }()
@@ -22,7 +22,7 @@ func TestC(t *testing.T) {
 
 	result := []int{}
 
-	C(C(C(is.
+	C(C(C(s.
 		Map(float2int), Int).
 		Map(int2string), String).
 		Map(string2int), Int).
@@ -35,7 +35,7 @@ func TestC(t *testing.T) {
 }
 
 func TestSC(t *testing.T) {
-	is := Stream[float32]{
+	s := Stream[float32]{
 		stream: func() chan float32 {
 			c := make(chan float32)
 			go func() { defer close(c); c <- 1.1; c <- 2.2; c <- 7.7; c <- 4.4 }()
@@ -46,7 +46,7 @@ func TestSC(t *testing.T) {
 
 	result := []int{}
 
-	SC(SC(SC(is.
+	SC(SC(SC(s.
 		Map(float2int), Stream[int]{}).
 		Map(int2string), Stream[string]{}).
 		Map(string2int), Stream[int]{}).

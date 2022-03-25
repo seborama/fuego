@@ -1,13 +1,18 @@
 // MapTo{{ .Name }} produces a new Stream[{{ .GoType }}] applying the
-//provided Function[T, {{ .GoType }}] to the elements of the stream.
+// provided Function[T, {{ .GoType }}] to the elements of the stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 //
 // It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
 // It is provided as a convenience since Go 1.18 does not support parameterised methods.
-func (s Stream[T]) MapTo{{ .Name }}(mapper Function[T, {{ .GoType }}]) Stream[{{ .GoType }}] {
-	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+func (s Stream[T]) MapTo{{ .Name }}(mapper Function[T, {{ .GoType }}]) {{- if eq .Name "Int" "Int8" "Int16" "Uint32" "Uint64" "Uint" "Uint8" "Uint16" "Uint32" "Uint64" "Float32" "Float64" "String" }}Comparable{{ end }}Stream[{{ .GoType }}] {
+	st := NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+	{{- if eq .Name "Int" "Int8" "Int16" "Uint32" "Uint64" "Uint" "Uint8" "Uint16" "Uint32" "Uint64" "Float32" "Float64" "String"  }}
+	return ComparableStream[{{ .GoType }}]{st}
+	{{- else }}
+	return st
+	{{- end }}
 }
 
 // FlatMapTo{{ .Name }} produces a new Stream[{{ .GoType }}] applying the
