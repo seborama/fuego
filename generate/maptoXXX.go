@@ -73,7 +73,7 @@ func main() {
 				GoType: fmt.Sprintf(formatter.GoType, mapTo.GoType),
 			}
 
-			mapToTmpl, err := template.ParseFiles("./mapto/maptoXXX.go.tmpl")
+			mapToTmpl, err := template.ParseFiles("./generate/maptoXXX.go.tmpl")
 			if err != nil {
 				panic(err)
 			}

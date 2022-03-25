@@ -13,7 +13,7 @@ test: deps
 
 .PHONY: generate
 generate: deps
-	go build -o bin/maptoXXX ./mapto/maptoXXX.go
+	go build -o bin/maptoXXX ./generate/maptoXXX.go
 	go generate
 
 # .PHONY: lint

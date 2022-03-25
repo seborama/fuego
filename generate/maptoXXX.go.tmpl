@@ -1,0 +1,24 @@
+// MapTo{{ .Name }} produces a new Stream[{{ .GoType }}] applying the
+//provided Function[T, {{ .GoType }}] to the elements of the stream.
+//
+// This function streams continuously until the in-stream is closed at
+// which point the out-stream will be closed too.
+//
+// It is a special case of Map() aiming to avoid the use of functions C or SC for native Go types.
+// It is provided as a convenience since Go 1.18 does not support parameterised methods.
+func (s Stream[T]) MapTo{{ .Name }}(mapper Function[T, {{ .GoType }}]) Stream[{{ .GoType }}] {
+	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
+}
+
+// FlatMapTo{{ .Name }} produces a new Stream[{{ .GoType }}] applying the
+// provided StreamFunction[T, {{ .GoType }}] to flatten the elements of the stream.
+//
+// This function streams continuously until the in-stream is closed at
+// which point the out-stream will be closed too.
+//
+// It is a special case of FlatMap() aiming to avoid the use of functions C or SC for native Go types.
+// It is provided as a convenience since Go 1.18 does not support parameterised methods.
+func (s Stream[T]) FlatMapTo{{ .Name }}(mapper StreamFunction[T, {{ .GoType }}]) Stream[{{ .GoType }}] {
+	return NewConcurrentStream(orderlyConcurrentDoStream(s, mapper), s.concurrency)
+}
+{{ "\n" }}

@@ -115,14 +115,14 @@ type R any
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
 func (s Stream[T]) Map(mapper Function[T, R]) Stream[R] {
-	return NewConcurrentStream(s.orderlyConcurrentDo(mapper), s.concurrency)
+	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
 }
 
 // orderlyConcurrentDo executes a Function on the stream.
 // Execution is concurrent and order is preserved.
 // See note on method Map() about the lack of support for parameterised methods in Go.
-func (s Stream[T]) orderlyConcurrentDo(fn Function[T, R]) chan R {
-	outstream := make(chan R, cap(s.stream))
+func orderlyConcurrentDo[T any, U any](s Stream[T], fn Function[T, U]) chan U {
+	outstream := make(chan U, cap(s.stream))
 
 	go func() {
 		defer close(outstream)
@@ -131,15 +131,15 @@ func (s Stream[T]) orderlyConcurrentDo(fn Function[T, R]) chan R {
 			return
 		}
 
-		pipelineCh := make(chan chan R, s.concurrency)
+		pipelineCh := make(chan chan U, s.concurrency)
 
-		pipelineWriter := func(pipelineWCh chan chan R) {
+		pipelineWriter := func(pipelineWCh chan chan U) {
 			defer close(pipelineWCh)
 
 			for val := range s.stream {
-				resultCh := make(chan R, 1)
+				resultCh := make(chan U, 1)
 				pipelineWCh <- resultCh
-				go func(resultCh chan<- R, val T) {
+				go func(resultCh chan<- U, val T) {
 					defer close(resultCh)
 					resultCh <- fn(val)
 				}(resultCh, val)
@@ -150,7 +150,7 @@ func (s Stream[T]) orderlyConcurrentDo(fn Function[T, R]) chan R {
 			pipelineWriter(pipelineCh)
 		}()
 
-		pipelineReader := func(pipelineRCh chan chan R) {
+		pipelineReader := func(pipelineRCh chan chan U) {
 			for resultCh := range pipelineRCh {
 				outstream <- <-resultCh
 			}
@@ -169,13 +169,13 @@ func (s Stream[T]) orderlyConcurrentDo(fn Function[T, R]) chan R {
 //
 // See: example_stream_test.go.
 func (s Stream[T]) FlatMap(mapper StreamFunction[T, R]) Stream[R] {
-	return NewConcurrentStream(s.orderlyConcurrentDoStream(mapper), s.concurrency)
+	return NewConcurrentStream(orderlyConcurrentDoStream(s, mapper), s.concurrency)
 }
 
 // orderlyConcurrentDoStream executes a StreamFunction on the stream.
 // Execution is concurrent and order is preserved.
-func (s Stream[T]) orderlyConcurrentDoStream(streamfn StreamFunction[T, R]) chan R {
-	outstream := make(chan R, cap(s.stream))
+func orderlyConcurrentDoStream[T any, U any](s Stream[T], streamfn StreamFunction[T, U]) chan U {
+	outstream := make(chan U, cap(s.stream))
 
 	go func() {
 		defer close(outstream)
@@ -184,15 +184,15 @@ func (s Stream[T]) orderlyConcurrentDoStream(streamfn StreamFunction[T, R]) chan
 			return
 		}
 
-		pipelineCh := make(chan chan Stream[R], s.concurrency)
+		pipelineCh := make(chan chan Stream[U], s.concurrency)
 
-		pipelineWriter := func(pipelineWCh chan chan Stream[R]) {
+		pipelineWriter := func(pipelineWCh chan chan Stream[U]) {
 			defer close(pipelineWCh)
 
 			for val := range s.stream {
-				resultCh := make(chan Stream[R], 1)
+				resultCh := make(chan Stream[U], 1)
 				pipelineWCh <- resultCh
-				go func(resultCh chan<- Stream[R], val T) {
+				go func(resultCh chan<- Stream[U], val T) {
 					defer close(resultCh)
 					resultCh <- streamfn(val)
 				}(resultCh, val)
@@ -203,10 +203,10 @@ func (s Stream[T]) orderlyConcurrentDoStream(streamfn StreamFunction[T, R]) chan
 			pipelineWriter(pipelineCh)
 		}()
 
-		pipelineReader := func(pipelineRCh chan chan Stream[R]) {
+		pipelineReader := func(pipelineRCh chan chan Stream[U]) {
 			for resultCh := range pipelineRCh {
 				val := <-resultCh
-				val.ForEach(func(e R) {
+				val.ForEach(func(e U) {
 					outstream <- e
 				})
 			}
