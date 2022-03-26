@@ -332,7 +332,7 @@ func TestStream_LeftReduce(t *testing.T) {
 			s := Stream[string]{
 				stream: tc.stream,
 			}
-			got := s.Reduce(Sum[string])
+			got := s.Reduce(Concatenate[string])
 			assert.Exactly(t, tc.want, got)
 		})
 	}

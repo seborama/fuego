@@ -335,7 +335,7 @@ Stream[float32]{}.
 
 As a result of this [issue](https://github.com/golang/go/issues/51957), an experiment to add `MapTo<native_type>() Stream[<native_type>]` is disabled.
 
-Instead, use function `CC` (ComparableStream Cast) to access Min(), Max(), and `AC` (AddableStream Cast) to access Sum().
+Instead, use function `CC` (ComparableStream Cast) to access Min(), Max(), and `MC` (MathableStream Cast) to access Sum().
 
 [(toc)](#table-of-content)
 

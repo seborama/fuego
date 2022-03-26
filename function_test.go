@@ -109,14 +109,6 @@ func TestSum(t *testing.T) {
 			sum:  func() interface{} { return Sum(3.4, -1.2) },
 			want: 2.2,
 		},
-		`Sum("abc","zyx")`: {
-			sum:  func() interface{} { return Sum("abc", "zyx") },
-			want: "abczyx",
-		},
-		`Sum("zyx","abc")`: {
-			sum:  func() interface{} { return Sum("zyx", "abc") },
-			want: "zyxabc",
-		},
 	}
 
 	for name, tc := range tt {

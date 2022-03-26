@@ -44,7 +44,12 @@ func Min[T Comparable](a, b T) T {
 }
 
 // Sum is a BiFunction that returns the sum of 2 values.
-func Sum[T Addable](a, b T) T {
+func Sum[T Mathable](a, b T) T {
+	return a + b
+}
+
+// Concatenate is BiFunction that returns the concatenation of the two strings passed to it.
+func Concatenate[T string](a, b T) T {
 	return a + b
 }
 
