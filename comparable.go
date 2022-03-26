@@ -17,7 +17,7 @@ func (s ComparableStream[T]) Max() interface{} {
 	max := val
 
 	for val = range s.stream {
-		max = Max(val, max)
+		max = Max(max, val)
 	}
 
 	return max
@@ -36,8 +36,27 @@ func (s ComparableStream[T]) Min() interface{} {
 	min := val
 
 	for val = range s.stream {
-		min = Min(val, min)
+		min = Min(min, val)
 	}
 
 	return min
+}
+
+func (s ComparableStream[T]) Sum() interface{} {
+	if s.stream == nil {
+		panic(PanicMissingChannel)
+	}
+
+	val, ok := <-s.stream
+	if !ok {
+		panic(PanicNoSuchElement)
+	}
+
+	sum := val
+
+	for val = range s.stream {
+		sum = Sum(sum, val)
+	}
+
+	return sum
 }
