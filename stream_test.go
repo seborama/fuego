@@ -338,6 +338,87 @@ func TestStream_LeftReduce(t *testing.T) {
 	}
 }
 
+func TestStream_GroupBy(t *testing.T) {
+	type fields struct {
+		stream chan int
+	}
+	type args struct {
+		classifier Function[int, R]
+	}
+	tt := map[string]struct {
+		fields fields
+		args   args
+		want   map[R][]int
+	}{
+		"Should return empty map when iterator with nil stream": {
+			fields: fields{
+				stream: nil,
+			},
+			args: args{
+				classifier: func(i int) R {
+					return i & 1
+				},
+			},
+			want: map[R][]int{},
+		},
+		"Should return empty map when empty stream": {
+			fields: fields{
+				stream: func() chan int {
+					c := make(chan int)
+					go func() {
+						defer close(c)
+					}()
+					return c
+				}(),
+			},
+			args: args{
+				classifier: func(i int) R {
+					return i & 1
+				},
+			},
+			want: map[R][]int{},
+		},
+		"Should group by odd / even numbers": {
+			fields: fields{
+				stream: func() chan int {
+					c := make(chan int)
+					go func() {
+						defer close(c)
+						c <- 1
+						c <- 2
+						c <- 3
+						c <- 4
+					}()
+					return c
+				}(),
+			},
+			args: args{
+				classifier: func(i int) R {
+					return i & 1
+				},
+			},
+			want: map[R][]int{
+				0: {2, 4},
+				1: {1, 3},
+			},
+		},
+	}
+	for name, tc := range tt {
+		tc := tc
+
+		t.Run(name, func(t *testing.T) {
+			rp := Stream[int]{
+				stream: tc.fields.stream,
+			}
+
+			got := rp.GroupBy(tc.args.classifier)
+			if !cmp.Equal(tc.want, got) {
+				t.Error(cmp.Diff(tc.want, got))
+			}
+		})
+	}
+}
+
 func TestStream_ForEach(t *testing.T) {
 	computeSumTotal := func(callCount, total *int) Consumer[int] {
 		return func(value int) {

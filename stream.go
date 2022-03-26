@@ -265,6 +265,26 @@ func (s Stream[T]) Reduce(f2 BiFunction[T, T, T]) T {
 	return s.LeftReduce(f2)
 }
 
+// GroupBy groups the elements of this Stream by classifying them.
+//
+// This is a continuous terminal operation and hence expects the producer to close the stream
+// in order to complete.
+func (s Stream[T]) GroupBy(classifier Function[T, R]) map[R][]T {
+	resultMap := make(map[R][]T)
+
+	if s.stream != nil {
+		for val := range s.stream {
+			k := classifier(val)
+			if interface{}(resultMap[k]) == nil {
+				resultMap[k] = []T{}
+			}
+			resultMap[k] = append(resultMap[k], val)
+		}
+	}
+
+	return resultMap
+}
+
 // ForEach executes the given consumer function for each entry in this stream.
 //
 // This is a continuous terminal operation. It will only complete if the producer closes the stream.
