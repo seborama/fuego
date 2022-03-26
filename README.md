@@ -331,6 +331,14 @@ Stream[float32]{}.
 
 [(toc)](#table-of-content)
 
+### Performance issues with numerous parameterised methods in Go 1.18
+
+As a result of this [issue](https://github.com/golang/go/issues/51957), an experiment to add `MapTo<native_type>() Stream[<native_type>]` is disabled.
+
+Instead, use function `CC` (ComparableStream Cast) to access Min(), Max(), and `AC` (AddableStream Cast) to access Sum().
+
+[(toc)](#table-of-content)
+
 <p align="center">
 <a href="https://buymeacoff.ee/seborama/" target="_blank">
   <img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: 41px !important;width: 174px !important;box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;" />

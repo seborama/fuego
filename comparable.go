@@ -4,7 +4,7 @@ type ComparableStream[T Comparable] struct {
 	Stream[T]
 }
 
-func (s ComparableStream[T]) Max() interface{} {
+func (s ComparableStream[T]) Max() T {
 	if s.stream == nil {
 		panic(PanicMissingChannel)
 	}
@@ -23,7 +23,7 @@ func (s ComparableStream[T]) Max() interface{} {
 	return max
 }
 
-func (s ComparableStream[T]) Min() interface{} {
+func (s ComparableStream[T]) Min() T {
 	if s.stream == nil {
 		panic(PanicMissingChannel)
 	}
@@ -40,23 +40,4 @@ func (s ComparableStream[T]) Min() interface{} {
 	}
 
 	return min
-}
-
-func (s ComparableStream[T]) Sum() interface{} {
-	if s.stream == nil {
-		panic(PanicMissingChannel)
-	}
-
-	val, ok := <-s.stream
-	if !ok {
-		panic(PanicNoSuchElement)
-	}
-
-	sum := val
-
-	for val = range s.stream {
-		sum = Sum(sum, val)
-	}
-
-	return sum
 }

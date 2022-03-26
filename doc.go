@@ -17,4 +17,7 @@
 //
 // A syntactically lighter approach is provided with `SC`` and `C``.
 // See functions `SC`` and `C `for casting Stream[R] to a typed Stream[T any].
+//
+// Go 1.18 suffers from a performance issue:
+//
 package fuego

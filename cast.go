@@ -45,6 +45,11 @@ func C[U any](from Stream[R], to U) Stream[U] {
 	return toStream
 }
 
+// CC is a typed cast function from a non-parameterised Stream[R] to a parameterised type ComparableStream[U].
+// CC receives a type U and creates a ComparableStream[U].
+//
+// CC exists to address the current lack of support in Go for parameterised methods and a performance issue with Go 1.18.
+// See doc.go for more details.
 func CC[U Comparable](from Stream[R], to U) ComparableStream[U] {
 	toCh := make(chan U, from.concurrency)
 
@@ -59,4 +64,25 @@ func CC[U Comparable](from Stream[R], to U) ComparableStream[U] {
 	}()
 
 	return ComparableStream[U]{toStream}
+}
+
+// AC is a typed cast function from a non-parameterised Stream[R] to a parameterised type AddableStream[U].
+// AC receives a type U and creates a AddableStream[U].
+//
+// AC exists to address the current lack of support in Go for parameterised methods and a performance issue with Go 1.18.
+// See doc.go for more details.
+func AC[U Comparable](from Stream[R], to U) AddableStream[U] {
+	toCh := make(chan U, from.concurrency)
+
+	toStream := NewConcurrentStream(toCh, from.concurrency)
+
+	go func() {
+		defer close(toStream.stream)
+
+		for f := range from.stream {
+			toStream.stream <- interface{}(f).(U)
+		}
+	}()
+
+	return AddableStream[U]{toStream}
 }
