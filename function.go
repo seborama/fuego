@@ -52,3 +52,8 @@ func Sum[T Addable](a, b T) T {
 func Identity[T any](v T) T {
 	return v
 }
+
+// ToR is a basic Function that returns the original value passed to it, cast to an 'R' type.
+func ToR[T any](v T) R {
+	return v
+}

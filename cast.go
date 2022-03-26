@@ -44,3 +44,19 @@ func C[U any](from Stream[R], to U) Stream[U] {
 
 	return toStream
 }
+
+func CC[U Comparable](from Stream[R], to U) ComparableStream[U] {
+	toCh := make(chan U, from.concurrency)
+
+	toStream := NewConcurrentStream(toCh, from.concurrency)
+
+	go func() {
+		defer close(toStream.stream)
+
+		for f := range from.stream {
+			toStream.stream <- interface{}(f).(U)
+		}
+	}()
+
+	return ComparableStream[U]{toStream}
+}

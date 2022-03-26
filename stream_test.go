@@ -214,16 +214,23 @@ func TestStream_FlatMap_Concurrent(t *testing.T) {
 
 	start := time.Now()
 
-	slowFlattening := func() StreamFunction[[]int, int] {
+	/*slowFlattening :=*/
+	func() StreamFunction[[]int, int] {
 		// slow down the execution to illustrate the performance improvement of the concurrent stream
 		time.Sleep(50 * time.Millisecond)
 		return FlattenTypedSlice[int](0)
 	}()
 
+	slowFlattening := func() StreamFunction[[]int, R] {
+		// slow down the execution to illustrate the performance improvement of the concurrent stream
+		time.Sleep(50 * time.Millisecond)
+		return FlattenSlice[int](0)
+	}()
+
 	unitStream.
 		Concurrent(concurrencyLevel).
-		FlatMapToInt(slowFlattening).
-		ForEach(func(i int) { result = append(result, i) })
+		FlatMap(slowFlattening).
+		ForEach(func(i R) { result = append(result, i.(int)) })
 
 	end := time.Now()
 

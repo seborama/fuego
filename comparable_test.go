@@ -13,32 +13,32 @@ func TestComparableStream_Max(t *testing.T) {
 	}{
 		"int": {
 			got: func() interface{} {
-				return NewStreamFromSlice([]int{1, -2, 3, 21, 5, 8, 13}, 0).
-					MapToInt(Identity[int]).
+				return CC(NewStreamFromSlice([]int{1, -2, 3, 21, 5, 8, 13}, 0).
+					Map(ToR[int]), Int).
 					Max()
 			},
 			want: 21,
 		},
 		"uint": {
 			got: func() interface{} {
-				return NewStreamFromSlice([]uint{1, 2, 3, 21, 5, 8, 13}, 0).
-					MapToUint(Identity[uint]).
+				return CC(NewStreamFromSlice([]uint{1, 2, 3, 21, 5, 8, 13}, 0).
+					Map(ToR[uint]), Uint).
 					Max()
 			},
 			want: uint(21),
 		},
 		"float32": {
 			got: func() interface{} {
-				return NewStreamFromSlice([]float32{1.1, -2.2, 3.3, 21.21, 5.5, 8.8, 13.12}, 0).
-					MapToFloat32(Identity[float32]).
+				return CC(NewStreamFromSlice([]float32{1.1, -2.2, 3.3, 21.21, 5.5, 8.8, 13.12}, 0).
+					Map(ToR[float32]), Float32).
 					Max()
 			},
 			want: float32(21.21),
 		},
 		"string": {
 			got: func() interface{} {
-				return NewStreamFromSlice([]string{"D", "K", "A", "Y", "M", "O"}, 0).
-					MapToString(Identity[string]).
+				return CC(NewStreamFromSlice([]string{"D", "K", "A", "Y", "M", "O"}, 0).
+					Map(ToR[string]), String).
 					Max()
 			},
 			want: "Y",
@@ -61,32 +61,32 @@ func TestComparableStream_Min(t *testing.T) {
 	}{
 		"int": {
 			got: func() interface{} {
-				return NewStreamFromSlice([]int{1, -2, 3, 21, 5, 8, 13}, 0).
-					MapToInt(Identity[int]).
+				return CC(NewStreamFromSlice([]int{1, -2, 3, 21, 5, 8, 13}, 0).
+					Map(ToR[int]), Int).
 					Min()
 			},
 			want: -2,
 		},
 		"uint": {
 			got: func() interface{} {
-				return NewStreamFromSlice([]uint{2, 1, 3, 21, 5, 8, 13}, 0).
-					MapToUint(Identity[uint]).
+				return CC(NewStreamFromSlice([]uint{2, 1, 3, 21, 5, 8, 13}, 0).
+					Map(ToR[uint]), Uint).
 					Min()
 			},
 			want: uint(1),
 		},
 		"float32": {
 			got: func() interface{} {
-				return NewStreamFromSlice([]float32{1.1, -2.2, 3.3, 21.21, 5.5, 8.8, 13.13}, 0).
-					MapToFloat32(Identity[float32]).
+				return CC(NewStreamFromSlice([]float32{1.1, -2.2, 3.3, 21.21, 5.5, 8.8, 13.13}, 0).
+					Map(ToR[float32]), Float32).
 					Min()
 			},
 			want: float32(-2.2),
 		},
 		"string": {
 			got: func() interface{} {
-				return NewStreamFromSlice([]string{"D", "K", "A", "Y", "M", "O"}, 0).
-					MapToString(Identity[string]).
+				return CC(NewStreamFromSlice([]string{"D", "K", "A", "Y", "M", "O"}, 0).
+					Map(ToR[string]), String).
 					Min()
 			},
 			want: "A",
@@ -109,32 +109,32 @@ func TestComparableStream_Sum(t *testing.T) {
 	}{
 		"int": {
 			got: func() interface{} {
-				return NewStreamFromSlice([]int{1, -2, 3, 21, 5, 8, 13}, 0).
-					MapToInt(Identity[int]).
+				return CC(NewStreamFromSlice([]int{1, -2, 3, 21, 5, 8, 13}, 0).
+					Map(ToR[int]), Int).
 					Sum()
 			},
 			want: 49,
 		},
 		"uint": {
 			got: func() interface{} {
-				return NewStreamFromSlice([]uint{2, 1, 3, 21, 5, 8, 13}, 0).
-					MapToUint(Identity[uint]).
+				return CC(NewStreamFromSlice([]uint{2, 1, 3, 21, 5, 8, 13}, 0).
+					Map(ToR[uint]), Uint).
 					Sum()
 			},
 			want: uint(53),
 		},
 		"float32": {
 			got: func() interface{} {
-				return NewStreamFromSlice([]float32{1.1, -2.2, 3.3, 21.21, 5.5, 8.8, 13.13}, 0).
-					MapToFloat32(Identity[float32]).
+				return CC(NewStreamFromSlice([]float32{1.1, -2.2, 3.3, 21.21, 5.5, 8.8, 13.13}, 0).
+					Map(ToR[float32]), Float32).
 					Sum()
 			},
 			want: float32(50.84),
 		},
 		"string": {
 			got: func() interface{} {
-				return NewStreamFromSlice([]string{"D", "K", "A", "Y", "M", "O"}, 0).
-					MapToString(Identity[string]).
+				return CC(NewStreamFromSlice([]string{"D", "K", "A", "Y", "M", "O"}, 0).
+					Map(ToR[string]), String).
 					Sum()
 			},
 			want: "DKAYMO",
