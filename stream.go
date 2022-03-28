@@ -106,22 +106,22 @@ func (s Stream[T]) Concurrent(n int) Stream[T] {
 	return NewConcurrentStream(s.stream, n)
 }
 
-// R is an alias for type `any`.
-type R any
+// Any is an alias for type `any`.
+type Any any
 
 // Map returns a Stream consisting of the result of
 // applying the given function to the elements of this stream.
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
-func (s Stream[T]) Map(mapper Function[T, R]) Stream[R] {
+func (s Stream[T]) Map(mapper Function[T, Any]) Stream[Any] {
 	return NewConcurrentStream(orderlyConcurrentDo(s, mapper), s.concurrency)
 }
 
 // orderlyConcurrentDo executes a Function on the stream.
 // Execution is concurrent and order is preserved.
 // See note on method Map() about the lack of support for parameterised methods in Go.
-func orderlyConcurrentDo[T any, U any](s Stream[T], fn Function[T, U]) chan U {
+func orderlyConcurrentDo[T, U any](s Stream[T], fn Function[T, U]) chan U {
 	outstream := make(chan U, cap(s.stream))
 
 	go func() {
@@ -166,13 +166,13 @@ func orderlyConcurrentDo[T any, U any](s Stream[T], fn Function[T, U]) chan U {
 //
 // This function streams continuously until the in-stream is closed at
 // which point the out-stream will be closed too.
-func (s Stream[T]) FlatMap(mapper StreamFunction[T, R]) Stream[R] {
+func (s Stream[T]) FlatMap(mapper StreamFunction[T, Any]) Stream[Any] {
 	return NewConcurrentStream(orderlyConcurrentDoStream(s, mapper), s.concurrency)
 }
 
 // orderlyConcurrentDoStream executes a StreamFunction on the stream.
 // Execution is concurrent and order is preserved.
-func orderlyConcurrentDoStream[T any, U any](s Stream[T], streamfn StreamFunction[T, U]) chan U {
+func orderlyConcurrentDoStream[T, U any](s Stream[T], streamfn StreamFunction[T, U]) chan U {
 	outstream := make(chan U, cap(s.stream))
 
 	go func() {
@@ -269,8 +269,8 @@ func (s Stream[T]) Reduce(f2 BiFunction[T, T, T]) T {
 //
 // This is a continuous terminal operation and hence expects the producer to close the stream
 // in order to complete.
-func (s Stream[T]) GroupBy(classifier Function[T, R]) map[R][]T {
-	resultMap := make(map[R][]T)
+func (s Stream[T]) GroupBy(classifier Function[T, Any]) map[Any][]T {
+	resultMap := make(map[Any][]T)
 
 	if s.stream != nil {
 		for val := range s.stream {
@@ -301,8 +301,8 @@ func (s Stream[T]) ForEach(c Consumer[T]) {
 }
 
 // StreamR returns this stream as a Stream[R].
-func (s Stream[T]) StreamR() Stream[R] {
-	rCh := make(chan R, cap(s.stream))
+func (s Stream[T]) StreamR() Stream[Any] {
+	rCh := make(chan Any, cap(s.stream))
 
 	r := NewConcurrentStream(rCh, s.concurrency)
 

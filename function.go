@@ -1,21 +1,21 @@
 package fuego
 
 // Function that accepts one argument and produces a result.
-type Function[T any, R any] func(T) R
+type Function[T, R any] func(T) R
 
 // BiFunction that accepts two arguments and produces a result.
-type BiFunction[T any, U any, R any] func(T, U) R
+type BiFunction[T, U, R any] func(T, U) R
 
 // StreamFunction that accepts one argument and produces a Stream[R].
 //
 // It is used with when "flat mapping" a `Stream`.
 // In effect, this is a one to many operation, such as exploding the individual values of a slice
 // into a Stream[R].
-type StreamFunction[T any, R any] func(T) Stream[R]
+type StreamFunction[T, R any] func(T) Stream[R]
 
 // FlattenSlice is a StreamFunction that flattens a []T slice to a Stream[R] of its elements.
-func FlattenSlice[T any](bufsize int) StreamFunction[[]T, R] {
-	return func(el []T) Stream[R] {
+func FlattenSlice[T any](bufsize int) StreamFunction[[]T, Any] {
+	return func(el []T) Stream[Any] {
 		return NewStreamFromSlice(el, bufsize).StreamR()
 	}
 }
@@ -59,6 +59,6 @@ func Identity[T any](v T) T {
 }
 
 // ToR is a basic Function that returns the original value passed to it, cast to an 'R' type.
-func ToR[T any](v T) R {
+func ToR[T any](v T) Any {
 	return v
 }

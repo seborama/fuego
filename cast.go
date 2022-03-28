@@ -7,7 +7,7 @@ package fuego
 // See doc.go for more details.
 //
 // See C for A typed cast.
-func SC[U any](from Stream[R], to Stream[U]) Stream[U] {
+func SC[U any](from Stream[Any], to Stream[U]) Stream[U] {
 	toCh := make(chan U, from.concurrency)
 	to.stream = toCh
 
@@ -29,7 +29,7 @@ func SC[U any](from Stream[R], to Stream[U]) Stream[U] {
 // See doc.go for more details.
 //
 // See SC for A Stream cast.
-func C[U any](from Stream[R], to U) Stream[U] {
+func C[U any](from Stream[Any], to U) Stream[U] {
 	toCh := make(chan U, from.concurrency)
 
 	toStream := NewConcurrentStream(toCh, from.concurrency)
@@ -50,7 +50,7 @@ func C[U any](from Stream[R], to U) Stream[U] {
 //
 // CC exists to address the current lack of support in Go for parameterised methods and a performance issue with Go 1.18.
 // See doc.go for more details.
-func CC[U Comparable](from Stream[R], to U) ComparableStream[U] {
+func CC[U Comparable](from Stream[Any], to U) ComparableStream[U] {
 	toCh := make(chan U, from.concurrency)
 
 	toStream := NewConcurrentStream(toCh, from.concurrency)
@@ -71,7 +71,7 @@ func CC[U Comparable](from Stream[R], to U) ComparableStream[U] {
 //
 // MC exists to address the current lack of support in Go for parameterised methods and a performance issue with Go 1.18.
 // See doc.go for more details.
-func MC[U Mathable](from Stream[R], to U) MathableStream[U] {
+func MC[U Mathable](from Stream[Any], to U) MathableStream[U] {
 	toCh := make(chan U, from.concurrency)
 
 	toStream := NewConcurrentStream(toCh, from.concurrency)

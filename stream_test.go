@@ -61,7 +61,7 @@ func TestSC(t *testing.T) {
 func TestStream_Map(t *testing.T) {
 	tt := map[string]struct {
 		stream Stream[int]
-		mapper Function[int, R]
+		mapper Function[int, Any]
 		want   []int
 	}{
 		"Should return an empty Stream": {
@@ -221,7 +221,7 @@ func TestStream_FlatMap_Concurrent(t *testing.T) {
 		return FlattenTypedSlice[int](0)
 	}()
 
-	slowFlattening := func() StreamFunction[[]int, R] {
+	slowFlattening := func() StreamFunction[[]int, Any] {
 		// slow down the execution to illustrate the performance improvement of the concurrent stream
 		time.Sleep(50 * time.Millisecond)
 		return FlattenSlice[int](0)
@@ -230,7 +230,7 @@ func TestStream_FlatMap_Concurrent(t *testing.T) {
 	unitStream.
 		Concurrent(concurrencyLevel).
 		FlatMap(slowFlattening).
-		ForEach(func(i R) { result = append(result, i.(int)) })
+		ForEach(func(i Any) { result = append(result, i.(int)) })
 
 	end := time.Now()
 
@@ -343,23 +343,23 @@ func TestStream_GroupBy(t *testing.T) {
 		stream chan int
 	}
 	type args struct {
-		classifier Function[int, R]
+		classifier Function[int, Any]
 	}
 	tt := map[string]struct {
 		fields fields
 		args   args
-		want   map[R][]int
+		want   map[Any][]int
 	}{
 		"Should return empty map when iterator with nil stream": {
 			fields: fields{
 				stream: nil,
 			},
 			args: args{
-				classifier: func(i int) R {
+				classifier: func(i int) Any {
 					return i & 1
 				},
 			},
-			want: map[R][]int{},
+			want: map[Any][]int{},
 		},
 		"Should return empty map when empty stream": {
 			fields: fields{
@@ -372,11 +372,11 @@ func TestStream_GroupBy(t *testing.T) {
 				}(),
 			},
 			args: args{
-				classifier: func(i int) R {
+				classifier: func(i int) Any {
 					return i & 1
 				},
 			},
-			want: map[R][]int{},
+			want: map[Any][]int{},
 		},
 		"Should group by odd / even numbers": {
 			fields: fields{
@@ -393,11 +393,11 @@ func TestStream_GroupBy(t *testing.T) {
 				}(),
 			},
 			args: args{
-				classifier: func(i int) R {
+				classifier: func(i int) Any {
 					return i & 1
 				},
 			},
-			want: map[R][]int{
+			want: map[Any][]int{
 				0: {2, 4},
 				1: {1, 3},
 			},
@@ -477,20 +477,20 @@ func TestStream_ForEach(t *testing.T) {
 	}
 }
 
-var float2int = func() Function[float32, R] {
-	return func(f float32) R {
+var float2int = func() Function[float32, Any] {
+	return func(f float32) Any {
 		return int(f)
 	}
 }()
 
-var int2string = func() Function[int, R] {
-	return func(i int) R {
+var int2string = func() Function[int, Any] {
+	return func(i int) Any {
 		return fmt.Sprintf("%d", i)
 	}
 }()
 
-var string2int = func() Function[string, R] {
-	return func(s string) R {
+var string2int = func() Function[string, Any] {
+	return func(s string) Any {
 		i, err := strconv.Atoi(s)
 		if err != nil {
 			panic(err)
@@ -499,14 +499,14 @@ var string2int = func() Function[string, R] {
 	}
 }()
 
-var functionTimesTwo = func() Function[int, R] {
-	return func(i int) R {
+var functionTimesTwo = func() Function[int, Any] {
+	return func(i int) Any {
 		return 2 * i
 	}
 }()
 
-var functionSlowTimesTwo = func() Function[int, R] {
-	return func(i int) R {
+var functionSlowTimesTwo = func() Function[int, Any] {
+	return func(i int) Any {
 		time.Sleep(50 * time.Millisecond)
 		return 2 * i
 	}
