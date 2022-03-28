@@ -135,28 +135,32 @@ Set environment variable `FUEGO_LOG_LEVEL` to enable logging to the desired leve
 ## [Example Stream](#example-stream)
 
 ```go
-    strs := []int{
-        "a",
-        "bb",
-        "cc",
-        "ddd",
-    }
+strs := []int{
+    "a",
+    "b",
+    "bb",
+    "bb",
+    "cc",
+    "ddd",
+}
     
-    // TODO: this example needs updating for v11
-    NewStreamFromSlice[string](strs, 100).
-        Filter(isEntryString).
-        Distinct().
-        Collect(
-            GroupingBy(
-                stringLength,
-                Mapping(
-                    stringToUpper,
-                    Filtering(
-                        stringLengthGreaterThan(1),
-                        ToEntrySlice()))))
-    }
+Collect(
+  NewStreamFromSlice[string](strs, 100).
+    Filter(isString).
+    Distinct(stringHash),
+  GroupingBy(
+    stringLength,
+    Mapping(
+      stringToUpper,
+      Filtering(
+        stringLengthGreaterThan(1),
+        ToSlice[string](),
+      ),
+    ),
+  ),
+)
 
-    // result: map[1:[] 2:[BB CC] 3:[DDD]]
+// result: map[1:[] 2:[BB CC] 3:[DDD]]
 ```
 
 [(toc)](#table-of-content)
@@ -300,38 +304,20 @@ ___ƒuego___ includes a casting function that reduces the visually leftward-grow
 while preserving a natural functional flow expression:
 
 ```go
-C(C(C(s.
-  Map(float2int_), Int).
-  Map(int2string_), String).
-  Map(string2int_), Int).
-  ForEach(print[int])
+C(C(C(
+  s.
+    Map(float2int_), Int).
+    Map(int2string_), String).
+    Map(string2int_), Int).
+    ForEach(print[int])
 // This is actually performing: s.Map(float2int).Map(int2string).Map(string2int).ForEach(print)
 ```
 
-While not perfect, this is the best compromise I have obtained thus far.
-
-To aid with a better experience, `Stream` exposes specialist mappers for Go native types (full list in [mapto.go](mapto.go)):
-
-- MapToBool
-- MapToInt*
-- MapToUint*
-- MapToString
-- MapToS* (for slice of types)
-- ...
-
-The above example with the `C` cast function can be simplified to:
-
-```go
-Stream[float32]{}.
-  MapToInt(float2int).
-  MapToString(int2string).
-  MapToInt(string2int).
-  ForEach(print[int]) // Stream[int] also has .Max(), .Min(), etc
-```
+While not perfect, this is the best workable compromise I have obtained thus far.
 
 [(toc)](#table-of-content)
 
-### Performance issues with numerous parameterised methods in Go 1.18
+### Performance issues when using numerous parameterised methods in Go 1.18
 
 As a result of this [issue](https://github.com/golang/go/issues/51957), an experiment to add `MapTo<native_type>() Stream[<native_type>]` is disabled.
 
