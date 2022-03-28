@@ -55,3 +55,100 @@ func TestCollector_GroupingBy_Mapping_Filtering_ToEntrySlice(t *testing.T) {
 
 	assert.EqualValues(t, expected, got)
 }
+
+func TestCollector_Filtering(t *testing.T) {
+	employees := getEmployeesSample()
+
+	highestPaidEmployeesByDepartment :=
+		Collect(
+			NewStreamFromSlice(employees, 0),
+			GroupingBy(employee.Department,
+				Filtering(func(e employee) bool {
+					return e.Salary() > 2000
+				},
+					ToSlice[employee]())))
+
+	expected := map[string][]employee{
+		"HR": {
+			{
+				id:         5,
+				name:       "Five",
+				department: "HR",
+				salary:     2300,
+			}},
+		"IT": {
+			{
+				id:         2,
+				name:       "Two",
+				department: "IT",
+				salary:     2500,
+			},
+			{
+				id:         3,
+				name:       "Three",
+				department: "IT",
+				salary:     2200,
+			}},
+		"Marketing": {},
+	}
+
+	assert.EqualValues(t, expected, highestPaidEmployeesByDepartment)
+}
+
+type employee struct {
+	id         uint32
+	name       string
+	department string
+	salary     float32
+}
+
+func (e employee) ID() uint32 {
+	return e.id
+}
+
+func (e employee) Name() string {
+	return e.name
+}
+
+func (e employee) Department() string {
+	return e.department
+}
+
+func (e employee) Salary() float32 {
+	return e.salary
+}
+
+func getEmployeesSample() []employee {
+	return []employee{
+		{
+			id:         1,
+			name:       "One",
+			department: "Marketing",
+			salary:     1500,
+		},
+		{
+			id:         2,
+			name:       "Two",
+			department: "IT",
+			salary:     2500,
+		},
+		{
+			id:         3,
+			name:       "Three",
+			department: "IT",
+			salary:     2200,
+		},
+		{
+			id:         4,
+			name:       "Four",
+			department: "HR",
+			salary:     1800,
+		},
+		{
+			id:         5,
+			name:       "Five",
+			department: "HR",
+			salary:     2300,
+		},
+	}
+}
