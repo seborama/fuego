@@ -19,27 +19,9 @@ package fuego
 // implement you own requirement functionally! Focus on *what* needs to be done in your streams (and
 // delegate the details of the *how* to the implementation of your `Collector`).
 //
-// Example:
-//
-//  strs := []string{
-//      "a",
-//      "bb",
-//      "cc",
-//      "ddd",
-//  }
-//
-//  NewStreamFromSlice[string](strs, 1e3).
-//      Collect(
-//          GroupingBy(
-//              stringLength,
-//              Mapping(
-//                  stringToUpper,
-//                  ToEntryMap())))
-//  // Result: map[1:[A] 2:[BB CC] 3:[DDD]]
-//
 // Type T: type of input elements to the reduction operation
 // Type A: mutable accumulation type of the reduction operation (often hidden as an implementation detail)
-// Type R: result type of the reduction operation
+// Type R: result type of the reduction operation.
 type Collector[T, A, R any] struct {
 	supplier    Supplier[A]
 	accumulator BiFunction[A, T, A]
@@ -86,10 +68,12 @@ func GroupingBy[T any, K comparable, A, D any](classifier Function[T, K], downst
 
 	accumulator := func(supply map[K]A, element T) map[K]A {
 		key := classifier(element)
+
 		container, ok := supply[key]
 		if !ok {
 			container = downstream.supplier()
 		}
+
 		container = downstream.accumulator(container, element)
 		supply[key] = container
 
@@ -105,6 +89,7 @@ func GroupingBy[T any, K comparable, A, D any](classifier Function[T, K], downst
 		for k, v := range e {
 			m[k] = downstream.finisher(v)
 		}
+
 		return m
 	}
 
@@ -124,26 +109,27 @@ func Mapping[T, U, A, R any](mapper Function[T, U], downstream Collector[U, A, R
 	return NewCollector(supplier, accumulator, finisher)
 }
 
-// // FlatMapping adapts the Entries a Collector accepts to another type
-// // by applying a flat mapping function which maps input elements to a
-// // `Stream`.
-// func FlatMapping(mapper StreamFunction, collector Collector) Collector {
-// 	supplier := collector.supplier
+// FlatMapping adapts the Entries a Collector accepts to another type by
+// applying a flat mapping function which maps input elements to a `Stream`.
+func FlatMapping[U, T, A, R any](mapper StreamFunction[T, U], collector Collector[U, A, R]) Collector[T, A, R] {
+	supplier := collector.supplier
 
-// 	accumulator := func(supplierA Entry, entry Entry) Entry {
-// 		container := supplierA
-// 		stream := mapper(entry)
-// 		stream.ForEach(
-// 			func(e Entry) {
-// 				container = collector.accumulator(container, e)
-// 			})
-// 		return container
-// 	}
+	accumulator := func(supplierA A, entry T) A {
+		container := supplierA
+		stream := mapper(entry)
 
-// 	finisher := collector.finisher
+		stream.ForEach(
+			func(e U) {
+				container = collector.accumulator(container, e)
+			})
 
-// 	return NewCollector(supplier, accumulator, finisher)
-// }
+		return container
+	}
+
+	finisher := collector.finisher
+
+	return NewCollector(supplier, accumulator, finisher)
+}
 
 // Filtering filters the entries a Collector accepts to a subset that satisfy the given predicate.
 func Filtering[T, A, R any](predicate Predicate[T], collector Collector[T, A, R]) Collector[T, A, R] {
@@ -153,6 +139,7 @@ func Filtering[T, A, R any](predicate Predicate[T], collector Collector[T, A, R]
 		if predicate(entry) {
 			return collector.accumulator(supplier, entry)
 		}
+
 		return supplier
 	}
 
@@ -161,73 +148,31 @@ func Filtering[T, A, R any](predicate Predicate[T], collector Collector[T, A, R]
 	return NewCollector(supplier, accumulator, finisher)
 }
 
-// // Reducing returns a collector that performs a reduction of
-// // its input elements using the provided BiFunction.
-// func Reducing(f2 BiFunction) Collector {
-// 	supplier := func() Entry { // TODO: use chan Entry instead with a finisher that converts to slice?
-// 		return Tuple2{E1: EntryBool(false), E2: nil}
-// 	}
+// Reducing returns a collector that performs a reduction of
+// its input elements using the provided BiFunction.
+func Reducing[T any](f2 BiFunction[T, T, T]) Collector[T, Optional[T], T] {
+	supplier := func() Optional[T] {
+		return OptionalEmpty[T]()
+	}
 
-// 	accumulator := func(supplierA Entry, entry Entry) Entry {
-// 		present := supplierA.(Tuple2).E1.(EntryBool)
-// 		result := supplierA.(Tuple2).E2
+	accumulator := func(supplierA Optional[T], entry T) Optional[T] {
+		result := entry
 
-// 		if present {
-// 			result = f2(result, entry)
-// 		} else {
-// 			present = true
-// 			result = entry
-// 		}
-// 		return Tuple2{E1: present, E2: result}
-// 	}
+		supplierA.IfPresent(func(val T) { result = f2(val, entry) })
 
-// 	finisher := func(e Entry) Entry {
-// 		return e.(Tuple2).E2
-// 	}
+		return OptionalOf(result)
+	}
 
-// 	return NewCollector(supplier, accumulator, finisher)
-// }
+	finisher := func(e Optional[T]) T {
+		return e.Get()
+	}
 
-// // ToEntryMap returns a collector that accumulates the input
-// // entries into an EntryMap.
-// func ToEntryMap(keyMapper, valueMapper Function) Collector {
-// 	supplier := func() Entry { // TODO: use chan Entry instead with a finisher that converts to map?
-// 		return EntryMap{}
-// 	}
-
-// 	accumulator := func(supplier, entry Entry) Entry {
-// 		key := keyMapper(entry)
-// 		value := valueMapper(entry)
-// 		return supplier.(EntryMap).Merge(key, value, func(v1, v2 Entry) Entry { panic(fmt.Sprintf("%s: '%v'", PanicDuplicateKey, key)) })
-// 	}
-
-// 	finisher := IdentityFinisher
-
-// 	return NewCollector(supplier, accumulator, finisher)
-// }
-
-// // ToEntryMapWithKeyMerge returns a collector that accumulates the input
-// // entries into an EntryMap. Duplicate keys are managed by mergeFunction.
-// // See EntryMap.Merge() for details about the mergeFunction.
-// func ToEntryMapWithKeyMerge(keyMapper, valueMapper Function, mergeFunction BiFunction) Collector {
-// 	supplier := func() Entry { // TODO: use chan Entry instead with a finisher that converts to EntryMap?
-// 		return EntryMap{}
-// 	}
-
-// 	accumulator := func(supplier, entry Entry) Entry {
-// 		key := keyMapper(entry)
-// 		value := valueMapper(entry)
-// 		return supplier.(EntryMap).Merge(key, value, mergeFunction)
-// 	}
-
-// 	finisher := IdentityFinisher
-
-// 	return NewCollector(supplier, accumulator, finisher)
-// }
+	return NewCollector(supplier, accumulator, finisher)
+}
 
 // ToSlice returns a collector that accumulates the input entries into a Go slice.
 func ToSlice[T any]() Collector[T, []T, []T] {
-	supplier := func() []T { // TODO: use chan A instead with a finisher that converts to []A]?
+	supplier := func() []T { // TODO: use chan A instead with a finisher that converts to []A?
 		return []T{}
 	}
 

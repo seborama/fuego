@@ -1,6 +1,7 @@
 package fuego
 
 import (
+	"hash/crc32"
 	"strings"
 	"testing"
 
@@ -93,6 +94,71 @@ func TestCollector_Filtering(t *testing.T) {
 	}
 
 	assert.EqualValues(t, expected, highestPaidEmployeesByDepartment)
+}
+
+func TestCollector_GroupingBy_Mapping_FlatMapping_Filtering_Mapping_Reducing(t *testing.T) {
+	stringLength :=
+		func(e string) int {
+			return len(e)
+		}
+
+	toStringList :=
+		func(e string) []string {
+			r := []string{}
+			for _, c := range e {
+				r = append(r, string(c))
+			}
+			return r
+		}
+
+	flattenStringListToDistinct :=
+		func(e []string) Stream[string] {
+			return NewStreamFromSlice(e, 0).
+				Distinct(func(s string) uint32 { return crc32.ChecksumIEEE([]byte(s)) })
+		}
+
+	stringToUpper :=
+		func(e string) string {
+			return strings.ToUpper(e)
+		}
+
+	concatenateStringsBiFunc := func(i, j string) string {
+		iStr := i
+		jStr := j
+		return iStr + jStr
+	}
+
+	strs := []string{
+		"a",
+		"bb",
+		"cc",
+		"ee",
+		"ddd",
+	}
+
+	got :=
+		Collect(
+			NewStreamFromSlice(strs, 0),
+			GroupingBy(
+				stringLength,
+				Mapping(
+					toStringList,
+					FlatMapping(flattenStringListToDistinct,
+						Mapping(stringToUpper,
+							Reducing(concatenateStringsBiFunc),
+						),
+					),
+				),
+			),
+		)
+
+	expected := map[int]string{
+		1: "A",
+		2: "BCE",
+		3: "D",
+	}
+
+	assert.EqualValues(t, expected, got)
 }
 
 type employee struct {

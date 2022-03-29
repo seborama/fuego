@@ -1,7 +1,7 @@
 package fuego
 
 // Predicate represents a predicate (boolean-valued function) of one argument.
-// Could also be: `type Predicate[T any] Function[T, bool]`
+// Could also be: `type Predicate[T any] Function[T, bool]`.
 type Predicate[T any] func(t T) bool
 
 // And is a composed predicate that represents a short-circuiting logical
@@ -11,6 +11,7 @@ func (p Predicate[T]) And(other Predicate[T]) Predicate[T] {
 		if p == nil || other == nil {
 			return False[T]()(t)
 		}
+
 		return p(t) && other(t)
 	}
 }
@@ -22,9 +23,11 @@ func (p Predicate[T]) Or(other Predicate[T]) Predicate[T] {
 		if p == nil {
 			p = False[T]()
 		}
+
 		if other == nil {
 			return p(t)
 		}
+
 		return p(t) || other(t)
 	}
 }

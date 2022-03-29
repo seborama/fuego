@@ -16,10 +16,10 @@ generate: deps
 	go build -o bin/maptoXXX ./generate/maptoXXX.go
 	go generate
 
-# .PHONY: lint
-# lint: deps
-# 	@echo "=~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~="
-# 	./golangci-lint.sh
+.PHONY: lint
+lint: deps
+	@echo "=~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~="
+	./golangci-lint.sh
 
 # .PHONY: mutations
 # mutations: deps

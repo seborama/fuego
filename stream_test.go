@@ -2,6 +2,7 @@ package fuego
 
 import (
 	"fmt"
+	"hash/crc32"
 	"strconv"
 	"testing"
 	"time"
@@ -339,63 +340,45 @@ func TestStream_LeftReduce(t *testing.T) {
 }
 
 func TestStream_GroupBy(t *testing.T) {
-	type fields struct {
-		stream chan int
-	}
-	type args struct {
-		classifier Function[int, Any]
-	}
 	tt := map[string]struct {
-		fields fields
-		args   args
-		want   map[Any][]int
+		stream     chan int
+		classifier Function[int, Any]
+		want       map[Any][]int
 	}{
 		"Should return empty map when iterator with nil stream": {
-			fields: fields{
-				stream: nil,
-			},
-			args: args{
-				classifier: func(i int) Any {
-					return i & 1
-				},
+			stream: nil,
+			classifier: func(i int) Any {
+				return i & 1
 			},
 			want: map[Any][]int{},
 		},
 		"Should return empty map when empty stream": {
-			fields: fields{
-				stream: func() chan int {
-					c := make(chan int)
-					go func() {
-						defer close(c)
-					}()
-					return c
-				}(),
-			},
-			args: args{
-				classifier: func(i int) Any {
-					return i & 1
-				},
+			stream: func() chan int {
+				c := make(chan int)
+				go func() {
+					defer close(c)
+				}()
+				return c
+			}(),
+			classifier: func(i int) Any {
+				return i & 1
 			},
 			want: map[Any][]int{},
 		},
 		"Should group by odd / even numbers": {
-			fields: fields{
-				stream: func() chan int {
-					c := make(chan int)
-					go func() {
-						defer close(c)
-						c <- 1
-						c <- 2
-						c <- 3
-						c <- 4
-					}()
-					return c
-				}(),
-			},
-			args: args{
-				classifier: func(i int) Any {
-					return i & 1
-				},
+			stream: func() chan int {
+				c := make(chan int)
+				go func() {
+					defer close(c)
+					c <- 1
+					c <- 2
+					c <- 3
+					c <- 4
+				}()
+				return c
+			}(),
+			classifier: func(i int) Any {
+				return i & 1
 			},
 			want: map[Any][]int{
 				0: {2, 4},
@@ -408,10 +391,10 @@ func TestStream_GroupBy(t *testing.T) {
 
 		t.Run(name, func(t *testing.T) {
 			rp := Stream[int]{
-				stream: tc.fields.stream,
+				stream: tc.stream,
 			}
 
-			got := rp.GroupBy(tc.args.classifier)
+			got := rp.GroupBy(tc.classifier)
 			if !cmp.Equal(tc.want, got) {
 				t.Error(cmp.Diff(tc.want, got))
 			}
@@ -473,6 +456,141 @@ func TestStream_ForEach(t *testing.T) {
 			s.ForEach(tc.consumer(&callCount, &total))
 			assert.Equal(t, tc.want.count, callCount)
 			assert.Equal(t, tc.want.total, total)
+		})
+	}
+}
+
+func TestStream_ToSlice(t *testing.T) {
+	tt := map[string]struct {
+		stream chan int
+		want   []int
+	}{
+		"Should produce an empty stream when in-stream is nil": {
+			stream: nil,
+			want:   []int{},
+		},
+		"Should produce an empty stream when in-stream is empty": {
+			stream: func() chan int {
+				c := make(chan int)
+				go func() { defer close(c) }()
+				return c
+			}(),
+			want: []int{},
+		},
+		"Should produce a flat stream when in-stream is not empty": {
+			stream: func() chan int {
+				c := make(chan int)
+				go func() {
+					defer close(c)
+					c <- 1
+					c <- 2
+					c <- 3
+				}()
+				return c
+			}(),
+			want: []int{
+				1,
+				2,
+				3,
+			},
+		},
+	}
+
+	for name, tc := range tt {
+		tc := tc
+		t.Run(name, func(t *testing.T) {
+			s := Stream[int]{
+				stream: tc.stream,
+			}
+			got := s.ToSlice()
+			assert.EqualValues(t, tc.want, got)
+		})
+	}
+}
+
+func TestStream_DistinctPanicsWhenNilChannel(t *testing.T) {
+	assert.PanicsWithValue(t, PanicMissingChannel, func() { Stream[string]{stream: nil}.Distinct(func(string) uint32 { return 0 }) })
+}
+
+func TestStream_Distinct(t *testing.T) {
+	data5 := []any{
+		1,
+		"two",
+		true,
+		4,
+		"five",
+	}
+
+	data10 := []any{
+		1,
+		"five",
+		"two",
+		1,
+		"five",
+		"five",
+		true,
+		4,
+		false,
+		"five",
+	}
+
+	generateStream := func(data []any) chan any {
+		c := make(chan any, 200)
+		go func() {
+			defer close(c)
+			for _, e := range data {
+				c <- e
+			}
+		}()
+		return c
+	}
+
+	tt := map[string]struct {
+		stream chan any
+		want   []any
+	}{
+		"Should return same values when the in-stream has distinct values": {
+			stream: generateStream(data5),
+			want:   data5,
+		},
+		"Should return distinct values when the in-stream has repeat values": {
+			stream: generateStream(data10),
+			want: []any{
+				1,
+				"five",
+				"two",
+				true,
+				4,
+				false,
+			},
+		},
+	}
+
+	hashFn := func(t any) uint32 {
+		switch tp := t.(type) {
+		case bool:
+			if tp {
+				return 1
+			}
+			return 0
+		case int:
+			return crc32.ChecksumIEEE([]byte(strconv.Itoa(tp)))
+		case string:
+			return crc32.ChecksumIEEE([]byte(tp))
+		default:
+			panic("unknown type")
+		}
+	}
+
+	for name, tc := range tt {
+		tc := tc
+
+		t.Run(name, func(t *testing.T) {
+			s := Stream[any]{
+				stream: tc.stream,
+			}
+			got := s.Distinct(hashFn).ToSlice()
+			assert.EqualValues(t, tc.want, got)
 		})
 	}
 }

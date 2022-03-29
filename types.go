@@ -21,6 +21,7 @@ const (
 )
 
 // Useful variables that represent native go types.
+// nolint: gochecknoglobals
 var (
 	SBool       = []bool{}
 	SInt        = []int{}
@@ -41,6 +42,7 @@ var (
 )
 
 // Useful variables that represent native go types.
+// nolint: gochecknoglobals
 var (
 	BoolPtr       = ptr(Bool)
 	IntPtr        = ptr(Int)
@@ -61,6 +63,7 @@ var (
 )
 
 // Useful variables that represent native go types.
+// nolint: gochecknoglobals
 var (
 	SBoolPtr       = []*bool{}
 	SIntPtr        = []*int{}
@@ -81,7 +84,7 @@ var (
 )
 
 // Comparable is a constraint that matches any type that supports the operators:
-// >= <= > < == !=
+// >= <= > < == != .
 type Comparable interface {
 	~int | ~int8 | ~int16 | ~int32 | ~int64 |
 		~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 |

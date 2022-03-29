@@ -6,6 +6,10 @@ type Function[T, R any] func(T) R
 // BiFunction that accepts two arguments and produces a result.
 type BiFunction[T, U, R any] func(T, U) R
 
+// BinaryOperator that accepts two arguments of the same type and produces a result of the same type.
+// This is a special case of BiFunction.
+type BinaryOperator[T any] func(T, T) T
+
 // StreamFunction that accepts one argument and produces a Stream[R].
 //
 // It is used with when "flat mapping" a `Stream`.
@@ -16,7 +20,7 @@ type StreamFunction[T, R any] func(T) Stream[R]
 // FlattenSlice is a StreamFunction that flattens a []T slice to a Stream[R] of its elements.
 func FlattenSlice[T any](bufsize int) StreamFunction[[]T, Any] {
 	return func(el []T) Stream[Any] {
-		return NewStreamFromSlice(el, bufsize).StreamR()
+		return NewStreamFromSlice(el, bufsize).StreamAny()
 	}
 }
 
@@ -32,6 +36,7 @@ func Max[T Comparable](a, b T) T {
 	if a > b {
 		return a
 	}
+
 	return b
 }
 
@@ -40,6 +45,7 @@ func Min[T Comparable](a, b T) T {
 	if a < b {
 		return a
 	}
+
 	return b
 }
 

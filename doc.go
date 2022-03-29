@@ -1,4 +1,4 @@
-// package fuego provides various functional facilities.
+// Package fuego provides various functional facilities.
 //
 //////////////////
 // Important note:

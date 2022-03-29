@@ -20,6 +20,7 @@ type Logger interface {
 // init initialises zap's global loggers (i.e. zap.L() and zap.S().
 // Log level is retrieved from environment variable LOB_LEVEL, defaulting to "info" otherwise.
 // To activate this facility, add a blank import to this package.
+// nolint: gochecknoinits
 func init() {
 	level := os.Getenv("FUEGO_LOG_LEVEL")
 	if level == "" {

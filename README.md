@@ -212,7 +212,7 @@ Streams:
 
 Functional Types:
 
-- Maybe
+- Optional
 - Tuple
 - Predicate:
   - True

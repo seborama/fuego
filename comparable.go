@@ -1,5 +1,6 @@
 package fuego
 
+// ComparableStream is a stream of Comparable type.
 type ComparableStream[T Comparable] struct {
 	Stream[T]
 }

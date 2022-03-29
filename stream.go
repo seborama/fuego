@@ -3,6 +3,8 @@ package fuego
 //go:generate ./bin/maptoXXX
 
 import (
+	"fmt"
+
 	"go.uber.org/zap"
 )
 
@@ -58,6 +60,7 @@ func NewStreamFromSlice[T any](slice []T, bufsize int) Stream[T] {
 
 	go func() {
 		defer close(c) // slices have finite size: close stream after all data was read.
+
 		for _, element := range slice {
 			c <- element
 		}
@@ -139,6 +142,7 @@ func orderlyConcurrentDo[T, U any](s Stream[T], fn Function[T, U]) chan U {
 			for val := range s.stream {
 				resultCh := make(chan U, 1)
 				pipelineWCh <- resultCh
+
 				go func(resultCh chan<- U, val T) {
 					defer close(resultCh)
 					resultCh <- fn(val)
@@ -190,6 +194,7 @@ func orderlyConcurrentDoStream[T, U any](s Stream[T], streamfn StreamFunction[T,
 			for val := range s.stream {
 				resultCh := make(chan Stream[U], 1)
 				pipelineWCh <- resultCh
+
 				go func(resultCh chan<- Stream[U], val T) {
 					defer close(resultCh)
 					resultCh <- streamfn(val)
@@ -246,7 +251,7 @@ func (s Stream[T]) Filter(predicate Predicate[T]) Stream[T] {
 func (s Stream[T]) LeftReduce(f2 BiFunction[T, T, T]) T {
 	if s.stream == nil {
 		var t T
-		return t // TODO: return Maybe
+		return t // TODO: return Optional
 	}
 
 	res := <-s.stream
@@ -275,9 +280,11 @@ func (s Stream[T]) GroupBy(classifier Function[T, Any]) map[Any][]T {
 	if s.stream != nil {
 		for val := range s.stream {
 			k := classifier(val)
+
 			if interface{}(resultMap[k]) == nil {
 				resultMap[k] = []T{}
 			}
+
 			resultMap[k] = append(resultMap[k], val)
 		}
 	}
@@ -300,8 +307,61 @@ func (s Stream[T]) ForEach(c Consumer[T]) {
 	}
 }
 
-// StreamR returns this stream as a Stream[R].
-func (s Stream[T]) StreamR() Stream[Any] {
+// ToSlice extracts the elements of the stream into a []T.
+//
+// This is a special case of a reduction.
+//
+// This is a continuous terminal operation and hence expects
+// the producer to close the stream in order to complete (or
+// it will block).
+func (s Stream[T]) ToSlice() []T {
+	result := []T{}
+
+	if s.stream != nil {
+		for val := range s.stream {
+			result = append(result, val)
+		}
+	}
+
+	return result
+}
+
+// Distinct returns a stream of the distinct elements of this stream.
+// Distinctiveness is determined via the provided hashFn.
+//
+// This operation is costly both in time and in memory. It is
+// strongly recommended to use buffered channels for this operation.
+//
+// This function streams continuously until the in-stream is closed at
+// which point the out-stream will be closed too.
+func (s Stream[T]) Distinct(hashFn func(T) uint32) Stream[T] {
+	if s.stream == nil {
+		panic(PanicMissingChannel)
+	}
+
+	outstream := make(chan T, cap(s.stream))
+
+	go func() {
+		defer close(outstream)
+
+		unique := map[string]struct{}{}
+
+		for val := range s.stream {
+			// hash is prefixed with the type in case T is an interface implemented by 2 or more types
+			// that are present on the stream.
+			uniqueHash := fmt.Sprintf("%T%d", val, hashFn(val))
+			if _, ok := unique[uniqueHash]; !ok {
+				unique[uniqueHash] = struct{}{}
+				outstream <- val
+			}
+		}
+	}()
+
+	return NewConcurrentStream(outstream, s.concurrency)
+}
+
+// StreamAny returns this stream as a Stream[R].
+func (s Stream[T]) StreamAny() Stream[Any] {
 	rCh := make(chan Any, cap(s.stream))
 
 	r := NewConcurrentStream(rCh, s.concurrency)
