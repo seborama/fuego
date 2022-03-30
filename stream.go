@@ -360,7 +360,7 @@ func (s Stream[T]) Distinct(hashFn func(T) uint32) Stream[T] {
 	return NewConcurrentStream(outstream, s.concurrency)
 }
 
-// StreamAny returns this stream as a Stream[R].
+// StreamAny returns this stream as a Stream[Any].
 func (s Stream[T]) StreamAny() Stream[Any] {
 	rCh := make(chan Any, cap(s.stream))
 

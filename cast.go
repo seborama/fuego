@@ -1,6 +1,6 @@
 package fuego
 
-// SC is a typed Stream cast function from a non-parameterised Stream[R] to a parameterised Stream[U].
+// SC is a typed Stream cast function from a non-parameterised Stream[Any] to a parameterised Stream[U].
 // SC receives a typed Stream[U].
 //
 // SC exists to address the current lack of support in Go for parameterised methods.
@@ -22,7 +22,7 @@ func SC[U any](from Stream[Any], to Stream[U]) Stream[U] {
 	return to
 }
 
-// C is a typed cast function from a non-parameterised Stream[R] to a parameterised type Stream[U].
+// C is a typed cast function from a non-parameterised Stream[Any] to a parameterised type Stream[U].
 // C receives a type U and creates a Stream[U].
 //
 // C exists to address the current lack of support in Go for parameterised methods.
@@ -45,7 +45,7 @@ func C[U any](from Stream[Any], to U) Stream[U] {
 	return toStream
 }
 
-// CC is a typed cast function from a non-parameterised Stream[R] to a parameterised type ComparableStream[U].
+// CC is a typed cast function from a non-parameterised Stream[Any] to a parameterised type ComparableStream[U].
 // CC receives a type U and creates a ComparableStream[U].
 //
 // CC exists to address the current lack of support in Go for parameterised methods and a performance issue with Go 1.18.
@@ -66,7 +66,7 @@ func CC[U Comparable](from Stream[Any], to U) ComparableStream[U] {
 	return ComparableStream[U]{toStream}
 }
 
-// MC is a typed cast function from a non-parameterised Stream[R] to a parameterised type MathableStream[U].
+// MC is a typed cast function from a non-parameterised Stream[Any] to a parameterised type MathableStream[U].
 // MC receives a type U and creates a MathableStream[U].
 //
 // MC exists to address the current lack of support in Go for parameterised methods and a performance issue with Go 1.18.

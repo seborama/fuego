@@ -17,7 +17,7 @@ type BinaryOperator[T any] func(T, T) T
 // into a Stream[R].
 type StreamFunction[T, R any] func(T) Stream[R]
 
-// FlattenSlice is a StreamFunction that flattens a []T slice to a Stream[R] of its elements.
+// FlattenSlice is a StreamFunction that flattens a []T slice to a Stream[Any] of its elements.
 func FlattenSlice[T any](bufsize int) StreamFunction[[]T, Any] {
 	return func(el []T) Stream[Any] {
 		return NewStreamFromSlice(el, bufsize).StreamAny()
@@ -64,7 +64,7 @@ func Identity[T any](v T) T {
 	return v
 }
 
-// ToR is a basic Function that returns the original value passed to it, cast to an 'R' type.
-func ToR[T any](v T) Any {
+// ToAny is a basic Function that returns the original value passed to it, cast to an 'Any' type.
+func ToAny[T any](v T) Any {
 	return v
 }

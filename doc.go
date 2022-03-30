@@ -16,7 +16,7 @@
 // Example: "Map(Map(stream,f1),f2)" instead of "stream.Map(f1).Map(f2)".
 //
 // A syntactically lighter approach is provided with `SC`` and `C``.
-// See functions `SC`` and `C `for casting Stream[R] to a typed Stream[T any].
+// See functions `SC`` and `C `for casting Stream[Any] to a typed Stream[T any].
 //
 // Go 1.18 suffers from a performance issue:
 //
