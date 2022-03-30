@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="doc/fuego_logo.png" alt="ƒuego logo" height="300">
+  <img src="doc/fuego_logo.png" alt="ƒuego logo" height="200">
 </p>
 
 <h3 align="center">
@@ -27,12 +27,11 @@
   </a>
 </p>
 
-<p align="left">
-  <img src="doc/fuego_code.png" alt="ƒuego example" width="654">
-</p>
-
-<p align="right">
-  <img src="doc/fuego_code_employees.png" alt="ƒuego example" width="654">
+<p>
+  <a style="vertical-align:middle; display:inline-block;">
+  <img src="doc/fuego_code.png" alt="ƒuego example" width="440">
+  <img align="right" src="doc/fuego_code_employees.png" alt="ƒuego example" width="360">
+  </a>
 </p>
 
 ## Table of content
@@ -206,24 +205,19 @@ TODO: update as necessary for v11.
 Streams:
 
 - Stream
-- IntStream
-- FloatStream
-- CStream - concurrent implementation of Stream
+- ComparableStream
+- MathableStream
 
 Functional Types:
 
 - Optional
-- Tuple
-- Predicate:
-  - True
-  - False
+- Predicate
 
 Functions:
 
 - Consumer / BiConsumer
 - Function / BiFunction
 - StreamFunction
-- Predicate
 
 Collectors:
 
@@ -232,9 +226,7 @@ Collectors:
 - FlatMapping
 - Filtering
 - Reducing
-- ToEntrySlice
-- ToEntryMap
-- ToEntryMapWithKeyMerge
+- ToSlice
 
 Check the [godoc](https://pkg.go.dev/github.com/seborama/fuego/v11) for full details.
 
@@ -274,7 +266,7 @@ Collectors also provide a few functional methods.
 
 But... what if you need something else? And it is not straightforward or readable when combining the existing methods ___ƒuego___ offers?
 
-Enters `Collector`: implement you own requirement functionally!
+Enters `Collector`: implement your own requirement functionally!
 <br/>
 Focus on _**what**_ needs doing in your streams (and delegate the details of the _**how**_ to the implementation of your `Collector`).
 
@@ -300,8 +292,7 @@ ReStream(
   Stream[string]{}).Map(int2string)
 // This is actually performing: Stream.Map(float2int).Map(int2string)
 ```
-___ƒuego___ includes a casting function that reduces the visually leftward-growing chain of decorators
-while preserving a natural functional flow expression:
+___ƒuego___ includes a set of casting functions that reduce the visually leftward-growing chain of decorators while preserving a natural functional flow expression:
 
 ```go
 C(C(C(

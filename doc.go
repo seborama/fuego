@@ -8,8 +8,8 @@
 // https://go.googlesource.com/proposal/+/master/design/43651-type-parameters.md#no-parameterized-methods
 //
 // The below construct is not currently possible:
-// func (s Stream[T]) Map[R any](mapper Function[T, R]) Stream[R] {...}
-//                       ^^^^^^^ no!
+//  func (s Stream[T]) Map[R any](mapper Function[T, R]) Stream[R] {...}
+//                        ^^^^^^^ no!
 //
 // One option would be to make `Map` a function rather than a method but constructs would be chained
 // right-to-left rather than left-to-right, which I think is awkward.
