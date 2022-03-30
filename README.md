@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  <a href="https://pkg.go.dev/github.com/seborama/fuego/v10">
+  <a href="https://pkg.go.dev/github.com/seborama/fuego/v11">
     <img src="https://img.shields.io/badge/godoc-reference-blue.svg" alt="fuego">
   </a>
   <a href="http://goreportcard.com/report/seborama/fuego">
@@ -41,6 +41,7 @@
 - [Type Parameters](#type-parameters)
 - [Documentation](#documentation)
 - [Installation](#installation)
+- [Debugging](#debugging)
 - [Example Stream](#example-stream)
 - [Contributions](#contributions)
 - [The Golden rules of the game](#the-golden-rules-of-the-game)
@@ -67,15 +68,17 @@ Have fun!!
 
 ## [Type Parameters](#type-parameters)
 
-The next version of ___ƒuego___ (v11, not yet released), will use Go 1.18's [Type Parameters](https://go.googlesource.com/proposal/+/master/design/43651-type-parameters.md).
+Starting with version v11.0.0, ___ƒuego___ use Go 1.18's [Type Parameters](https://go.googlesource.com/proposal/+/master/design/43651-type-parameters.md).
 
-It is a drastic design change and fundamentally incompatible with previous versions of ___ƒuego___!
+It is a drastic design change and fundamentally incompatible with previous versions of ___ƒuego___.
 
 Use v10 or prior if you need the pre-Go1.18 version of ___ƒuego___ that is based on interface `Entry`.
 
+[(toc)](#table-of-content)
+
 ## [Documentation](#documentation)
 
-The code documentation and some examples can be found on [godoc](https://pkg.go.dev/github.com/seborama/fuego/v10).
+The code documentation and some examples can be found on [godoc](https://pkg.go.dev/github.com/seborama/fuego/v11).
 
 The tests form the best source of documentation. ___ƒuego___ comes with a good collection of unit tests and testable Go examples. Don't be shy, open them up and read them and tinker with them!
 
@@ -96,7 +99,7 @@ go get github.com/seborama/fuego
 Or for a specific version:
 
 ```bash
-go get gopkg.in/seborama/fuego.v8
+go get gopkg.in/seborama/fuego.v11
 ```
 
 ### Import in your code
@@ -108,43 +111,56 @@ To simplify usage, you can use an alias:
 ```go
 package sample
 
-import ƒ "gopkg.in/seborama/fuego.v8"
+import ƒ "gopkg.in/seborama/fuego.v11"
 ```
 
-...or import as an unqualified dot import:
+...or import as a blank import:
 
 ```go
 package sample
 
-import . "gopkg.in/seborama/fuego.v8"
+import _ "gopkg.in/seborama/fuego.v11"
 ```
+
+Note: dot imports should work just fine but the logger may be disabled, unless you initialised the zap global logger yourself.
+
+[(toc)](#table-of-content)
+
+## [Debugging](#debugging)
+
+Set environment variable `FUEGO_LOG_LEVEL` to enable logging to the desired level.
 
 [(toc)](#table-of-content)
 
 ## [Example Stream](#example-stream)
 
 ```go
-    strs := EntrySlice{
-        EntryString("a"),
-        EntryString("bb"),
-        EntryString("cc"),
-        EntryString("ddd"),
-    }
+strs := []int{
+    "a",
+    "b",
+    "bb",
+    "bb",
+    "cc",
+    "ddd",
+}
     
-    NewStreamFromSlice(strs, 500).
-        Filter(isEntryString).
-        Distinct().
-        Collect(
-            GroupingBy(
-                stringLength,
-                Mapping(
-                    stringToUpper,
-                    Filtering(
-                        stringLengthGreaterThan(1),
-                        ToEntrySlice()))))
-    }
+Collect(
+  NewStreamFromSlice[string](strs, 100).
+    Filter(isString).
+    Distinct(stringHash),
+  GroupingBy(
+    stringLength,
+    Mapping(
+      stringToUpper,
+      Filtering(
+        stringLengthGreaterThan(1),
+        ToSlice[string](),
+      ),
+    ),
+  ),
+)
 
-    // result: map[1:[] 2:[BB CC] 3:[DDD]]
+// result: map[1:[] 2:[BB CC] 3:[DDD]]
 ```
 
 [(toc)](#table-of-content)
@@ -155,7 +171,9 @@ Contributions and feedback are welcome.
 
 For contributions, you must develop in TDD fashion and ideally provide Go testable examples (if meaningful).
 
-If you have an idea to improve ___ƒuego___, please share it via an issue. And if you like ___ƒuego___ give it a star to show your support for the project - it will put a smile on my face! :blush:
+If you have an idea to improve ___ƒuego___, please share it via an issue.
+
+And if you like ___ƒuego___ give it a star to show your support for the project - it will put a smile on my face! :blush:
 
 Thanks!!
 
@@ -163,7 +181,7 @@ Thanks!!
 
 ## [The Golden rules of the game](#the-golden-rules-of-the-game)
 
-1. Producers close their channel. In other words, when you create a channel, you are responsible for closing it. Similarly, whenever ___ƒuego___ creates a channel, it is responsible for closing it.
+1. Producers close their channel.
 
 1. Consumers do not close channels.
 
@@ -175,34 +193,15 @@ Thanks!!
 
 Go channels support buffering that affects the behaviour when combining channels in a pipeline.
 
-When the buffer of a Stream's channel of a consumer  is full, the producer will not be able to send more data through to it. This protects downstream operations from overloading.
+When the buffer of a Stream's channel of a consumer is full, the producer will not be able to send more data through to it. This protects downstream operations from overloading.
 
 Presently, a Go channel cannot dynamically change its buffer size. This prevents from adapting the stream flexibly. Constructs that use 'select' on channels on the producer side can offer opportunities for mitigation.
 
 [(toc)](#table-of-content)
 
-## [Concept: Entry](#concept-entry)
-
-`Entry` is inspired by `hamt.Entry`. This is an elegant solution from [Yota Toyama](https://github.com/raviqqe): the type can be anything so long as it respects the simple behaviour of the`Entry` interface. This provides an abstraction of types yet with known behaviour:
-
-- Hash(): identifies an Entry Uniquely.
-- Equal(): defines equality for a concrete type of `Entry`. `Equal()` is expected to be based on `Hash()` for non-basic types. Equal should ensure the compared Entry is of the same type as the reference Entry. For instance, `EntryBool(false)` and `EntryInt(0)` both have a Hash of `0`, yet they aren't equal.
-
-Several Entry implementations are provided:
-
-- EntryBool
-- EntryInt
-- EntryFloat
-- EntryString
-- EntryMap
-- EntrySlice
-- Tuples
-
-Check the [godoc](https://pkg.go.dev/github.com/seborama/fuego/v10) for additional methods each of these may provide.
-
-[(toc)](#table-of-content)
-
 ## [Features summary](#features-summary)
+
+TODO: update as necessary for v11.
 
 Streams:
 
@@ -213,27 +212,18 @@ Streams:
 
 Functional Types:
 
-- Maybe
+- Optional
 - Tuple
 - Predicate:
   - True
   - False
-  - FunctionPredicate
 
 Functions:
 
-- Consumer
-- Function:
-  - ToIntFunction
-  - ToFloatFunction
-- BiFunction
-- StreamFunction:
-  - FlattenEntrySliceToEntry
-- Predicate:
-  - Or
-  - Xor
-  - And
-  - Not / Negate
+- Consumer / BiConsumer
+- Function / BiFunction
+- StreamFunction
+- Predicate
 
 Collectors:
 
@@ -246,7 +236,7 @@ Collectors:
 - ToEntryMap
 - ToEntryMapWithKeyMerge
 
-Check the [godoc](https://pkg.go.dev/github.com/seborama/fuego/v10) for full details.
+Check the [godoc](https://pkg.go.dev/github.com/seborama/fuego/v11) for full details.
 
 [(toc)](#table-of-content)
 
@@ -254,13 +244,13 @@ Check the [godoc](https://pkg.go.dev/github.com/seborama/fuego/v10) for full det
 
 As of v8.0.0, a new concurrent model offers to process a stream concurrently while preserving order.
 
-This is not possible yet with all Stream methods but is available with e.g. `Stream.Map`.
+This is not possible yet with all Stream methods but it is available with e.g. `Stream.Map`.
 
 #### Notes on concurrency
 
 Concurrent streams are challenging to implement owing to ordering issues in parallel processing. At the moment, the view is that the most sensible approach is to delegate control to users. Multiple ___ƒuego___ streams can be created and data distributed across as desired. This empowers users of ___ƒuego___ to implement the desired behaviour of their pipelines.
 
-`Stream` has some methods that fan out (e.g. `ForEachC`). See the [godoc](https://pkg.go.dev/github.com/seborama/fuego/v10) for further information and limitations.
+`Stream` has some methods that fan out (e.g. `ForEachC`). See the [godoc](https://pkg.go.dev/github.com/seborama/fuego/v11) for further information and limitations.
 
 I recommend Rob Pike's slides on Go concurrency patterns:
 
@@ -276,13 +266,13 @@ A `Collector` is a mutable reduction operation, optionally transforming the accu
 
 Collectors can be combined to express complex operations in a concise manner.
 <br/>
-Simply put, a collector allows creating custom actions on a Stream.
+Simply put, a collector allows the creation of bespoke actions on a Stream.
 
 ___ƒuego___ exposes a number of functional methods such as `MapToInt`, `Head`, `LastN`, `Filter`, etc...
 <br/>
 Collectors also provide a few functional methods.
 
-But... what if you need something else? And it is not straighforward or readable when combining the existing methods ___ƒuego___ offers?
+But... what if you need something else? And it is not straightforward or readable when combining the existing methods ___ƒuego___ offers?
 
 Enters `Collector`: implement you own requirement functionally!
 <br/>
@@ -293,6 +283,45 @@ Focus on _**what**_ needs doing in your streams (and delegate the details of the
 ## [Known limitations](#known-limitations)
 
 - several operations may be memory intensive or poorly performing.
+
+### No parameterised method in Go
+
+Go 1.18 brings typed parameters. However, parameterised methods are not allowed.
+
+This prevents the Map() method of `Stream` from mapping to, and from returning, a new typed parameter.
+
+To circumvent this, we need to use a decorator function to re-map the `Stream`.
+
+This can lead to a leftward-growing chain of decorator function calls that makes the intent opaque:
+
+```go
+ReStream(
+  ReStream(is, Stream[int]{}).Map(float2int),
+  Stream[string]{}).Map(int2string)
+// This is actually performing: Stream.Map(float2int).Map(int2string)
+```
+___ƒuego___ includes a casting function that reduces the visually leftward-growing chain of decorators
+while preserving a natural functional flow expression:
+
+```go
+C(C(C(
+  s.
+    Map(float2int_), Int).
+    Map(int2string_), String).
+    Map(string2int_), Int).
+    ForEach(print[int])
+// This is actually performing: s.Map(float2int).Map(int2string).Map(string2int).ForEach(print)
+```
+
+While not perfect, this is the best workable compromise I have obtained thus far.
+
+[(toc)](#table-of-content)
+
+### Performance issues when using numerous parameterised methods in Go 1.18
+
+As a result of this [issue](https://github.com/golang/go/issues/51957), an experiment to add `MapTo<native_type>() Stream[<native_type>]` is disabled.
+
+Instead, use function `CC` (ComparableStream Cast) to access Min(), Max(), and `MC` (MathableStream Cast) to access Sum().
 
 [(toc)](#table-of-content)
 

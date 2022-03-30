@@ -2,100 +2,108 @@ package fuego
 
 import (
 	"fmt"
-	"reflect"
+	"hash/crc32"
+	"strconv"
 	"testing"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 )
 
-func functionTimesTwo() Function {
-	return func(i Entry) Entry {
-		num := int(i.(EntryInt))
-		return EntryInt(2 * num)
+func TestC(t *testing.T) {
+	s := Stream[float32]{
+		stream: func() chan float32 {
+			c := make(chan float32)
+			go func() { defer close(c); c <- 1.1; c <- 2.2; c <- 7.7; c <- 4.4 }()
+			return c
+		}(),
+		concurrency: 2,
+	}
+
+	result := []int{}
+
+	C(C(C(s.
+		Map(float2int), Int).
+		Map(int2string), String).
+		Map(string2int), Int).
+		ForEach(func(i int) { result = append(result, i) })
+
+	expected := []int{1, 2, 7, 4}
+	if !cmp.Equal(expected, result) {
+		t.Error(cmp.Diff(expected, result))
 	}
 }
 
-func functionSlowTimesTwo() Function {
-	return func(i Entry) Entry {
-		num := int(i.(EntryInt))
-		time.Sleep(50 * time.Millisecond)
-		return EntryInt(2 * num)
+func TestSC(t *testing.T) {
+	s := Stream[float32]{
+		stream: func() chan float32 {
+			c := make(chan float32)
+			go func() { defer close(c); c <- 1.1; c <- 2.2; c <- 7.7; c <- 4.4 }()
+			return c
+		}(),
+		concurrency: 2,
 	}
-}
 
-func entryIntEqualsTo(number EntryInt) Function {
-	return func(subject Entry) Entry {
-		subjectEntryInt, ok := subject.(EntryInt)
-		if !ok {
-			return EntryBool(false)
-		}
+	result := []int{}
 
-		return EntryBool(number.Equal(subjectEntryInt))
+	SC(SC(SC(s.
+		Map(float2int), Stream[int]{}).
+		Map(int2string), Stream[string]{}).
+		Map(string2int), Stream[int]{}).
+		ForEach(func(i int) { result = append(result, i) })
+
+	expected := []int{1, 2, 7, 4}
+	if !cmp.Equal(expected, result) {
+		t.Error(cmp.Diff(expected, result))
 	}
 }
 
 func TestStream_Map(t *testing.T) {
-	type fields struct {
-		stream chan Entry
-	}
-	type args struct {
-		mapper Function
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   EntrySlice
+	tt := map[string]struct {
+		stream Stream[int]
+		mapper Function[int, Any]
+		want   []int
 	}{
-		{
-			name:   "Should return an empty Stream",
-			fields: fields{stream: nil},
-			args: args{
-				mapper: functionTimesTwo(),
-			},
-			want: EntrySlice{},
+		"Should return an empty Stream": {
+			stream: Stream[int]{stream: nil},
+			mapper: functionTimesTwo,
+			want:   nil,
 		},
-		{
-			name: "Should return a Stream of doubled integers",
-			fields: fields{
-				stream: func() chan Entry {
-					c := make(chan Entry, 1)
+		"Should return a Stream of doubled integers": {
+			stream: Stream[int]{
+				stream: func() chan int {
+					c := make(chan int, 1)
 					go func() {
 						defer close(c)
-						c <- EntryInt(1)
-						c <- EntryInt(3)
-						c <- EntryInt(2)
+						c <- 1
+						c <- 3
+						c <- 2
 					}()
 					return c
 				}()},
-			args: args{
-				mapper: functionTimesTwo(),
+			mapper: functionTimesTwo,
+			want: []int{
+				2,
+				6,
+				4,
 			},
-			want: EntrySlice{
-				EntryInt(2),
-				EntryInt(6),
-				EntryInt(4)},
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := Stream{
-				stream: tt.fields.stream,
-			}
-
-			var got EntrySlice
-			stream := s.Map(tt.args.mapper)
-			if gotStream := stream.stream; gotStream != nil {
-				got = EntrySlice{}
+	for name, tc := range tt {
+		tc := tc
+		t.Run(name, func(t *testing.T) {
+			var got []int
+			var resultStream Stream[int] = C(tc.stream.Map(tc.mapper), Int)
+			if gotStream := resultStream.stream; gotStream != nil {
 				for val := range gotStream {
 					got = append(got, val)
 				}
 			}
 
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Stream.Map() = %v, want %v", got, tt.want)
+			if !cmp.Equal(tc.want, got) {
+				t.Error(cmp.Diff(tc.want, got))
 			}
 		})
 	}
@@ -105,150 +113,331 @@ func TestStream_Map_Concurrent(t *testing.T) {
 	const numEntries = 300
 	const concurrencyLevel = numEntries / 10
 
-	sourceStream := func() chan Entry {
-		c := make(chan Entry, 10)
+	sourceStream := func() chan int {
+		c := make(chan int, 10)
 		go func() {
 			defer close(c)
 			for i := 0; i < numEntries; i++ {
-				c <- EntryInt(i)
+				c <- i
 			}
 		}()
 		return c
 	}()
 
-	want := func() EntrySlice {
-		es := EntrySlice{}
+	want := func() []int {
+		ints := []int{}
 		for i := 0; i < numEntries; i++ {
-			es = es.Append(functionTimesTwo()(EntryInt(i)))
+			ints = append(ints, functionTimesTwo(i).(int))
 		}
-		return es
+		return ints
 	}()
 
-	unitStream := Stream{
+	unitStream := Stream[int]{
 		stream: sourceStream,
 	}
 
-	// functionSlowTimesTwo: use slow function to illustrate the performance improvement
-	gotStream := unitStream.Concurrent(concurrencyLevel).Map(functionSlowTimesTwo()).ToSlice()
+	result := []int{}
 
-	if !reflect.DeepEqual(gotStream, want) {
-		t.Errorf("Stream.Map() = %v, want %v", gotStream, want)
+	start := time.Now()
+
+	// functionSlowTimesTwo: use slow function to illustrate the performance improvement
+	C(unitStream.
+		Concurrent(concurrencyLevel).
+		Map(functionSlowTimesTwo), Int).
+		ForEach(func(i int) { result = append(result, i) })
+
+	end := time.Now()
+
+	if !cmp.Equal(want, result) {
+		t.Error(cmp.Diff(want, result))
+	}
+
+	// if concurrency is not effective, the test will take 15 seconds for concurrency of 0 or
+	// 7.5 seconds for a concurrency of 1.
+	assert.WithinDuration(t, end, start, 3*time.Second) // 3 seconds should be plenty enough...
+}
+
+func TestStream_FlatMap(t *testing.T) {
+	a := []int{1, 2, 3}
+	b := []int{4, 5}
+	c := []int{6, 7, 8}
+
+	sliceOfSlicesOfInts := [][]int{a, b, c}
+
+	result := []int{}
+
+	C(NewStreamFromSlice(sliceOfSlicesOfInts, 0).
+		FlatMap(FlattenSlice[int](0)), Int).
+		ForEach(func(i int) { result = append(result, i) })
+
+	// Before flattening: [[1 2 3] [4 5] [6 7 8]]
+	// After flattening: [1 2 3 4 5 6 7 8]
+	expected := []int{1, 2, 3, 4, 5, 6, 7, 8}
+	if !cmp.Equal(expected, result) {
+		t.Error(cmp.Diff(expected, result))
 	}
 }
 
+func TestStream_FlatMap_Concurrent(t *testing.T) {
+	const numEntries = 300
+	const concurrencyLevel = numEntries / 10
+
+	sourceStream := func() chan []int {
+		c := make(chan []int, 10)
+		go func() {
+			defer close(c)
+			for i := 0; i < numEntries; i++ {
+				p1 := []int{1, 2, 3}
+				p2 := []int{4, 5}
+				p3 := []int{6, 7, 8}
+
+				c <- p1
+				c <- p2
+				c <- p3
+			}
+		}()
+		return c
+	}()
+
+	want := func() []int {
+		ints := []int{}
+		for i := 0; i < numEntries; i++ {
+			ints = append(ints, 1, 2, 3, 4, 5, 6, 7, 8)
+		}
+		return ints
+	}()
+
+	unitStream := Stream[[]int]{
+		stream: sourceStream,
+	}
+
+	result := []int{}
+
+	start := time.Now()
+
+	/*slowFlattening :=*/
+	func() StreamFunction[[]int, int] {
+		// slow down the execution to illustrate the performance improvement of the concurrent stream
+		time.Sleep(50 * time.Millisecond)
+		return FlattenTypedSlice[int](0)
+	}()
+
+	slowFlattening := func() StreamFunction[[]int, Any] {
+		// slow down the execution to illustrate the performance improvement of the concurrent stream
+		time.Sleep(50 * time.Millisecond)
+		return FlattenSlice[int](0)
+	}()
+
+	unitStream.
+		Concurrent(concurrencyLevel).
+		FlatMap(slowFlattening).
+		ForEach(func(i Any) { result = append(result, i.(int)) })
+
+	end := time.Now()
+
+	if !cmp.Equal(want, result) {
+		t.Error(cmp.Diff(want, result))
+	}
+
+	// if concurrency is not effective, the test will take 15 seconds for concurrency of 0 or
+	// 7.5 seconds for a concurrency of 1.
+	assert.WithinDuration(t, end, start, 3*time.Second) // 3 seconds should be plenty enough...
+}
+
 func TestStream_Filter(t *testing.T) {
-	type fields struct {
-		stream chan Entry
-	}
-	type args struct {
-		predicate Predicate
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   EntrySlice
+	tests := map[string]struct {
+		stream    chan int
+		predicate Predicate[int]
+		want      []int
 	}{
-		{
-			name:   "Should return nil for an empty Stream",
-			fields: fields{stream: nil},
-			args: args{
-				predicate: intGreaterThanPredicate(5),
-			},
-			want: EntrySlice{},
+		"Should return nil for an empty Stream": {
+			stream:    nil,
+			predicate: intGreaterThanPredicate(5),
+			want:      nil,
 		},
-		{
-			name: "Should give produce filtered values as per predicate",
-			fields: fields{
-				stream: func() chan Entry {
-					c := make(chan Entry, 1)
-					go func() {
-						defer close(c)
-						c <- EntryInt(17)
-						c <- EntryInt(8)
-						c <- EntryInt(2)
-					}()
-					return c
-				}()},
-			args: args{
-				predicate: intGreaterThanPredicate(5),
-			},
-			want: EntrySlice{
-				EntryInt(17),
-				EntryInt(8)},
+		"Should give produce filtered values as per predicate": {
+			stream: func() chan int {
+				c := make(chan int, 1)
+				go func() {
+					defer close(c)
+					c <- 17
+					c <- 8
+					c <- 2
+				}()
+				return c
+			}(),
+			predicate: intGreaterThanPredicate(5),
+			want:      []int{17, 8},
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := Stream{
-				stream: tt.fields.stream,
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			s := Stream[int]{
+				stream: tt.stream,
 			}
 
-			var got EntrySlice
-			if gotStream := s.Filter(tt.args.predicate).stream; gotStream != nil {
-				got = EntrySlice{}
+			var got []int
+			if gotStream := s.Filter(tt.predicate).stream; gotStream != nil {
 				for val := range gotStream {
 					got = append(got, val)
 				}
 			}
 
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Stream.Filter() = %v, want %v", got, tt.want)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestStream_LeftReduce(t *testing.T) {
+	tt := map[string]struct {
+		stream chan string
+		want   string
+	}{
+		"Should return nil for a Stream of nil": {
+			stream: nil,
+			want:   "",
+		},
+		"Should return reduction of set of single element": {
+			stream: func() chan string {
+				c := make(chan string)
+				go func() {
+					defer close(c)
+					c <- "three"
+				}()
+				return c
+			}(),
+			want: "three",
+		},
+		"Should return reduction of set of multiple elements": {
+			stream: func() chan string {
+				c := make(chan string)
+				go func() {
+					defer close(c)
+					c <- "four-"
+					c <- "twelve-"
+					c <- "one-"
+					c <- "six-"
+					c <- "three"
+				}()
+				return c
+			}(),
+			want: "four-twelve-one-six-three",
+		},
+	}
+
+	for name, tc := range tt {
+		tc := tc
+
+		t.Run(name, func(t *testing.T) {
+			s := Stream[string]{
+				stream: tc.stream,
+			}
+			got := s.Reduce(Concatenate[string])
+			assert.Exactly(t, tc.want, got)
+		})
+	}
+}
+
+func TestStream_GroupBy(t *testing.T) {
+	tt := map[string]struct {
+		stream     chan int
+		classifier Function[int, Any]
+		want       map[Any][]int
+	}{
+		"Should return empty map when iterator with nil stream": {
+			stream: nil,
+			classifier: func(i int) Any {
+				return i & 1
+			},
+			want: map[Any][]int{},
+		},
+		"Should return empty map when empty stream": {
+			stream: func() chan int {
+				c := make(chan int)
+				go func() {
+					defer close(c)
+				}()
+				return c
+			}(),
+			classifier: func(i int) Any {
+				return i & 1
+			},
+			want: map[Any][]int{},
+		},
+		"Should group by odd / even numbers": {
+			stream: func() chan int {
+				c := make(chan int)
+				go func() {
+					defer close(c)
+					c <- 1
+					c <- 2
+					c <- 3
+					c <- 4
+				}()
+				return c
+			}(),
+			classifier: func(i int) Any {
+				return i & 1
+			},
+			want: map[Any][]int{
+				0: {2, 4},
+				1: {1, 3},
+			},
+		},
+	}
+	for name, tc := range tt {
+		tc := tc
+
+		t.Run(name, func(t *testing.T) {
+			rp := Stream[int]{
+				stream: tc.stream,
+			}
+
+			got := rp.GroupBy(tc.classifier)
+			if !cmp.Equal(tc.want, got) {
+				t.Error(cmp.Diff(tc.want, got))
 			}
 		})
 	}
 }
 
 func TestStream_ForEach(t *testing.T) {
-	var callCount, total int
-	computeSumTotal := func(value Entry) {
-		callCount++
-		total += int(value.(EntryInt))
+	computeSumTotal := func(callCount, total *int) Consumer[int] {
+		return func(value int) {
+			*callCount++
+			*total += value
+		}
 	}
 
-	type fields struct {
-		stream chan Entry
-	}
-	type args struct {
-		consumer Consumer
-	}
 	type want struct {
 		total, count int
 	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   want
+	tt := map[string]struct {
+		stream   chan int
+		consumer func(callCount, total *int) Consumer[int]
+		want     want
 	}{
-		{
-			name:   "Should not call consumer for a Stream of nil",
-			fields: fields{stream: nil},
-			args: args{
-				consumer: computeSumTotal,
-			},
+		"Should not call consumer for a Stream of nil": {
+			stream:   nil,
+			consumer: computeSumTotal,
 			want: want{
 				count: 0,
 				total: 0,
 			},
 		},
-		{
-			name: "Should give produce filtered values as per predicate",
-			fields: fields{
-				stream: func() chan Entry {
-					c := make(chan Entry)
-					go func() {
-						defer close(c)
-						c <- EntryInt(4)
-						c <- EntryInt(1)
-						c <- EntryInt(3)
-					}()
-					return c
-				}()},
-			args: args{
-				consumer: computeSumTotal,
-			},
+		"Should give produce filtered values as per predicate": {
+			stream: func() chan int {
+				c := make(chan int)
+				go func() {
+					defer close(c)
+					c <- 4
+					c <- 1
+					c <- 3
+				}()
+				return c
+			}(),
+			consumer: computeSumTotal,
 			want: want{
 				count: 3,
 				total: 8,
@@ -256,2134 +445,97 @@ func TestStream_ForEach(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			callCount, total = 0, 0
-			s := Stream{
-				stream: tt.fields.stream,
+	for name, tc := range tt {
+		tc := tc
+		t.Run(name, func(t *testing.T) {
+			callCount, total := 0, 0
+			s := Stream[int]{
+				stream: tc.stream,
 			}
-			s.ForEach(tt.args.consumer)
-			assert.Equal(t, tt.want.count, callCount)
-			assert.Equal(t, tt.want.total, total)
+
+			s.ForEach(tc.consumer(&callCount, &total))
+			assert.Equal(t, tc.want.count, callCount)
+			assert.Equal(t, tc.want.total, total)
 		})
-	}
-}
-
-func concatenateStringsBiFunc(i, j Entry) Entry {
-	iStr := i.(EntryString)
-	jStr := j.(EntryString)
-	return iStr + "-" + jStr
-}
-
-func TestStream_LeftReduce(t *testing.T) {
-	type fields struct {
-		stream chan Entry
-	}
-	type args struct {
-		f2 BiFunction
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   Entry
-	}{
-		{
-			name:   "Should return nil for a Stream of nil",
-			fields: fields{stream: nil},
-			args:   args{f2: concatenateStringsBiFunc},
-			want:   nil,
-		},
-		{
-			name: "Should return reduction of set of single element",
-			fields: fields{
-				stream: func() chan Entry {
-					c := make(chan Entry)
-					go func() {
-						defer close(c)
-						c <- EntryString("three")
-					}()
-					return c
-				}()},
-			args: args{f2: concatenateStringsBiFunc},
-			want: EntryString("three"),
-		},
-		{
-			name: "Should return reduction of set of multiple elements",
-			fields: fields{
-				stream: func() chan Entry {
-					c := make(chan Entry)
-					go func() {
-						defer close(c)
-						c <- EntryString("four")
-						c <- EntryString("twelve")
-						c <- EntryString("one")
-						c <- EntryString("six")
-						c <- EntryString("three")
-					}()
-					return c
-				}()},
-			args: args{f2: concatenateStringsBiFunc},
-			want: EntryString("four-twelve-one-six-three"),
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := Stream{
-				stream: tt.fields.stream,
-			}
-			if gotReduce := s.Reduce(tt.args.f2); !assert.Exactly(t, tt.want, gotReduce) {
-				return
-			}
-		})
-	}
-}
-
-func TestStream_Intersperse(t *testing.T) {
-	type fields struct {
-		stream chan Entry
-	}
-	type args struct {
-		e Entry
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   EntrySlice
-	}{
-		{
-			name:   "Should return an empty Stream for nil input Stream",
-			fields: fields{stream: nil},
-			args: args{
-				e: EntryString(" - "),
-			},
-			want: EntrySlice{},
-		},
-		{
-			name: "Should return an empty Stream for empty input Stream",
-			fields: fields{stream: func() chan Entry {
-				c := make(chan Entry)
-				go func() {
-					defer close(c)
-				}()
-				return c
-			}()},
-			args: args{
-				e: EntryString(" - "),
-			},
-			want: EntrySlice{},
-		},
-		{
-			name: "Should return the original input Stream when it has a single value",
-			fields: fields{stream: func() chan Entry {
-				c := make(chan Entry)
-				go func() {
-					defer close(c)
-					c <- EntryString("four")
-				}()
-				return c
-			}()},
-			args: args{
-				e: EntryString(" - "),
-			},
-			want: EntrySlice{
-				EntryString("four"),
-			},
-		},
-		{
-			name: "Should return the Set with given value interspersed",
-			fields: fields{stream: func() chan Entry {
-				c := make(chan Entry)
-				go func() {
-					defer close(c)
-					c <- EntryString("four")
-					c <- EntryString("twelve")
-					c <- EntryString("one")
-					c <- EntryString("six")
-					c <- EntryString("three")
-				}()
-				return c
-			}()},
-			args: args{
-				e: EntryString(" - "),
-			},
-			want: EntrySlice{
-				EntryString("four"),
-				EntryString(" - "),
-				EntryString("twelve"),
-				EntryString(" - "),
-				EntryString("one"),
-				EntryString(" - "),
-				EntryString("six"),
-				EntryString(" - "),
-				EntryString("three")},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := Stream{
-				stream: tt.fields.stream,
-			}
-			out := s.Intersperse(tt.args.e)
-			got := EntrySlice{}
-			for e := range out.stream {
-				got = append(got, e)
-			}
-			if !assert.ElementsMatch(t, got, tt.want) {
-				t.Errorf("Stream.Intersperse() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestStream_GroupBy(t *testing.T) {
-	type fields struct {
-		stream chan Entry
-	}
-	type args struct {
-		classifier Function
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   EntryMap
-	}{
-		{
-			name: "Should return empty map when iterator with nil stream",
-			fields: fields{
-				stream: nil,
-			},
-			args: args{
-				classifier: func(i Entry) Entry {
-					return i.(EntryInt) & 1
-				},
-			},
-			want: EntryMap{},
-		},
-		{
-			name: "Should return empty map when empty stream",
-			fields: fields{
-				stream: func() chan Entry {
-					c := make(chan Entry)
-					go func() {
-						defer close(c)
-					}()
-					return c
-				}(),
-			},
-			args: args{
-				classifier: func(i Entry) Entry {
-					return i.(EntryInt) & 1
-				},
-			},
-			want: EntryMap{},
-		},
-		{
-			name: "Should group by odd / even numbers",
-			fields: fields{
-				stream: func() chan Entry {
-					c := make(chan Entry)
-					go func() {
-						defer close(c)
-						c <- EntryInt(1)
-						c <- EntryInt(2)
-						c <- EntryInt(3)
-						c <- EntryInt(4)
-					}()
-					return c
-				}(),
-			},
-			args: args{
-				classifier: func(i Entry) Entry {
-					return i.(EntryInt) & 1
-				},
-			},
-			want: EntryMap{
-				EntryInt(0): EntrySlice{
-					EntryInt(2),
-					EntryInt(4),
-				},
-				EntryInt(1): EntrySlice{
-					EntryInt(1),
-					EntryInt(3),
-				},
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			rp := Stream{
-				stream: tt.fields.stream,
-			}
-			got := rp.GroupBy(tt.args.classifier)
-			assert.True(t, got.Equal(tt.want))
-		})
-	}
-}
-
-func TestStream_NewStreamFromNilChannelPanics(t *testing.T) {
-	assert.PanicsWithValue(t, PanicMissingChannel, func() { NewStream(nil) })
-}
-
-func TestStream_NewStream(t *testing.T) {
-	emptyChannel := make(chan Entry)
-	populatedChannel := func() chan Entry {
-		c := make(chan Entry)
-		go func() {
-			defer close(c)
-			c <- EntryInt(1)
-			c <- EntryInt(2)
-			c <- EntryInt(3)
-			c <- EntryInt(4)
-		}()
-		return c
-	}()
-
-	type args struct {
-		s chan Entry
-	}
-	tests := []struct {
-		name string
-		args args
-		want Stream
-	}{
-		{
-			name: "Should create an empty Stream with an empty channel",
-			args: args{s: emptyChannel},
-			want: Stream{stream: emptyChannel},
-		},
-		{
-			name: "Should create a Stream with a populated channel",
-			args: args{
-				s: populatedChannel,
-			},
-			want: Stream{
-				stream: populatedChannel,
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := NewStream(tt.args.s); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewStream() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestStream_NewStreamFromSlice(t *testing.T) {
-	type args struct {
-		s EntrySlice
-	}
-	tests := []struct {
-		name string
-		args args
-		want EntrySlice
-	}{
-		{
-			name: "Should create a Stream with an empty channel",
-			args: args{s: nil},
-			want: EntrySlice{},
-		},
-		{
-			name: "Should create an empty Stream with an empty channel",
-			args: args{s: EntrySlice{}},
-			want: EntrySlice{},
-		},
-		{
-			name: "Should create a Stream with a populated channel",
-			args: args{
-				s: EntrySlice{
-					EntryInt(1),
-					EntryInt(2),
-					EntryInt(3),
-					EntryInt(4),
-				},
-			},
-			want: EntrySlice{
-				EntryInt(1),
-				EntryInt(2),
-				EntryInt(3),
-				EntryInt(4),
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var got EntrySlice
-			if gotStream := NewStreamFromSlice(tt.args.s, 0).stream; gotStream != nil {
-				got = EntrySlice{}
-				for val := range gotStream {
-					got = append(got, val)
-				}
-			}
-
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewStreamFromSlice() = %+v, want %+v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestStream_Count(t *testing.T) {
-	type fields struct {
-		stream chan Entry
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		want   int
-	}{
-		{
-			name:   "Should return 0 for a nil channel",
-			fields: fields{stream: nil},
-			want:   0,
-		},
-		{
-			name: "Should return 0 for an empty closed channel",
-			fields: fields{stream: func() chan Entry {
-				c := make(chan Entry)
-				go func() {
-					defer close(c)
-				}()
-				return c
-			}()},
-			want: 0,
-		},
-		{
-			name: "Should return 3 for a size 3 closed channel",
-			fields: fields{stream: func() chan Entry {
-				c := make(chan Entry, 1)
-				go func() {
-					defer close(c)
-					c <- EntryInt(1)
-					c <- EntryInt(2)
-					c <- EntryInt(1)
-				}()
-				return c
-			}()},
-			want: 3,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := Stream{
-				stream: tt.fields.stream,
-			}
-			if got := s.Count(); got != tt.want {
-				t.Errorf("Stream.Count() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestStream_MapToInt(t *testing.T) {
-	entryToInt := func(e Entry) EntryInt {
-		switch j := e.(type) {
-		case EntryInt:
-			return j
-		case EntryString:
-			return EntryInt(j[0])
-		default:
-			return EntryInt(0xdeadbeef)
-		}
-	}
-
-	type fields struct {
-		stream chan Entry
-	}
-	type args struct {
-		toInt ToIntFunction
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   IntStream
-	}{
-		{
-			name:   "Should map a nil stream to an empty stream of EntryInt's",
-			fields: fields{stream: nil},
-			args: args{
-				toInt: entryToInt,
-			},
-			want: NewIntStreamFromSlice([]EntryInt{}, 0),
-		},
-		{
-			name: "Should map a stream of Entry's to a stream of EntryInt's",
-			fields: fields{stream: func() chan Entry {
-				c := make(chan Entry, 2)
-				go func() {
-					defer close(c)
-					c <- EntryString("a")
-					c <- EntryBool(false)
-					c <- EntryString("b")
-					c <- EntryInt(-17)
-					c <- EntryString("c")
-				}()
-				return c
-			}()},
-			args: args{
-				toInt: func(e Entry) EntryInt {
-					switch j := e.(type) {
-					case EntryInt:
-						return j
-					case EntryString:
-						return EntryInt(j[0])
-					default:
-						return EntryInt(0xdeadbeef)
-					}
-				},
-			},
-			want: NewIntStreamFromSlice([]EntryInt{
-				EntryInt(97),
-				EntryInt(0xdeadbeef),
-				EntryInt(98),
-				EntryInt(-17),
-				EntryInt(99),
-			}, 0),
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := Stream{
-				stream: tt.fields.stream,
-			}
-			gotIntStream := s.MapToInt(tt.args.toInt)
-
-			if !assert.IsType(t, IntStream{}, gotIntStream) {
-				t.Errorf("Stream.MapToInt() did not return type = %T, want IntStream", gotIntStream)
-			}
-
-			wantStr := ""
-			for v := range tt.want.stream {
-				wantStr += fmt.Sprintf("%v ", v)
-			}
-			gotStr := ""
-			for v := range gotIntStream.stream {
-				gotStr += fmt.Sprintf("%v ", v)
-			}
-			if !assert.Equal(t, wantStr, gotStr) {
-				t.Errorf("Stream.MapToInt() = %v, want %v", gotStr, wantStr)
-			}
-		})
-	}
-}
-
-func TestStream_MapToFloat(t *testing.T) {
-	entryToFloat := func(e Entry) EntryFloat {
-		switch j := e.(type) {
-		case EntryFloat:
-			return j
-		case EntryString:
-			return EntryFloat(j[0])
-		default:
-			return EntryFloat(0xdeadbeef)
-		}
-	}
-
-	type fields struct {
-		stream chan Entry
-	}
-	type args struct {
-		toFloat ToFloatFunction
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   FloatStream
-	}{
-		{
-			name:   "Should map a nil stream to an empty stream of EntryFloat's",
-			fields: fields{stream: nil},
-			args: args{
-				toFloat: entryToFloat,
-			},
-			want: NewFloatStreamFromSlice([]EntryFloat{}, 0),
-		},
-		{
-			name: "Should map a stream of Entry's to a stream of EntryFloat's",
-			fields: fields{stream: func() chan Entry {
-				c := make(chan Entry, 2)
-				go func() {
-					defer close(c)
-					c <- EntryString("a")
-					c <- EntryBool(false)
-					c <- EntryString("b")
-					c <- EntryFloat(-17)
-					c <- EntryString("c")
-				}()
-				return c
-			}()},
-			args: args{
-				toFloat: func(e Entry) EntryFloat {
-					switch j := e.(type) {
-					case EntryFloat:
-						return j
-					case EntryString:
-						return EntryFloat(j[0])
-					default:
-						return EntryFloat(0xdeadbeef)
-					}
-				},
-			},
-			want: NewFloatStreamFromSlice([]EntryFloat{
-				EntryFloat(97),
-				EntryFloat(0xdeadbeef),
-				EntryFloat(98),
-				EntryFloat(-17),
-				EntryFloat(99),
-			}, 0),
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := Stream{
-				stream: tt.fields.stream,
-			}
-			gotFloatStream := s.MapToFloat(tt.args.toFloat)
-
-			if !assert.IsType(t, FloatStream{}, gotFloatStream) {
-				t.Errorf("Stream.MapToFloat() did not return type = %T, want FloatStream", gotFloatStream)
-			}
-
-			wantStr := ""
-			for v := range tt.want.stream {
-				wantStr += fmt.Sprintf("%v ", v)
-			}
-			gotStr := ""
-			for v := range gotFloatStream.stream {
-				gotStr += fmt.Sprintf("%v ", v)
-			}
-			if !assert.Equal(t, wantStr, gotStr) {
-				t.Errorf("Stream.MapToFloat() = %v, want %v", gotStr, wantStr)
-			}
-		})
-	}
-}
-
-func TestStream_AnyMatch(t *testing.T) {
-	dataGenerator := func() chan Entry {
-		c := make(chan Entry, 2)
-		go func() {
-			defer close(c)
-			c <- EntryString("a")
-			c <- EntryBool(false)
-			c <- EntryString("b")
-			c <- EntryInt(-17)
-			c <- EntryString("c")
-		}()
-		return c
-	}
-
-	type fields struct {
-		stream chan Entry
-	}
-	type args struct {
-		p Predicate
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   bool
-	}{
-		{
-			name:   "Should not match any when channel is nil",
-			fields: fields{stream: nil},
-			args:   args{p: True},
-			want:   false,
-		},
-		{
-			name:   "Should not match any",
-			fields: fields{stream: dataGenerator()},
-			args:   args{p: func(e Entry) bool { return e.Equal(EntryString("not in here")) }},
-			want:   false,
-		},
-		{
-			name:   "Should match any",
-			fields: fields{stream: dataGenerator()},
-			args:   args{p: func(e Entry) bool { return e.Equal(EntryString("b")) }},
-			want:   true,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := Stream{
-				stream: tt.fields.stream,
-			}
-			if got := s.AnyMatch(tt.args.p); got != tt.want {
-				t.Errorf("Stream.AnyMatch() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestStream_NoneMatch(t *testing.T) {
-	dataGenerator := func() chan Entry {
-		c := make(chan Entry, 2)
-		go func() {
-			defer close(c)
-			c <- EntryString("a")
-			c <- EntryBool(false)
-			c <- EntryString("b")
-			c <- EntryInt(-17)
-			c <- EntryString("c")
-		}()
-		return c
-	}
-
-	type fields struct {
-		stream chan Entry
-	}
-	type args struct {
-		p Predicate
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   bool
-	}{
-		{
-			name:   "Should satisfy when channel is nil",
-			fields: fields{stream: nil},
-			args:   args{p: True},
-			want:   true,
-		},
-		{
-			name:   "Should satisfy",
-			fields: fields{stream: dataGenerator()},
-			args:   args{p: func(e Entry) bool { return e.Equal(EntryString("not in here")) }},
-			want:   true,
-		},
-		{
-			name:   "Should not satisfy",
-			fields: fields{stream: dataGenerator()},
-			args:   args{p: func(e Entry) bool { return e.Equal(EntryString("b")) }},
-			want:   false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := Stream{
-				stream: tt.fields.stream,
-			}
-			if got := s.NoneMatch(tt.args.p); got != tt.want {
-				t.Errorf("Stream.NoneMatch() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestStream_AllMatch(t *testing.T) {
-	dataGenerator := func() chan Entry {
-		c := make(chan Entry, 2)
-		go func() {
-			defer close(c)
-			c <- EntryString("a")
-			c <- EntryBool(false)
-			c <- EntryString("b")
-			c <- EntryInt(-17)
-			c <- EntryString("c")
-		}()
-		return c
-	}
-
-	type fields struct {
-		stream chan Entry
-	}
-	type args struct {
-		p Predicate
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   bool
-	}{
-		{
-			name:   "Should not match all when channel is nil",
-			fields: fields{stream: nil},
-			args:   args{p: True},
-			want:   false,
-		},
-		{
-			name:   "Should match all",
-			fields: fields{stream: dataGenerator()},
-			args:   args{p: func(e Entry) bool { return !e.Equal(EntryString("not in here")) }},
-			want:   true,
-		},
-		{
-			name:   "Should not match all",
-			fields: fields{stream: dataGenerator()},
-			args:   args{p: func(e Entry) bool { return e.Equal(EntryString("b")) }},
-			want:   false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := Stream{
-				stream: tt.fields.stream,
-			}
-			if got := s.AllMatch(tt.args.p); got != tt.want {
-				t.Errorf("Stream.AllMatch() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestStream_Drop(t *testing.T) {
-	data1 := EntrySlice{
-		EntryInt(1),
-	}
-
-	data := EntrySlice{
-		EntryString("a"),
-		EntryBool(false),
-		EntryString("b"),
-		EntryInt(-17),
-		EntryString("c"),
-	}
-
-	dataGenerator := func(slice EntrySlice) chan Entry {
-		c := make(chan Entry, 2)
-		go func() {
-			defer close(c)
-			for _, val := range slice {
-				c <- val
-			}
-		}()
-		return c
-	}
-
-	type fields struct {
-		stream chan Entry
-	}
-	type args struct {
-		n uint64
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   EntrySlice
-	}{
-		{
-			name: "Should return an empty stream when nil channel",
-			fields: fields{
-				stream: nil,
-			},
-			args: args{
-				n: 1,
-			},
-			want: EntrySlice{},
-		},
-		{
-			name: "Should not change the stream if n < 1",
-			fields: fields{
-				stream: dataGenerator(data),
-			},
-			args: args{
-				n: 0,
-			},
-			want: data,
-		},
-		{
-			name: "Should drop all elements when n > number of elements in the stream",
-			fields: fields{
-				stream: dataGenerator(data),
-			},
-			args: args{
-				n: uint64(len(data) + 10),
-			},
-			want: EntrySlice{},
-		},
-		{
-			name: "Should drop the first n elements when n < number of elements in the stream",
-			fields: fields{
-				stream: dataGenerator(data),
-			},
-			args: args{
-				n: 2,
-			},
-			want: data[2:],
-		},
-		{
-			name: "Should drop the sole element in the stream",
-			fields: fields{
-				stream: dataGenerator(data1),
-			},
-			args: args{
-				n: 1,
-			},
-			want: EntrySlice{},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := Stream{stream: tt.fields.stream}
-			gotStream := s.Drop(tt.args.n)
-			if tt.want == nil {
-				assert.Nil(t, gotStream.stream)
-				return
-			}
-			got := EntrySlice{}
-			for val := range gotStream.stream {
-				got = append(got, val)
-			}
-			assert.EqualValues(t, tt.want, got)
-		})
-	}
-}
-
-func TestStream_DropWhile(t *testing.T) {
-	data := EntrySlice{
-		EntryString("a"),
-		EntryBool(false),
-		EntryString("b"),
-		EntryInt(-17),
-		EntryString("c"),
-	}
-	dataGenerator := func() chan Entry {
-		c := make(chan Entry, 2)
-		go func() {
-			defer close(c)
-			for _, val := range data {
-				c <- val
-			}
-		}()
-		return c
-	}
-
-	type fields struct {
-		stream chan Entry
-	}
-	type args struct {
-		p Predicate
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   EntrySlice
-	}{
-		{
-			name: "Should return empty out-stream when nil in-stream",
-			fields: fields{
-				stream: nil,
-			},
-			args: args{
-				p: True,
-			},
-			want: EntrySlice{},
-		},
-		{
-			name: "Should not change the stream if predicate never satisfies",
-			fields: fields{
-				stream: dataGenerator(),
-			},
-			args: args{
-				p: False,
-			},
-			want: data,
-		},
-		{
-			name: "Should drop the first few elements that satisfy the predicate",
-			fields: fields{
-				stream: dataGenerator(),
-			},
-			args: args{
-				p: func(e Entry) bool {
-					return e.Equal(EntryString("a")) || e.Equal(EntryBool(false))
-				},
-			},
-			want: data[2:],
-		},
-		{
-			name: "Should drop all elements when the predicate always satisfies",
-			fields: fields{
-				stream: dataGenerator(),
-			},
-			args: args{
-				p: True,
-			},
-			want: EntrySlice{},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := Stream{stream: tt.fields.stream}
-			gotStream := s.DropWhile(tt.args.p)
-			got := EntrySlice{}
-			for val := range gotStream.stream {
-				got = append(got, val)
-			}
-			assert.EqualValues(t, tt.want, got)
-		})
-	}
-}
-
-func TestStream_DropUntil(t *testing.T) {
-	data := EntrySlice{
-		EntryString("a"),
-		EntryBool(false),
-		EntryString("b"),
-		EntryInt(-17),
-		EntryString("c"),
-	}
-	dataGenerator := func() chan Entry {
-		c := make(chan Entry, 2)
-		go func() {
-			defer close(c)
-			for _, val := range data {
-				c <- val
-			}
-		}()
-		return c
-	}
-
-	type fields struct {
-		stream chan Entry
-	}
-	type args struct {
-		p Predicate
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   EntrySlice
-	}{
-		{
-			name: "Should return empty out-stream when nil in-stream",
-			fields: fields{
-				stream: nil,
-			},
-			args: args{
-				p: True,
-			},
-			want: EntrySlice{},
-		},
-		{
-			name: "Should return empty stream if predicate never satisfies",
-			fields: fields{
-				stream: dataGenerator(),
-			},
-			args: args{
-				p: False,
-			},
-			want: EntrySlice{},
-		},
-		{
-			name: "Should drop the first few elements that satisfy the predicate",
-			fields: fields{
-				stream: dataGenerator(),
-			},
-			args: args{
-				p: func(e Entry) bool {
-					return e.Equal(EntryString("b"))
-				},
-			},
-			want: EntrySlice{
-				EntryString("b"),
-				EntryInt(-17),
-				EntryString("c"),
-			},
-		},
-		{
-			name: "Should not drop any element when the predicate always satisfies",
-			fields: fields{
-				stream: dataGenerator(),
-			},
-			args: args{
-				p: True,
-			},
-			want: data,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := Stream{stream: tt.fields.stream}
-			gotStream := s.DropUntil(tt.args.p)
-			got := EntrySlice{}
-			for val := range gotStream.stream {
-				got = append(got, val)
-			}
-			assert.EqualValues(t, tt.want, got)
-		})
-	}
-}
-
-func TestStream_LastX_PanicsWhenNilChannel(t *testing.T) {
-	assert.PanicsWithValue(t, PanicMissingChannel, func() { Stream{stream: nil}.LastN(1) })
-	assert.PanicsWithValue(t, PanicMissingChannel, func() { Stream{stream: nil}.Last() })
-}
-
-func TestStream_LastX_PanicsWhenEmptyChannel(t *testing.T) {
-	emptyStream := func() chan Entry {
-		c := make(chan Entry)
-		go func() {
-			defer close(c)
-		}()
-		return c
-	}
-
-	assert.PanicsWithValue(t, PanicNoSuchElement, func() { NewStream(emptyStream()).LastN(1) })
-	assert.PanicsWithValue(t, PanicNoSuchElement, func() { NewStream(emptyStream()).Last() })
-}
-
-func TestStream_LastNWithInvalidArgumentPanics(t *testing.T) {
-	tests := []struct {
-		name      string
-		n         uint64
-		wantPanic bool
-	}{
-		{
-			name:      "Should panic when N is less than 1",
-			n:         0,
-			wantPanic: true,
-		},
-		{
-			name:      "Should not panic when N is 1",
-			n:         1,
-			wantPanic: false,
-		},
-	}
-
-	populatedStream := func() chan Entry {
-		c := make(chan Entry)
-		go func() {
-			defer close(c)
-			c <- EntryString("joy")
-		}()
-		return c
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := Stream{
-				stream: populatedStream(),
-			}
-			if tt.wantPanic {
-				assert.PanicsWithValue(t, PanicNoSuchElement, func() { s.LastN(tt.n) })
-			} else {
-				assert.NotPanics(t, func() { s.LastN(tt.n) })
-			}
-		})
-	}
-}
-
-func TestStream_LastN(t *testing.T) {
-	data := EntrySlice{
-		EntryString("one"),
-		EntryString("two"),
-		EntryString("thee"),
-		EntryString("four"),
-		EntryString("five"),
-	}
-
-	largeData := EntrySlice{}
-	for i := 1; i < 1e5; i++ {
-		largeData = append(largeData, EntryInt(i))
-	}
-
-	populatedStream := func(slice EntrySlice) chan Entry {
-		c := make(chan Entry)
-		go func() {
-			defer close(c)
-			for _, val := range slice {
-				c <- val
-			}
-		}()
-		return c
-	}
-
-	type fields struct {
-		stream chan Entry
-	}
-	type args struct {
-		n uint64
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   EntrySlice
-	}{
-		{
-			name: "Should return the last n elements when the stream is longer",
-			fields: fields{
-				stream: populatedStream(data),
-			},
-			args: args{2},
-			want: data[3:],
-		},
-		{
-			name: "Should return all the elements when the stream is shorter",
-			fields: fields{
-				stream: populatedStream(data),
-			},
-			args: args{uint64(len(data) + 10)},
-			want: data,
-		},
-		{
-			name: "Should return the last n elements when the stream is significantly larger",
-			fields: fields{
-				stream: populatedStream(largeData),
-			},
-			args: args{2e3},
-			want: largeData[len(largeData)-2e3:],
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := Stream{
-				stream: tt.fields.stream,
-			}
-			got := s.LastN(tt.args.n)
-			assert.EqualValues(t, tt.want, got)
-		})
-	}
-}
-
-func TestStream_EndsWith(t *testing.T) {
-	data0 := EntrySlice{}
-	data1 := EntrySlice{EntryInt(16)}
-	data4 := EntrySlice{
-		EntryBool(true),
-		EntryInt(1),
-		EntryInt(4),
-		EntryString("two"),
-	}
-	data5 := EntrySlice{
-		EntryInt(1),
-		EntryString("two"),
-		EntryBool(true),
-		EntryInt(4),
-		EntryString("five"),
-	}
-
-	generateStream := func(data EntrySlice) chan Entry {
-		c := make(chan Entry)
-		go func() {
-			defer close(c)
-			for _, e := range data {
-				c <- e
-			}
-		}()
-		return c
-	}
-
-	type fields struct {
-		stream chan Entry
-	}
-	type args struct {
-		slice EntrySlice
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   bool
-	}{
-		{
-			name:   "Should not match with a nil channel",
-			fields: fields{stream: nil},
-			args:   args{slice: data1},
-			want:   false,
-		},
-		{
-			name:   "Should not match with an empty stream and with input",
-			fields: fields{stream: generateStream(data0)},
-			args:   args{slice: data1},
-			want:   false,
-		},
-		{
-			name:   "Should not match with an empty stream and with no input",
-			fields: fields{stream: generateStream(data0)},
-			args:   args{slice: data0},
-			want:   false,
-		},
-		{
-			name:   "Should not match when stream size is less than slice to compare even when the elements match",
-			fields: fields{stream: generateStream(data5[:3])},
-			args:   args{slice: data5},
-			want:   false,
-		},
-		{
-			name:   "Should match when stream size and data match slice to compare",
-			fields: fields{stream: generateStream(data5)},
-			args:   args{slice: data5},
-			want:   true,
-		},
-		{
-			name:   "Should match when the stream ends with the slice to compare",
-			fields: fields{stream: generateStream(data5)},
-			args:   args{slice: data5[3:]},
-			want:   true,
-		},
-		{
-			name:   "Should not match when stream does not end with slice to compare",
-			fields: fields{stream: generateStream(data5)},
-			args:   args{slice: data4},
-			want:   false,
-		},
-		{
-			name:   "Should not match when stream is shorter than slice to compare",
-			fields: fields{stream: generateStream(data5[:2])},
-			args:   args{slice: data5},
-			want:   false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := Stream{
-				stream: tt.fields.stream,
-			}
-			assert.Equal(t, tt.want, s.EndsWith(tt.args.slice))
-		})
-	}
-}
-
-func TestStream_HeadX_PanicsWhenNilChannel(t *testing.T) {
-	assert.PanicsWithValue(t, PanicMissingChannel, func() { Stream{stream: nil}.HeadN(1) })
-	assert.PanicsWithValue(t, PanicMissingChannel, func() { Stream{stream: nil}.Head() })
-}
-
-func TestStream_Head_PanicsWhenEmptyChannel(t *testing.T) {
-	emptyStream := func() chan Entry {
-		c := make(chan Entry)
-		go func() {
-			defer close(c)
-		}()
-		return c
-	}
-
-	assert.PanicsWithValue(t, PanicNoSuchElement, func() { NewStream(emptyStream()).Head() })
-}
-
-func TestStream_Head(t *testing.T) {
-	data1 := EntrySlice{
-		EntryString("one"),
-	}
-	data5 := EntrySlice{
-		EntryString("one"),
-		EntryString("two"),
-		EntryString("thee"),
-		EntryString("four"),
-		EntryString("five"),
-	}
-
-	generateStream := func(slice EntrySlice) chan Entry {
-		c := make(chan Entry)
-		go func() {
-			defer close(c)
-			for _, val := range slice {
-				c <- val
-			}
-		}()
-		return c
-	}
-
-	type fields struct {
-		stream chan Entry
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		want   Entry
-	}{
-		{
-			name: "Should return first element when the stream has one element",
-			fields: fields{
-				stream: generateStream(data1),
-			},
-			want: EntryString("one"),
-		},
-		{
-			name: "Should return first element when the stream has multiple elements",
-			fields: fields{
-				stream: generateStream(data5),
-			},
-			want: EntryString("one"),
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := Stream{
-				stream: tt.fields.stream,
-			}
-			if got := s.Head(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Stream.Head() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestStream_HeadN(t *testing.T) {
-	data0 := EntrySlice{}
-
-	data := EntrySlice{
-		EntryString("one"),
-		EntryString("two"),
-		EntryString("thee"),
-		EntryString("four"),
-		EntryString("five"),
-	}
-
-	largeData := EntrySlice{}
-	for i := 1; i < 1e5; i++ {
-		largeData = append(largeData, EntryInt(i))
-	}
-
-	generateStream := func(slice EntrySlice) chan Entry {
-		c := make(chan Entry)
-		go func() {
-			defer close(c)
-			for _, val := range slice {
-				c <- val
-			}
-		}()
-		return c
-	}
-
-	type fields struct {
-		stream chan Entry
-	}
-	type args struct {
-		n uint64
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   EntrySlice
-	}{
-		{
-			name: "Should return empty slice when the stream is empty",
-			fields: fields{
-				stream: generateStream(data0),
-			},
-			args: args{2},
-			want: EntrySlice{},
-		},
-		{
-			name: "Should return the first n elements when the stream is longer",
-			fields: fields{
-				stream: generateStream(data),
-			},
-			args: args{2},
-			want: data[:2],
-		},
-		{
-			name: "Should return all the elements when the stream is shorter",
-			fields: fields{
-				stream: generateStream(data),
-			},
-			args: args{2e3},
-			want: data,
-		},
-		{
-			name: "Should return the first n elements when the stream is significantly larger",
-			fields: fields{
-				stream: generateStream(largeData),
-			},
-			args: args{2e3},
-			want: largeData[:2000],
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := Stream{
-				stream: tt.fields.stream,
-			}
-			got := s.HeadN(tt.args.n)
-			assert.EqualValues(t, tt.want, got)
-		})
-	}
-}
-
-func TestStream_StartsWithPanicsWithNilChannel(t *testing.T) {
-	s := Stream{stream: nil}
-	assert.PanicsWithValue(t, PanicMissingChannel, func() { s.StartsWith(EntrySlice{}) })
-}
-
-func TestStream_StartsWith(t *testing.T) {
-	data0 := EntrySlice{}
-	data1 := EntrySlice{EntryInt(16)}
-	data4 := EntrySlice{
-		EntryBool(true),
-		EntryInt(1),
-		EntryInt(4),
-		EntryString("two"),
-	}
-	data5 := EntrySlice{
-		EntryInt(1),
-		EntryString("two"),
-		EntryBool(true),
-		EntryInt(4),
-		EntryString("five"),
-	}
-
-	generateStream := func(data EntrySlice) chan Entry {
-		c := make(chan Entry)
-		go func() {
-			defer close(c)
-			for _, e := range data {
-				c <- e
-			}
-		}()
-		return c
-	}
-
-	type fields struct {
-		stream chan Entry
-	}
-	type args struct {
-		slice EntrySlice
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   bool
-	}{
-		{
-			name:   "Should not match with an empty stream",
-			fields: fields{stream: generateStream(data0)},
-			args:   args{slice: data1},
-			want:   false,
-		},
-		{
-			name:   "Should not match with an empty slice: case with an empty stream ",
-			fields: fields{stream: generateStream(data0)},
-			args:   args{slice: data0},
-			want:   false,
-		},
-		{
-			name:   "Should not match with an empty slice: case with a populated stream ",
-			fields: fields{stream: generateStream(data1)},
-			args:   args{slice: data0},
-			want:   false,
-		},
-		{
-			name:   "Should not match when stream size is less than slice to compare even when the elements match",
-			fields: fields{stream: generateStream(data5[:3])},
-			args:   args{slice: data5},
-			want:   false,
-		},
-		{
-			name:   "Should match when stream size and data matches slice to compare",
-			fields: fields{stream: generateStream(data5)},
-			args:   args{slice: data5},
-			want:   true,
-		},
-		{
-			name:   "Should match when stream starts with the slice to compare",
-			fields: fields{stream: generateStream(data5)},
-			args:   args{slice: data5[:3]},
-			want:   true,
-		},
-		{
-			name:   "Should not match when stream does not end with slice to compare",
-			fields: fields{stream: generateStream(data5)},
-			args:   args{slice: data4},
-			want:   false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := Stream{
-				stream: tt.fields.stream,
-			}
-			assert.Equal(t, tt.want, s.StartsWith(tt.args.slice))
-		})
-	}
-}
-
-func TestStream_TakeX_LimitPanicWithNilChannel(t *testing.T) {
-	s := Stream{stream: nil}
-	assert.PanicsWithValue(t, PanicMissingChannel, func() { s.Limit(1) })
-	assert.PanicsWithValue(t, PanicMissingChannel, func() { s.TakeUntil(False) })
-	assert.PanicsWithValue(t, PanicMissingChannel, func() { s.TakeWhile(True) })
-}
-
-func TestStream_Take_Limit(t *testing.T) {
-	data1 := EntrySlice{
-		EntryInt(1),
-	}
-
-	data := EntrySlice{
-		EntryString("a"),
-		EntryBool(false),
-		EntryString("b"),
-		EntryInt(-17),
-		EntryString("c"),
-	}
-
-	dataGenerator := func(slice EntrySlice) chan Entry {
-		c := make(chan Entry, 2)
-		go func() {
-			defer close(c)
-			for _, val := range slice {
-				c <- val
-			}
-		}()
-		return c
-	}
-
-	type fields struct {
-		stream chan Entry
-	}
-	type args struct {
-		n uint64
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   EntrySlice
-	}{
-		{
-			name: "Should return empty stream when n < 1",
-			fields: fields{
-				stream: dataGenerator(data),
-			},
-			args: args{
-				n: 0,
-			},
-			want: EntrySlice{},
-		},
-		{
-			name: "Should return all elements when n > number of elements in the stream",
-			fields: fields{
-				stream: dataGenerator(data),
-			},
-			args: args{
-				n: uint64(len(data) + 10),
-			},
-			want: data,
-		},
-		{
-			name: "Should return the first n elements when n < number of elements in the stream",
-			fields: fields{
-				stream: dataGenerator(data),
-			},
-			args: args{
-				n: 2,
-			},
-			want: data[:2],
-		},
-		{
-			name: "Should return the sole element in the stream",
-			fields: fields{
-				stream: dataGenerator(data1),
-			},
-			args: args{
-				n: 1,
-			},
-			want: data1,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := Stream{stream: tt.fields.stream}
-			gotStream := s.Limit(tt.args.n)
-			if tt.want == nil {
-				assert.Nil(t, gotStream.stream)
-				return
-			}
-			got := EntrySlice{}
-			for val := range gotStream.stream {
-				got = append(got, val)
-			}
-			assert.EqualValues(t, tt.want, got)
-		})
-	}
-}
-
-func TestStream_TakeWhile(t *testing.T) {
-	data := EntrySlice{
-		EntryString("a"),
-		EntryBool(false),
-		EntryString("b"),
-		EntryInt(-17),
-		EntryString("c"),
-	}
-	dataGenerator := func() chan Entry {
-		c := make(chan Entry, 2)
-		go func() {
-			defer close(c)
-			for _, val := range data {
-				c <- val
-			}
-		}()
-		return c
-	}
-
-	type fields struct {
-		stream chan Entry
-	}
-	type args struct {
-		p Predicate
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   EntrySlice
-	}{
-		{
-			name: "Should return empty stream if predicate never satisfies",
-			fields: fields{
-				stream: dataGenerator(),
-			},
-			args: args{
-				p: False,
-			},
-			want: EntrySlice{},
-		},
-		{
-			name: "Should take the first few elements that satisfy the predicate",
-			fields: fields{
-				stream: dataGenerator(),
-			},
-			args: args{
-				p: func(e Entry) bool {
-					return e.Equal(EntryString("a")) || e.Equal(EntryBool(false))
-				},
-			},
-			want: data[:2],
-		},
-		{
-			name: "Should take all elements when the predicate always satisfies",
-			fields: fields{
-				stream: dataGenerator(),
-			},
-			args: args{
-				p: True,
-			},
-			want: data,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := Stream{stream: tt.fields.stream}
-			gotStream := s.TakeWhile(tt.args.p)
-			got := EntrySlice{}
-			for val := range gotStream.stream {
-				got = append(got, val)
-			}
-			assert.EqualValues(t, tt.want, got)
-		})
-	}
-}
-
-func TestStream_TakeUntil(t *testing.T) {
-	data := EntrySlice{
-		EntryString("a"),
-		EntryBool(false),
-		EntryString("b"),
-		EntryInt(-17),
-		EntryString("c"),
-	}
-	dataGenerator := func() chan Entry {
-		c := make(chan Entry, 2)
-		go func() {
-			defer close(c)
-			for _, val := range data {
-				c <- val
-			}
-		}()
-		return c
-	}
-
-	type fields struct {
-		stream chan Entry
-	}
-	type args struct {
-		p Predicate
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   EntrySlice
-	}{
-		{
-			name: "Should return whole stream if predicate never satisfies",
-			fields: fields{
-				stream: dataGenerator(),
-			},
-			args: args{
-				p: False,
-			},
-			want: data,
-		},
-		{
-			name: "Should take the first few elements until predicate satisfies",
-			fields: fields{
-				stream: dataGenerator(),
-			},
-			args: args{
-				p: func(e Entry) bool {
-					return e.Equal(EntryString("b"))
-				},
-			},
-			want: EntrySlice{
-				EntryString("a"),
-				EntryBool(false),
-			},
-		},
-		{
-			name: "Should return empty stream when the predicate always satisfies",
-			fields: fields{
-				stream: dataGenerator(),
-			},
-			args: args{
-				p: True,
-			},
-			want: EntrySlice{},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := Stream{stream: tt.fields.stream}
-			gotStream := s.TakeUntil(tt.args.p)
-			got := EntrySlice{}
-			for val := range gotStream.stream {
-				got = append(got, val)
-			}
-			assert.EqualValues(t, tt.want, got)
-		})
-	}
-}
-
-func TestStream_CollectPanicsWhenStreamIsNil(t *testing.T) {
-	supplier := func() Entry {
-		return EntrySlice{}
-	}
-	accumulator := func(e1, e2 Entry) Entry {
-		return e1.(EntrySlice).Append(e2)
-	}
-
-	s := Stream{stream: nil}
-	assert.PanicsWithValue(t, PanicMissingChannel, func() { s.Collect(NewCollector(supplier, accumulator, nil)) })
-}
-func TestStream_Collect(t *testing.T) {
-	supplier := func() Entry {
-		return EntrySlice{}
-	}
-	accumulator := func(e1, e2 Entry) Entry {
-		return e1.(EntrySlice).Append(e2)
-	}
-	finisher := func(e Entry) Entry {
-		total := EntryInt(0)
-		for _, e1 := range e.(EntrySlice) {
-			total += e1.(EntryInt)
-		}
-		return total
-	}
-
-	type fields struct {
-		stream chan Entry
-	}
-	type args struct {
-		c Collector
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   interface{}
-	}{
-		{
-			name: "Should not call finisher when nil (it would crash otherwise)",
-			fields: fields{
-				stream: func() chan Entry {
-					c := make(chan Entry)
-					go func() {
-						defer close(c)
-						c <- EntryInt(2)
-						c <- EntryInt(3)
-						c <- EntryInt(4)
-						c <- EntryInt(5)
-					}()
-					return c
-				}(),
-			},
-			args: args{
-				c: NewCollector(supplier, accumulator, nil),
-			},
-			want: EntrySlice{
-				EntryInt(2),
-				EntryInt(3),
-				EntryInt(4),
-				EntryInt(5),
-			},
-		},
-		{
-			name: "Should call finisher when provided",
-			fields: fields{
-				stream: func() chan Entry {
-					c := make(chan Entry)
-					go func() {
-						defer close(c)
-						c <- EntryInt(2)
-						c <- EntryInt(3)
-						c <- EntryInt(4)
-						c <- EntryInt(5)
-					}()
-					return c
-				}(),
-			},
-			args: args{
-				c: NewCollector(supplier, accumulator, finisher),
-			},
-			want: EntryInt(14),
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := Stream{
-				stream: tt.fields.stream,
-			}
-			if got := s.Collect(tt.args.c); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Stream.Collect() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestStream_FlatMap(t *testing.T) {
-	type fields struct {
-		stream chan Entry
-	}
-	type args struct {
-		mapper StreamFunction
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   Stream
-	}{
-		{
-			name: "Should produce an empty stream when in-stream is nil",
-			fields: fields{
-				stream: nil,
-			},
-			args: args{
-				mapper: func(e Entry) Stream {
-					return FlattenEntrySliceToEntry(0)(e)
-				},
-			},
-			want: NewStreamFromSlice(EntrySlice{}, 0),
-		},
-		{
-			name: "Should produce an empty stream when in-stream is empty",
-			fields: fields{
-				stream: func() chan Entry {
-					c := make(chan Entry)
-					go func() { defer close(c) }()
-					return c
-				}(),
-			},
-			args: args{
-				mapper: func(e Entry) Stream {
-					return FlattenEntrySliceToEntry(0)(e)
-				},
-			},
-			want: NewStreamFromSlice(EntrySlice{}, 0),
-		},
-		{
-			name: "Should produce a flat stream when in-stream is not empty",
-			fields: fields{
-				stream: func() chan Entry {
-					c := make(chan Entry)
-					go func() {
-						defer close(c)
-						c <- EntrySlice{
-							EntryInt(1),
-							EntryInt(2),
-							EntryInt(3),
-						}
-						c <- EntrySlice{
-							EntryInt(4),
-							EntryInt(5),
-							EntryInt(6),
-						}
-					}()
-					return c
-				}(),
-			},
-			args: args{
-				mapper: func(e Entry) Stream {
-					return FlattenEntrySliceToEntry(0)(e)
-				},
-			},
-			want: NewStreamFromSlice(EntrySlice{
-				EntryInt(1),
-				EntryInt(2),
-				EntryInt(3),
-				EntryInt(4),
-				EntryInt(5),
-				EntryInt(6),
-			}, 0),
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := Stream{
-				stream: tt.fields.stream,
-			}
-			got := s.FlatMap(tt.args.mapper).ToSlice()
-			expected := tt.want.ToSlice()
-			assert.EqualValues(t, expected, got)
-		})
-	}
-}
-
-func TestStream_FlatMap_Concurrent(t *testing.T) {
-	const numSlices = 300
-	const concurrencyLevel = numSlices / 10
-
-	sourceStream := func() chan Entry {
-		c := make(chan Entry, 10)
-		go func() {
-			defer close(c)
-			for i := 0; i < numSlices; i++ {
-				es := EntrySlice{}
-				for j := 0; j < 10; j++ {
-					es = append(es, EntryInt(j))
-				}
-				c <- es
-			}
-		}()
-		return c
-	}()
-
-	// Stream.flatMap() helps in converting Collection<Collection<T>> to Collection<T>.
-	// flatMap() = map() + Flattening
-	mapper := func(e Entry) Stream {
-		time.Sleep(50 * time.Millisecond)
-		return FlattenEntrySliceToEntry(concurrencyLevel)(e)
-	}
-
-	want := func() EntrySlice {
-		resultES := EntrySlice{}
-		for i := 0; i < numSlices; i++ {
-			for j := 0; j < 10; j++ {
-				resultES = resultES.Append(EntryInt(j))
-			}
-		}
-		return resultES
-	}()
-
-	unitStream := Stream{
-		stream: sourceStream,
-	}
-	gotStream := unitStream.Concurrent(concurrencyLevel).FlatMap(mapper).ToSlice()
-
-	if !reflect.DeepEqual(gotStream, want) {
-		t.Errorf("Stream.Map() = %v, want %v", gotStream, want)
 	}
 }
 
 func TestStream_ToSlice(t *testing.T) {
-	type fields struct {
-		stream chan Entry
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		want   EntrySlice
+	tt := map[string]struct {
+		stream chan int
+		want   []int
 	}{
-		{
-			name: "Should produce an empty stream when in-stream is nil",
-			fields: fields{
-				stream: nil,
-			},
-			want: EntrySlice{},
+		"Should produce an empty stream when in-stream is nil": {
+			stream: nil,
+			want:   []int{},
 		},
-		{
-			name: "Should produce an empty stream when in-stream is empty",
-			fields: fields{
-				stream: func() chan Entry {
-					c := make(chan Entry)
-					go func() { defer close(c) }()
-					return c
-				}(),
-			},
-			want: EntrySlice{},
+		"Should produce an empty stream when in-stream is empty": {
+			stream: func() chan int {
+				c := make(chan int)
+				go func() { defer close(c) }()
+				return c
+			}(),
+			want: []int{},
 		},
-		{
-			name: "Should produce a flat stream when in-stream is not empty",
-			fields: fields{
-				stream: func() chan Entry {
-					c := make(chan Entry)
-					go func() {
-						defer close(c)
-						c <- EntryInt(1)
-						c <- EntryInt(2)
-						c <- EntryInt(3)
-					}()
-					return c
-				}(),
-			},
-			want: EntrySlice{
-				EntryInt(1),
-				EntryInt(2),
-				EntryInt(3),
+		"Should produce a flat stream when in-stream is not empty": {
+			stream: func() chan int {
+				c := make(chan int)
+				go func() {
+					defer close(c)
+					c <- 1
+					c <- 2
+					c <- 3
+				}()
+				return c
+			}(),
+			want: []int{
+				1,
+				2,
+				3,
 			},
 		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := Stream{
-				stream: tt.fields.stream,
+
+	for name, tc := range tt {
+		tc := tc
+		t.Run(name, func(t *testing.T) {
+			s := Stream[int]{
+				stream: tc.stream,
 			}
 			got := s.ToSlice()
-			assert.EqualValues(t, tt.want, got)
+			assert.EqualValues(t, tc.want, got)
 		})
 	}
 }
 
 func TestStream_DistinctPanicsWhenNilChannel(t *testing.T) {
-	assert.PanicsWithValue(t, PanicMissingChannel, func() { Stream{stream: nil}.Distinct() })
+	assert.PanicsWithValue(t, PanicMissingChannel, func() { Stream[string]{stream: nil}.Distinct(func(string) uint32 { return 0 }) })
 }
 
 func TestStream_Distinct(t *testing.T) {
-	data5 := EntrySlice{
-		EntryInt(1),
-		EntryString("two"),
-		EntryBool(true),
-		EntryInt(4),
-		EntryString("five"),
+	data5 := []any{
+		1,
+		"two",
+		true,
+		4,
+		"five",
 	}
 
-	data10 := EntrySlice{
-		EntryInt(1),
-		EntryString("five"),
-		EntryString("two"),
-		EntryInt(1),
-		EntryString("five"),
-		EntryString("five"),
-		EntryBool(true),
-		EntryInt(4),
-		EntryBool(false),
-		EntryString("five"),
+	data10 := []any{
+		1,
+		"five",
+		"two",
+		1,
+		"five",
+		"five",
+		true,
+		4,
+		false,
+		"five",
 	}
 
-	generateStream := func(data EntrySlice) chan Entry {
-		c := make(chan Entry, 200)
+	generateStream := func(data []any) chan any {
+		c := make(chan any, 200)
 		go func() {
 			defer close(c)
 			for _, e := range data {
@@ -2393,139 +545,94 @@ func TestStream_Distinct(t *testing.T) {
 		return c
 	}
 
-	type fields struct {
-		stream chan Entry
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		want   Stream
+	tt := map[string]struct {
+		stream chan any
+		want   []any
 	}{
-		{
-			name: "Should return same values when the in-stream has distinct values",
-			fields: fields{
-				stream: generateStream(data5),
-			},
-			want: NewStreamFromSlice(data5, 0),
+		"Should return same values when the in-stream has distinct values": {
+			stream: generateStream(data5),
+			want:   data5,
 		},
-		{
-			name: "Should return distinct values when the in-stream has repeat values",
-			fields: fields{
-				stream: generateStream(data10),
+		"Should return distinct values when the in-stream has repeat values": {
+			stream: generateStream(data10),
+			want: []any{
+				1,
+				"five",
+				"two",
+				true,
+				4,
+				false,
 			},
-			want: NewStreamFromSlice(EntrySlice{
-				EntryInt(1),
-				EntryString("five"),
-				EntryString("two"),
-				EntryBool(true),
-				EntryInt(4),
-				EntryBool(false),
-			}, 0),
 		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := Stream{
-				stream: tt.fields.stream,
+
+	hashFn := func(t any) uint32 {
+		switch tp := t.(type) {
+		case bool:
+			if tp {
+				return 1
 			}
-			got := s.Distinct().ToSlice()
-			assert.EqualValues(t, tt.want.ToSlice(), got)
+			return 0
+		case int:
+			return crc32.ChecksumIEEE([]byte(strconv.Itoa(tp)))
+		case string:
+			return crc32.ChecksumIEEE([]byte(tp))
+		default:
+			panic("unknown type")
+		}
+	}
+
+	for name, tc := range tt {
+		tc := tc
+
+		t.Run(name, func(t *testing.T) {
+			s := Stream[any]{
+				stream: tc.stream,
+			}
+			got := s.Distinct(hashFn).ToSlice()
+			assert.EqualValues(t, tc.want, got)
 		})
 	}
 }
 
-func TestStream_Peek(t *testing.T) {
-	var callCount, total int
-	computeSumTotal := func(value Entry) {
-		callCount++
-		total += int(value.(EntryInt))
+var float2int = func() Function[float32, Any] {
+	return func(f float32) Any {
+		return int(f)
 	}
+}()
 
-	type fields struct {
-		stream chan Entry
+var int2string = func() Function[int, Any] {
+	return func(i int) Any {
+		return fmt.Sprintf("%d", i)
 	}
-	type args struct {
-		consumer Consumer
+}()
+
+var string2int = func() Function[string, Any] {
+	return func(s string) Any {
+		i, err := strconv.Atoi(s)
+		if err != nil {
+			panic(err)
+		}
+		return i
 	}
-	tests := []struct {
-		name          string
-		fields        fields
-		args          args
-		want          Stream
-		wantTotal     int
-		wantCallCount int
-	}{
-		{
-			name: "Should peek and return empty stream when nil in-stream",
-			fields: fields{
-				stream: nil,
-			},
-			args: args{
-				consumer: computeSumTotal,
-			},
-			want:          NewStreamFromSlice(EntrySlice{}, 0),
-			wantTotal:     0,
-			wantCallCount: 0,
-		},
-		{
-			name: "Should peek and return empty stream when empty in-stream",
-			fields: fields{
-				stream: func() chan Entry {
-					c := make(chan Entry)
-					go func() {
-						defer close(c)
-					}()
-					return c
-				}(),
-			},
-			args: args{
-				consumer: computeSumTotal,
-			},
-			want:          NewStreamFromSlice(EntrySlice{}, 0),
-			wantTotal:     0,
-			wantCallCount: 0,
-		},
-		{
-			name: "Should peek and return stream when populated in-stream",
-			fields: fields{
-				stream: func() chan Entry {
-					c := make(chan Entry)
-					go func() {
-						defer close(c)
-						c <- EntryInt(1)
-						c <- EntryInt(2)
-						c <- EntryInt(3)
-						c <- EntryInt(5)
-						c <- EntryInt(8)
-					}()
-					return c
-				}(),
-			},
-			args: args{
-				consumer: computeSumTotal,
-			},
-			want: NewStreamFromSlice(
-				EntrySlice{
-					EntryInt(1),
-					EntryInt(2),
-					EntryInt(3),
-					EntryInt(5),
-					EntryInt(8),
-				}, 0),
-			wantTotal:     19,
-			wantCallCount: 5,
-		},
+}()
+
+var functionTimesTwo = func() Function[int, Any] {
+	return func(i int) Any {
+		return 2 * i
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			callCount, total = 0, 0
-			s := Stream{
-				stream: tt.fields.stream,
-			}
-			got := s.Peek(tt.args.consumer)
-			assert.EqualValues(t, tt.want.ToSlice(), got.ToSlice())
-			assert.Equal(t, tt.wantTotal, total)
-			assert.Equal(t, tt.wantCallCount, callCount)
-		})
+}()
+
+var functionSlowTimesTwo = func() Function[int, Any] {
+	return func(i int) Any {
+		time.Sleep(50 * time.Millisecond)
+		return 2 * i
 	}
-}
+}()
+
+var intFunctionSlowTimesTwo = func() Function[int, int] {
+	return func(i int) int {
+		time.Sleep(50 * time.Millisecond)
+		return 2 * i
+	}
+}()
