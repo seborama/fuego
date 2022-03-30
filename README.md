@@ -68,7 +68,7 @@ Have fun!!
 
 ## [Type Parameters](#type-parameters)
 
-Starting with version v11.0.0, ___ƒuego___ use Go 1.18's [Type Parameters](https://go.googlesource.com/proposal/+/master/design/43651-type-parameters.md).
+Starting with version v11.0.0, ___ƒuego___ uses Go 1.18's [Type Parameters](https://go.googlesource.com/proposal/+/master/design/43651-type-parameters.md).
 
 It is a drastic design change and fundamentally incompatible with previous versions of ___ƒuego___.
 
