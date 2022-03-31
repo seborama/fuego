@@ -710,10 +710,3 @@ var functionSlowTimesTwo = func() Function[int, Any] {
 		return 2 * i
 	}
 }()
-
-var intFunctionSlowTimesTwo = func() Function[int, int] {
-	return func(i int) int {
-		time.Sleep(50 * time.Millisecond)
-		return 2 * i
-	}
-}()

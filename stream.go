@@ -275,7 +275,7 @@ func (s Stream[T]) GroupBy(classifier Function[T, Any]) map[Any][]T {
 		for val := range s.stream {
 			k := classifier(val)
 
-			if interface{}(resultMap[k]) == nil {
+			if resultMap[k] == nil {
 				resultMap[k] = []T{}
 			}
 
