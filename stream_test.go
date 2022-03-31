@@ -595,6 +595,87 @@ func TestStream_Distinct(t *testing.T) {
 	}
 }
 
+func TestStream_Peek(t *testing.T) {
+	computeSumTotal := func(callCount, total *int) Consumer[int] {
+		return func(value int) {
+			*callCount++
+			*total += value
+		}
+	}
+
+	tt := []struct {
+		name          string
+		stream        chan int
+		consumer      func(callCount, total *int) Consumer[int]
+		want          []int
+		wantTotal     int
+		wantCallCount int
+	}{
+		{
+			name:          "Should peek and return empty stream when nil in-stream",
+			stream:        nil,
+			consumer:      computeSumTotal,
+			want:          []int{},
+			wantTotal:     0,
+			wantCallCount: 0,
+		},
+		{
+			name: "Should peek and return empty stream when empty in-stream",
+			stream: func() chan int {
+				c := make(chan int)
+				go func() {
+					defer close(c)
+				}()
+				return c
+			}(),
+			consumer:      computeSumTotal,
+			want:          []int{},
+			wantTotal:     0,
+			wantCallCount: 0,
+		},
+		{
+			name: "Should peek and return stream when populated in-stream",
+			stream: func() chan int {
+				c := make(chan int)
+				go func() {
+					defer close(c)
+					c <- 1
+					c <- 2
+					c <- 3
+					c <- 5
+					c <- 8
+				}()
+				return c
+			}(),
+			consumer: computeSumTotal,
+			want: []int{
+				1,
+				2,
+				3,
+				5,
+				8,
+			},
+			wantTotal:     19,
+			wantCallCount: 5,
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			callCount, total := 0, 0
+
+			s := Stream[int]{
+				stream: tc.stream,
+			}
+
+			got := s.Peek(tc.consumer(&callCount, &total))
+			assert.EqualValues(t, tc.want, got.ToSlice())
+			assert.Equal(t, tc.wantTotal, total)
+			assert.Equal(t, tc.wantCallCount, callCount)
+		})
+	}
+}
+
 var float2int = func() Function[float32, Any] {
 	return func(f float32) Any {
 		return int(f)

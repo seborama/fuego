@@ -78,12 +78,6 @@ func (s Stream[T]) Concurrency() int {
 //
 // This is used for concurrent methods such as Stream.Map.
 //
-// Consumption is ordered by the stream's channel but output
-// may be unordered (a slow consumer will be "out-raced" by faster
-// consumers). Ordering is dependent on the implementation of
-// concurrency. For instance Stream.Map() is orderly but
-// Stream.ForEachC is not.
-//
 // Note that to switch off concurrency, you should provide n = 0.
 // With n = 1, concurrency is internal whereby the Stream writer
 // will not block on writing a single element (i.e. buffered
@@ -305,6 +299,26 @@ func (s Stream[T]) ForEach(c Consumer[T]) {
 		zap.L().Debug("calling consumer", zap.Any("value", val))
 		c(val)
 	}
+}
+
+// Peek is akin to ForEach but returns the Stream.
+//
+// This is useful e.g. for debugging.
+//
+// This function streams continuously until the in-stream is closed at
+// which point the out-stream will be closed too.
+func (s Stream[T]) Peek(consumer Consumer[T]) Stream[T] {
+	outstream := make(chan T, cap(s.stream))
+
+	go func() {
+		defer close(outstream)
+		s.ForEach(func(e T) {
+			consumer(e)
+			outstream <- e
+		})
+	}()
+
+	return NewConcurrentStream(outstream, s.concurrency)
 }
 
 // ToSlice extracts the elements of the stream into a []T.
