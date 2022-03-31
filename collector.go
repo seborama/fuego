@@ -1,5 +1,7 @@
 package fuego
 
+import "fmt"
+
 // NOTICE:
 // The code in this file was inspired by Java Collectors,
 // Vavr and somewhat Scala.
@@ -171,6 +173,7 @@ func Reducing[T any](f2 BiFunction[T, T, T]) Collector[T, Optional[T], T] {
 }
 
 // ToSlice returns a collector that accumulates the input entries into a Go slice.
+// Type T: type of the elements accumulated in the slice.
 func ToSlice[T any]() Collector[T, []T, []T] {
 	supplier := func() []T { // TODO: use chan A instead with a finisher that converts to []A?
 		return []T{}
@@ -181,6 +184,61 @@ func ToSlice[T any]() Collector[T, []T, []T] {
 	}
 
 	finisher := IdentityFinisher[[]T]
+
+	return NewCollector(supplier, accumulator, finisher)
+}
+
+// ToMap returns a collector that accumulates the input entries into a Go map.
+// Type T: type from which the elements are accumulated in the map.
+// Type K: type of the keys derived from T.
+// Type V: type of the values derived from T.
+func ToMap[T any, K comparable, V any](keyMapper Function[T, K], valueMapper Function[T, V]) Collector[T, map[K]V, map[K]V] {
+	supplier := func() map[K]V { // TODO: use chan instead with a finisher that converts to map?
+		return map[K]V{}
+	}
+
+	accumulator := func(supplier map[K]V, element T) map[K]V {
+		key := keyMapper(element)
+		value := valueMapper(element)
+
+		if _, ok := supplier[key]; !ok {
+			supplier[key] = value
+			return supplier
+		}
+
+		panic(fmt.Sprintf("%s: '%v'", PanicDuplicateKey, key))
+	}
+
+	finisher := IdentityFinisher[map[K]V]
+
+	return NewCollector(supplier, accumulator, finisher)
+}
+
+// ToMapWithMerge returns a collector that accumulates the input entries into a Go map.
+// Key collision strategy is managed by mergeFn.
+// Type T: type from which the elements are accumulated in the map.
+// Type K: type of the keys derived from T.
+// Type V: type of the values derived from T.
+func ToMapWithMerge[T any, K comparable, V any](keyMapper Function[T, K], valueMapper Function[T, V], mergeFn BiFunction[V, V, V]) Collector[T, map[K]V, map[K]V] {
+	supplier := func() map[K]V { // TODO: use chan instead with a finisher that converts to map?
+		return map[K]V{}
+	}
+
+	accumulator := func(supplier map[K]V, element T) map[K]V {
+		key := keyMapper(element)
+		value := valueMapper(element)
+
+		if _, ok := supplier[key]; !ok {
+			supplier[key] = value
+			return supplier
+		}
+
+		supplier[key] = mergeFn(supplier[key], value)
+
+		return supplier
+	}
+
+	finisher := IdentityFinisher[map[K]V]
 
 	return NewCollector(supplier, accumulator, finisher)
 }

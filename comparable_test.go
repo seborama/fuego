@@ -14,7 +14,7 @@ func TestComparableStream_Max(t *testing.T) {
 		"int": {
 			got: func() interface{} {
 				return CC(NewStreamFromSlice([]int{1, -2, 3, 21, 5, 8, 13}, 0).
-					Map(ToR[int]), Int).
+					Map(ToAny[int]), Int).
 					Max()
 			},
 			want: 21,
@@ -22,7 +22,7 @@ func TestComparableStream_Max(t *testing.T) {
 		"uint": {
 			got: func() interface{} {
 				return CC(NewStreamFromSlice([]uint{1, 2, 3, 21, 5, 8, 13}, 0).
-					Map(ToR[uint]), Uint).
+					Map(ToAny[uint]), Uint).
 					Max()
 			},
 			want: uint(21),
@@ -30,7 +30,7 @@ func TestComparableStream_Max(t *testing.T) {
 		"float32": {
 			got: func() interface{} {
 				return CC(NewStreamFromSlice([]float32{1.1, -2.2, 3.3, 21.21, 5.5, 8.8, 13.12}, 0).
-					Map(ToR[float32]), Float32).
+					Map(ToAny[float32]), Float32).
 					Max()
 			},
 			want: float32(21.21),
@@ -38,7 +38,7 @@ func TestComparableStream_Max(t *testing.T) {
 		"string": {
 			got: func() interface{} {
 				return CC(NewStreamFromSlice([]string{"D", "K", "A", "Y", "M", "O"}, 0).
-					Map(ToR[string]), String).
+					Map(ToAny[string]), String).
 					Max()
 			},
 			want: "Y",
@@ -62,7 +62,7 @@ func TestComparableStream_Min(t *testing.T) {
 		"int": {
 			got: func() interface{} {
 				return CC(NewStreamFromSlice([]int{1, -2, 3, 21, 5, 8, 13}, 0).
-					Map(ToR[int]), Int).
+					Map(ToAny[int]), Int).
 					Min()
 			},
 			want: -2,
@@ -70,7 +70,7 @@ func TestComparableStream_Min(t *testing.T) {
 		"uint": {
 			got: func() interface{} {
 				return CC(NewStreamFromSlice([]uint{2, 1, 3, 21, 5, 8, 13}, 0).
-					Map(ToR[uint]), Uint).
+					Map(ToAny[uint]), Uint).
 					Min()
 			},
 			want: uint(1),
@@ -78,7 +78,7 @@ func TestComparableStream_Min(t *testing.T) {
 		"float32": {
 			got: func() interface{} {
 				return CC(NewStreamFromSlice([]float32{1.1, -2.2, 3.3, 21.21, 5.5, 8.8, 13.13}, 0).
-					Map(ToR[float32]), Float32).
+					Map(ToAny[float32]), Float32).
 					Min()
 			},
 			want: float32(-2.2),
@@ -86,7 +86,7 @@ func TestComparableStream_Min(t *testing.T) {
 		"string": {
 			got: func() interface{} {
 				return CC(NewStreamFromSlice([]string{"D", "K", "A", "Y", "M", "O"}, 0).
-					Map(ToR[string]), String).
+					Map(ToAny[string]), String).
 					Min()
 			},
 			want: "A",

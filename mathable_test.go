@@ -14,7 +14,7 @@ func TestMathableStream_Sum(t *testing.T) {
 		"int": {
 			got: func() interface{} {
 				return MC(NewStreamFromSlice([]int{1, -2, 3, 21, 5, 8, 13}, 0).
-					Map(ToR[int]), Int).
+					Map(ToAny[int]), Int).
 					Sum()
 			},
 			want: 49,
@@ -22,7 +22,7 @@ func TestMathableStream_Sum(t *testing.T) {
 		"uint": {
 			got: func() interface{} {
 				return MC(NewStreamFromSlice([]uint{2, 1, 3, 21, 5, 8, 13}, 0).
-					Map(ToR[uint]), Uint).
+					Map(ToAny[uint]), Uint).
 					Sum()
 			},
 			want: uint(53),
@@ -30,7 +30,7 @@ func TestMathableStream_Sum(t *testing.T) {
 		"float32": {
 			got: func() interface{} {
 				return MC(NewStreamFromSlice([]float32{1.1, -2.2, 3.3, 21.21, 5.5, 8.8, 13.13}, 0).
-					Map(ToR[float32]), Float32).
+					Map(ToAny[float32]), Float32).
 					Sum()
 			},
 			want: float32(50.84),
@@ -54,7 +54,7 @@ func TestMathableStream_Average(t *testing.T) {
 		"int": {
 			got: func() interface{} {
 				return MC(NewStreamFromSlice([]int{1, -2, 3, 21, 5, 8, 13}, 0).
-					Map(ToR[int]), Int).
+					Map(ToAny[int]), Int).
 					Average()
 			},
 			want: 7,
@@ -62,7 +62,7 @@ func TestMathableStream_Average(t *testing.T) {
 		"uint": {
 			got: func() interface{} {
 				return MC(NewStreamFromSlice([]uint{2, 1, 3, 21, 5, 8, 13}, 0).
-					Map(ToR[uint]), Uint).
+					Map(ToAny[uint]), Uint).
 					Average()
 			},
 			want: uint(7),
@@ -70,7 +70,7 @@ func TestMathableStream_Average(t *testing.T) {
 		"float32": {
 			got: func() interface{} {
 				return MC(NewStreamFromSlice([]float32{1.1, -2.2, 3.3, 21.21, 5.5, 8.8, 13.13}, 0).
-					Map(ToR[float32]), Float32).
+					Map(ToAny[float32]), Float32).
 					Average()
 			},
 			want: float32(7.2628571429),

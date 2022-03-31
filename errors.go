@@ -18,3 +18,6 @@ const PanicCollectorMissingFinisher = "collector missing finisher"
 
 // PanicNilNotPermitted signifies that the `nil` value is not allowed in the context.
 const PanicNilNotPermitted = "nil not permitted"
+
+// PanicDuplicateKey signifies that an attempt was made to duplicate a key in a container (such as a map).
+const PanicDuplicateKey = "duplicate key"
