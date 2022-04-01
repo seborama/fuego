@@ -49,6 +49,7 @@
 - [Features summary](#features-summary)
   - [Concurrency](#concurrency)
 - [Collectors](#collectors)
+- [Golang, Receivers and Functions](#golang-receivers-and-functions)
 - [Known limitations](#known-limitations)
 
 ## [Overview](#overview)
@@ -276,6 +277,18 @@ But... what if you need something else? And it is not straightforward or readabl
 Enters `Collector`: implement your own requirement functionally!
 <br/>
 Focus on _**what**_ needs doing in your streams (and delegate the details of the _**how**_ to the implementation of your `Collector`).
+
+[(toc)](#table-of-content)
+
+## [Golang, Receivers and Functions](#golang-receivers-and-functions)
+
+Some tests (e.g. TestCollector_Filtering) are using receiver Getter methods in guise of `Function[T, R any]`. Here is the explanation how this is possible.
+
+`Function[T, R any]` is defined as `func(T) R`.
+
+A method Getter is typically defined as `func (T) Property() R {...}`.
+
+While `Property()` does not take any argument, Go allows `T.Property` be called as `T.Property(t)`, where `t` is the receiver. This is a `func(T) R` and hence a `Function[T, R any]`.
 
 [(toc)](#table-of-content)
 
