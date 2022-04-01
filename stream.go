@@ -264,6 +264,38 @@ func (s Stream[T]) Reduce(f2 BiFunction[T, T, T]) T {
 	return s.LeftReduce(f2)
 }
 
+// Intersperse inserts an element between all elements of this Stream.
+//
+// This function streams continuously until the in-stream is closed at
+// which point the out-stream will be closed too.
+func (s Stream[T]) Intersperse(e T) Stream[T] {
+	outstream := make(chan T, cap(s.stream))
+
+	go func() {
+		defer close(outstream)
+		if s.stream == nil {
+			return
+		}
+
+		// this is to get around the inability to test generic types for nil in Go 1.18
+		// nolint: wsl
+		select {
+		case val, ok := <-s.stream:
+			if !ok {
+				return
+			}
+			outstream <- val
+		}
+
+		for val := range s.stream {
+			outstream <- e
+			outstream <- val
+		}
+	}()
+
+	return NewConcurrentStream(outstream, s.concurrency)
+}
+
 // GroupBy groups the elements of this Stream by classifying them.
 //
 // This is a continuous terminal operation and hence expects the producer to close the stream

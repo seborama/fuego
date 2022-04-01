@@ -339,6 +339,88 @@ func TestStream_LeftReduce(t *testing.T) {
 	}
 }
 
+func TestStream_Intersperse(t *testing.T) {
+	tests := map[string]struct {
+		stream    chan string
+		inBetween string
+		want      []string
+	}{
+		"Should return an empty Stream for nil input Stream": {
+			stream:    nil,
+			inBetween: " - ",
+			want:      []string{},
+		},
+		"Should return an empty Stream for empty input Stream": {
+			stream: func() chan string {
+				c := make(chan string)
+				go func() {
+					defer close(c)
+				}()
+				return c
+			}(),
+			inBetween: " - ",
+			want:      []string{},
+		},
+		"Should return the original input Stream when it has a single value": {
+			stream: func() chan string {
+				c := make(chan string)
+				go func() {
+					defer close(c)
+					c <- "four"
+				}()
+				return c
+			}(),
+			inBetween: " - ",
+			want: []string{
+				"four",
+			},
+		},
+		"Should return the Set with given value interspersed": {
+			stream: func() chan string {
+				c := make(chan string)
+				go func() {
+					defer close(c)
+					c <- "four"
+					c <- "twelve"
+					c <- "one"
+					c <- "six"
+					c <- "three"
+				}()
+				return c
+			}(),
+			inBetween: " - ",
+			want: []string{
+				"four",
+				" - ",
+				"twelve",
+				" - ",
+				"one",
+				" - ",
+				"six",
+				" - ",
+				"three"},
+		},
+	}
+
+	for name, tc := range tests {
+		tc := tc
+
+		t.Run(name, func(t *testing.T) {
+			s := Stream[string]{
+				stream: tc.stream,
+			}
+			out := s.Intersperse(tc.inBetween)
+			got := []string{}
+			for e := range out.stream {
+				got = append(got, e)
+			}
+			if !assert.ElementsMatch(t, got, tc.want) {
+				t.Errorf("Stream.Intersperse() = %v, want %v", got, tc.want)
+			}
+		})
+	}
+}
+
 func TestStream_GroupBy(t *testing.T) {
 	tt := map[string]struct {
 		stream     chan int
