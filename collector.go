@@ -83,10 +83,6 @@ func GroupingBy[T any, K comparable, A, D any](classifier Function[T, K], downst
 	}
 
 	finisher := func(e map[K]A) map[K]D {
-		if downstream.finisher == nil {
-			panic(PanicCollectorMissingFinisher)
-		}
-
 		m := map[K]D{}
 		for k, v := range e {
 			m[k] = downstream.finisher(v)

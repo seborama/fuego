@@ -1,6 +1,10 @@
 package fuego
 
-// Optional is a container object which may or may not contain a value (nil is considered a non-value).
+// Optional is a container object which may or may not contain a value (NO: nil is considered a non-value).
+// IMPORTANT NOTE:
+// Currently, Go 1.18 does not permit nil generic types.
+// See: https://github.com/golang/go/issues/22729
+//
 // See IsPresent().
 //
 // Additional methods that depend on the presence or absence of a contained value are provided,
@@ -100,12 +104,11 @@ func (o Optional[T]) Map(f Function[T, Any]) Optional[Any] {
 	return OptionalEmpty[Any]()
 }
 
-// OptionalOf returns an Optional describing the given non-nil value.
+// OptionalOf returns an Optional describing the given (NO: non-nil) value.
+// IMPORTANT NOTE:
+// Currently, Go 1.18 does not permit nil generic types.
+// See: https://github.com/golang/go/issues/22729
 func OptionalOf[T any](val T) Optional[T] {
-	if interface{}(val) == nil {
-		panic(PanicNilNotPermitted)
-	}
-
 	return Optional[T]{
 		value:   val,
 		present: true,
