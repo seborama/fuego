@@ -484,6 +484,204 @@ func TestStream_GroupBy(t *testing.T) {
 	}
 }
 
+func TestStream_Count(t *testing.T) {
+	tt := map[string]struct {
+		stream chan int
+		want   int
+	}{
+		"Should return 0 for a nil channel": {
+			stream: nil,
+			want:   0,
+		},
+		"Should return 0 for an empty closed channel": {
+			stream: func() chan int {
+				c := make(chan int)
+				go func() {
+					defer close(c)
+				}()
+				return c
+			}(),
+			want: 0,
+		},
+		"Should return 3 for a size 3 closed channel": {
+			stream: func() chan int {
+				c := make(chan int, 1)
+				go func() {
+					defer close(c)
+					c <- 1
+					c <- 2
+					c <- 1
+				}()
+				return c
+			}(),
+			want: 3,
+		},
+	}
+
+	for name, tc := range tt {
+		tc := tc
+
+		t.Run(name, func(t *testing.T) {
+			s := Stream[int]{
+				stream: tc.stream,
+			}
+			if got := s.Count(); got != tc.want {
+				t.Errorf("Stream.Count() = %v, want %v", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestStream_AnyMatch(t *testing.T) {
+	dataGenerator := func() chan any {
+		c := make(chan any, 2)
+		go func() {
+			defer close(c)
+			c <- "a"
+			c <- false
+			c <- "b"
+			c <- -17
+			c <- "c"
+		}()
+		return c
+	}
+
+	tt := map[string]struct {
+		stream    chan any
+		predicate Predicate[any]
+		want      bool
+	}{
+		"Should not match any when channel is nil": {
+			stream:    nil,
+			predicate: True[any](),
+			want:      false,
+		},
+		"Should not match any": {
+			stream:    dataGenerator(),
+			predicate: func(e any) bool { return e == "not in here" },
+			want:      false,
+		},
+		"Should match any": {
+			stream:    dataGenerator(),
+			predicate: func(e any) bool { return e == "b" },
+			want:      true,
+		},
+	}
+
+	for name, tc := range tt {
+		tc := tc
+
+		t.Run(name, func(t *testing.T) {
+			s := Stream[any]{
+				stream: tc.stream,
+			}
+			if got := s.AnyMatch(tc.predicate); got != tc.want {
+				t.Errorf("Stream.AnyMatch() = %v, want %v", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestStream_NoneMatch(t *testing.T) {
+	dataGenerator := func() chan any {
+		c := make(chan any, 2)
+		go func() {
+			defer close(c)
+			c <- "a"
+			c <- false
+			c <- "b"
+			c <- -17
+			c <- "c"
+		}()
+		return c
+	}
+
+	tt := map[string]struct {
+		stream    chan any
+		predicate Predicate[any]
+		want      bool
+	}{
+		"Should satisfy when channel is nil": {
+			stream:    nil,
+			predicate: True[any](),
+			want:      true,
+		},
+		"Should satisfy": {
+			stream:    dataGenerator(),
+			predicate: func(e any) bool { return e == "not in here" },
+			want:      true,
+		},
+		"Should not satisfy": {
+			stream:    dataGenerator(),
+			predicate: func(e any) bool { return e == "b" },
+			want:      false,
+		},
+	}
+
+	for name, tc := range tt {
+		tc := tc
+
+		t.Run(name, func(t *testing.T) {
+			s := Stream[any]{
+				stream: tc.stream,
+			}
+			if got := s.NoneMatch(tc.predicate); got != tc.want {
+				t.Errorf("Stream.NoneMatch() = %v, want %v", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestStream_AllMatch(t *testing.T) {
+	dataGenerator := func() chan any {
+		c := make(chan any, 2)
+		go func() {
+			defer close(c)
+			c <- "a"
+			c <- false
+			c <- "b"
+			c <- -17
+			c <- "c"
+		}()
+		return c
+	}
+
+	tt := map[string]struct {
+		stream    chan any
+		predicate Predicate[any]
+		want      bool
+	}{
+		"Should not match all when channel is nil": {
+			stream:    nil,
+			predicate: True[any](),
+			want:      false,
+		},
+		"Should match all": {
+			stream:    dataGenerator(),
+			predicate: func(e any) bool { return e != "not in here" },
+			want:      true,
+		},
+		"Should not match all": {
+			stream:    dataGenerator(),
+			predicate: func(e any) bool { return e == "b" },
+			want:      false,
+		},
+	}
+
+	for name, tc := range tt {
+		tc := tc
+
+		t.Run(name, func(t *testing.T) {
+			s := Stream[any]{
+				stream: tc.stream,
+			}
+			if got := s.AllMatch(tc.predicate); got != tc.want {
+				t.Errorf("Stream.AllMatch() = %v, want %v", got, tc.want)
+			}
+		})
+	}
+}
+
 func TestStream_ForEach(t *testing.T) {
 	computeSumTotal := func(callCount, total *int) Consumer[int] {
 		return func(value int) {

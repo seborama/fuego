@@ -273,12 +273,12 @@ func (s Stream[T]) Intersperse(e T) Stream[T] {
 
 	go func() {
 		defer close(outstream)
+
 		if s.stream == nil {
 			return
 		}
 
 		// this is to get around the inability to test generic types for nil in Go 1.18
-		// nolint: wsl
 		select {
 		case val, ok := <-s.stream:
 			if !ok {
@@ -316,6 +316,74 @@ func (s Stream[T]) GroupBy(classifier Function[T, Any]) map[Any][]T {
 	}
 
 	return resultMap
+}
+
+// Count the number of elements in the stream.
+//
+// This is a continuous terminal operation and hence expects
+// the producer to close the stream in order to complete (or
+// it will block).
+func (s Stream[T]) Count() int {
+	if s.stream == nil {
+		return 0
+	}
+
+	count := 0
+	for range s.stream {
+		count++
+	}
+
+	return count
+}
+
+// AllMatch returns whether all of the elements in the stream
+// satisfy the predicate.
+//
+// This is a continuous terminal operation and hence expects
+// the producer to close the stream in order to complete (or
+// it will block).
+func (s Stream[T]) AllMatch(p Predicate[T]) bool {
+	if s.stream == nil {
+		return false
+	}
+
+	for val := range s.stream {
+		if !p(val) {
+			return false
+		}
+	}
+
+	return true
+}
+
+// AnyMatch returns whether any of the elements in the stream
+// satisfies the predicate.
+//
+// This is a continuous terminal operation and hence expects
+// the producer to close the stream in order to complete (or
+// it will block).
+func (s Stream[T]) AnyMatch(p Predicate[T]) bool {
+	if s.stream == nil {
+		return false
+	}
+
+	for val := range s.stream {
+		if p(val) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// NoneMatch returns whether none of the elements in the stream
+// satisfies the predicate. It is the opposite of AnyMatch.
+//
+// This is a continuous terminal operation and hence expects
+// the producer to close the stream in order to complete (or
+// it will block).
+func (s Stream[T]) NoneMatch(p Predicate[T]) bool {
+	return !s.AnyMatch(p)
 }
 
 // ForEach executes the given consumer function for each entry in this stream.
