@@ -200,11 +200,18 @@ Presently, a Go channel cannot dynamically change its buffer size. This prevents
 
 ## [Features summary](#features-summary)
 
-TODO: update as necessary for v11.
-
 Streams:
 
-- Stream
+- Stream:
+  - Filter
+  - Map / FlatMap
+  - Reduce
+  - GroupBy
+  - All/Any/None -Match
+  - Intersperse
+  - Distinct
+  - ForEach / Peek
+  - ...
 - ComparableStream
 - MathableStream
 
