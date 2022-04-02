@@ -386,6 +386,63 @@ func (s Stream[T]) NoneMatch(p Predicate[T]) bool {
 	return !s.AnyMatch(p)
 }
 
+// Drop the first 'n' elements of this stream and returns a new stream.
+//
+// This function streams continuously until the in-stream is closed at
+// which point the out-stream will be closed too.
+func (s Stream[T]) Drop(n uint64) Stream[T] {
+	return s.DropWhile(func() func(e T) bool {
+		count := uint64(0)
+		return func(e T) bool {
+			count++
+			return count <= n
+		}
+	}())
+}
+
+// DropWhile drops the first elements of this stream while the predicate
+// is satisfied and returns a new stream.
+//
+// This function streams continuously until the in-stream is closed at
+// which point the out-stream will be closed too.
+func (s Stream[T]) DropWhile(p Predicate[T]) Stream[T] {
+	outstream := make(chan T, cap(s.stream))
+
+	go func() {
+		defer close(outstream)
+
+		if s.stream == nil {
+			return
+		}
+
+		// drop elements as required
+		for val := range s.stream {
+			if p(val) {
+				continue
+			}
+			outstream <- val
+
+			break
+		}
+
+		// flush the remainder to outstream
+		for val := range s.stream {
+			outstream <- val
+		}
+	}()
+
+	return NewConcurrentStream(outstream, s.concurrency)
+}
+
+// DropUntil drops the first elements of this stream until the predicate
+// is satisfied and returns a new stream.
+//
+// This function streams continuously until the in-stream is closed at
+// which point the out-stream will be closed too.
+func (s Stream[T]) DropUntil(p Predicate[T]) Stream[T] {
+	return s.DropWhile(p.Negate())
+}
+
 // ForEach executes the given consumer function for each entry in this stream.
 //
 // This is a continuous terminal operation. It will only complete if the producer closes the stream.

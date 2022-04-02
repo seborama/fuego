@@ -682,6 +682,213 @@ func TestStream_AllMatch(t *testing.T) {
 	}
 }
 
+func TestStream_Drop(t *testing.T) {
+	data1 := []any{
+		1,
+	}
+
+	data := []any{
+		"a",
+		false,
+		"b",
+		-17,
+		"c",
+	}
+
+	dataGenerator := func(slice []any) chan any {
+		c := make(chan any, 2)
+		go func() {
+			defer close(c)
+			for _, val := range slice {
+				c <- val
+			}
+		}()
+		return c
+	}
+
+	tt := map[string]struct {
+		stream chan any
+		n      uint64
+		want   []any
+	}{
+		"Should return an empty stream when nil channel": {
+			stream: nil,
+			n:      1,
+			want:   []any{},
+		},
+		"Should not change the stream if n < 1": {
+			stream: dataGenerator(data),
+			n:      0,
+			want:   data,
+		},
+		"Should drop all elements when n > number of elements in the stream": {
+			stream: dataGenerator(data),
+			n:      uint64(len(data) + 10),
+			want:   []any{},
+		},
+		"Should drop the first n elements when n < number of elements in the stream": {
+			stream: dataGenerator(data),
+			n:      2,
+			want:   data[2:],
+		},
+		"Should drop the sole element in the stream": {
+			stream: dataGenerator(data1),
+			n:      1,
+			want:   []any{},
+		},
+	}
+
+	for name, tc := range tt {
+		tc := tc
+
+		t.Run(name, func(t *testing.T) {
+			s := Stream[any]{stream: tc.stream}
+			gotStream := s.Drop(tc.n)
+			if tc.want == nil {
+				assert.Nil(t, gotStream.stream)
+				return
+			}
+			got := []any{}
+			for val := range gotStream.stream {
+				got = append(got, val)
+			}
+			assert.EqualValues(t, tc.want, got)
+		})
+	}
+}
+
+func TestStream_DropWhile(t *testing.T) {
+	data := []any{
+		"a",
+		false,
+		"b",
+		-17,
+		"c",
+	}
+
+	dataGenerator := func() chan any {
+		c := make(chan any, 2)
+		go func() {
+			defer close(c)
+			for _, val := range data {
+				c <- val
+			}
+		}()
+		return c
+	}
+
+	tt := map[string]struct {
+		stream chan any
+		p      Predicate[any]
+		want   []any
+	}{
+		"Should return empty out-stream when nil in-stream": {
+			stream: nil,
+			p:      True[any](),
+			want:   []any{},
+		},
+		"Should not change the stream if predicate never satisfies": {
+			stream: dataGenerator(),
+			p:      False[any](),
+			want:   data,
+		},
+		"Should drop the first few elements that satisfy the predicate": {
+			stream: dataGenerator(),
+			p: func(e any) bool {
+				return e == "a" || e == false
+			},
+			want: data[2:],
+		},
+		"Should drop all elements when the predicate always satisfies": {
+			stream: dataGenerator(),
+			p:      True[any](),
+			want:   []any{},
+		},
+	}
+
+	for name, tc := range tt {
+		tc := tc
+
+		t.Run(name, func(t *testing.T) {
+			s := Stream[any]{stream: tc.stream}
+			gotStream := s.DropWhile(tc.p)
+			got := []any{}
+			for val := range gotStream.stream {
+				got = append(got, val)
+			}
+			assert.EqualValues(t, tc.want, got)
+		})
+	}
+}
+
+func TestStream_DropUntil(t *testing.T) {
+	data := []any{
+		"a",
+		false,
+		"b",
+		-17,
+		"c",
+	}
+
+	dataGenerator := func() chan any {
+		c := make(chan any, 2)
+		go func() {
+			defer close(c)
+			for _, val := range data {
+				c <- val
+			}
+		}()
+		return c
+	}
+
+	tt := map[string]struct {
+		stream chan any
+		p      Predicate[any]
+		want   []any
+	}{
+		"Should return empty out-stream when nil in-stream": {
+			stream: nil,
+			p:      True[any](),
+			want:   []any{},
+		},
+		"Should return empty stream if predicate never satisfies": {
+			stream: dataGenerator(),
+			p:      False[any](),
+			want:   []any{},
+		},
+		"Should drop the first few elements that satisfy the predicate": {
+			stream: dataGenerator(),
+			p: func(e any) bool {
+				return e == "b"
+			},
+			want: []any{
+				"b",
+				-17,
+				"c",
+			},
+		},
+		"Should not drop any element when the predicate always satisfies": {
+			stream: dataGenerator(),
+			p:      True[any](),
+			want:   data,
+		},
+	}
+
+	for name, tc := range tt {
+		tc := tc
+
+		t.Run(name, func(t *testing.T) {
+			s := Stream[any]{stream: tc.stream}
+			gotStream := s.DropUntil(tc.p)
+			got := []any{}
+			for val := range gotStream.stream {
+				got = append(got, val)
+			}
+			assert.EqualValues(t, tc.want, got)
+		})
+	}
+}
+
 func TestStream_ForEach(t *testing.T) {
 	computeSumTotal := func(callCount, total *int) Consumer[int] {
 		return func(value int) {
