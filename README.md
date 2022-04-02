@@ -235,6 +235,7 @@ Collectors:
 - Filtering
 - Reducing
 - ToSlice
+- ToMap*
 
 Check the [godoc](https://pkg.go.dev/github.com/seborama/fuego/v11) for full details.
 
@@ -282,13 +283,19 @@ Focus on _**what**_ needs doing in your streams (and delegate the details of the
 
 ## [Golang, Receivers and Functions](#golang-receivers-and-functions)
 
-Some tests (e.g. TestCollector_Filtering) are using receiver Getter methods in guise of `Function[T, R any]`. Here is the explanation how this is possible.
+Some tests (e.g. `TestCollector_Filtering`) are using receiver Getter methods in guise of `Function[T, R any]`. Here is the explanation how this is possible.
 
 `Function[T, R any]` is defined as `func(T) R`.
 
 A method Getter is typically defined as `func (T) Property() R {...}`.
 
 While `Property()` does not take any argument, Go allows `T.Property` be called as `T.Property(t)`, where `t` is the receiver. This is a `func(T) R` and hence a `Function[T, R any]`.
+
+Example - `TestCollector_Filtering`:
+
+`employee.Department(employees[0])` is the same as `employees[0].Department()`, and of course, they both return a `string`.
+
+The first syntax has one advantage for our purpose though: it is a `Function[T, R any]`.
 
 [(toc)](#table-of-content)
 
