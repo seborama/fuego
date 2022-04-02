@@ -16,11 +16,9 @@ func TestOptional_OptionalOf_ZeroValue_IsPresent_True(t *testing.T) {
 	assert.True(t, o.IsPresent())
 }
 
-func TestOptional_OptionalOf_Nil_Panics(t *testing.T) {
-	// IMPORTANT NOTE:
-	// Currently, Go 1.18 does not permit nil generic types.
-	// See: https://github.com/golang/go/issues/22729
-	// assert.PanicsWithValue(t, PanicNilNotPermitted, func() { OptionalOf[*string](nil) })
+func TestOptional_OptionalOf_Nil_IsPresent_False(t *testing.T) {
+	o := OptionalOf[*string](nil)
+	assert.False(t, o.IsPresent())
 }
 
 func TestOptional_OptionalEmpty_IsPresent_False(t *testing.T) {

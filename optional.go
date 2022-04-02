@@ -1,10 +1,10 @@
 package fuego
 
+import (
+	"reflect"
+)
+
 // Optional is a container object which may or may not contain a value (NO: nil is considered a non-value).
-// IMPORTANT NOTE:
-// Currently, Go 1.18 does not permit nil generic types.
-// See: https://github.com/golang/go/issues/22729
-//
 // See IsPresent().
 //
 // Additional methods that depend on the presence or absence of a contained value are provided,
@@ -105,14 +105,26 @@ func (o Optional[T]) Map(f Function[T, Any]) Optional[Any] {
 }
 
 // OptionalOf returns an Optional describing the given (NO: non-nil) value.
-// IMPORTANT NOTE:
 // Currently, Go 1.18 does not permit nil generic types.
 // See: https://github.com/golang/go/issues/22729
 func OptionalOf[T any](val T) Optional[T] {
 	return Optional[T]{
 		value:   val,
-		present: true,
+		present: !isNil(val),
 	}
+}
+
+func isNil(v any) bool {
+	// hat tip to TeaEntityLab/fpGo:
+	// https://github.com/TeaEntityLab/fpGo/blob/5a35fcbc23e384be5f9b33069e3e3ecc9c661bf4/fp.go#L1218
+	val := reflect.ValueOf(v)
+	kind := reflect.ValueOf(v).Kind()
+
+	if kind == reflect.Ptr {
+		return val.IsNil()
+	}
+
+	return !val.IsValid()
 }
 
 // OptionalEmpty returns an empty Optional instance. No value is present for this Optional.

@@ -162,6 +162,8 @@ func Reducing[T any](f2 BiFunction[T, T, T]) Collector[T, Optional[T], T] {
 	}
 
 	finisher := func(e Optional[T]) T {
+		// alternative:
+		// return e.OrElse(*new(T))
 		return e.Get()
 	}
 
