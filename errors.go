@@ -1,7 +1,7 @@
 package fuego
 
 // PanicMissingChannel signifies that the Stream is missing a channel.
-const PanicMissingChannel = "stream creation requires a channel"
+const PanicMissingChannel = "stream requires a channel"
 
 // PanicNoSuchElement signifies that the requested element is not present.
 // Examples: when the Stream is empty, or when an Optional does not have a value.

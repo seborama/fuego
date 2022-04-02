@@ -211,6 +211,8 @@ Streams:
   - All/Any/None -Match
   - Intersperse
   - Distinct
+  - Head* / Last* / Take* / Drop*
+  - StartsWith / EndsWith
   - ForEach / Peek
   - ...
 - ComparableStream
