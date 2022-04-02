@@ -3,6 +3,7 @@ package fuego
 import (
 	"fmt"
 	"hash/crc32"
+	"reflect"
 	"strconv"
 	"testing"
 	"time"
@@ -245,7 +246,7 @@ func TestStream_FlatMap_Concurrent(t *testing.T) {
 }
 
 func TestStream_Filter(t *testing.T) {
-	tests := map[string]struct {
+	tt := map[string]struct {
 		stream    chan int
 		predicate Predicate[int]
 		want      []int
@@ -271,20 +272,22 @@ func TestStream_Filter(t *testing.T) {
 		},
 	}
 
-	for name, tt := range tests {
+	for name, tc := range tt {
+		tc := tc
+
 		t.Run(name, func(t *testing.T) {
 			s := Stream[int]{
-				stream: tt.stream,
+				stream: tc.stream,
 			}
 
 			var got []int
-			if gotStream := s.Filter(tt.predicate).stream; gotStream != nil {
+			if gotStream := s.Filter(tc.predicate).stream; gotStream != nil {
 				for val := range gotStream {
 					got = append(got, val)
 				}
 			}
 
-			assert.Equal(t, tt.want, got)
+			assert.Equal(t, tc.want, got)
 		})
 	}
 }
@@ -340,7 +343,7 @@ func TestStream_LeftReduce(t *testing.T) {
 }
 
 func TestStream_Intersperse(t *testing.T) {
-	tests := map[string]struct {
+	tt := map[string]struct {
 		stream    chan string
 		inBetween string
 		want      []string
@@ -402,7 +405,7 @@ func TestStream_Intersperse(t *testing.T) {
 		},
 	}
 
-	for name, tc := range tests {
+	for name, tc := range tt {
 		tc := tc
 
 		t.Run(name, func(t *testing.T) {
@@ -889,6 +892,632 @@ func TestStream_DropUntil(t *testing.T) {
 	}
 }
 
+func TestStream_LastX_PanicsWhenNilChannel(t *testing.T) {
+	assert.PanicsWithValue(t, PanicMissingChannel, func() { Stream[int]{stream: nil}.LastN(1) })
+	assert.PanicsWithValue(t, PanicMissingChannel, func() { Stream[int]{stream: nil}.Last() })
+}
+
+func TestStream_LastX_PanicsWhenEmptyChannel(t *testing.T) {
+	emptyStream := func() chan int {
+		c := make(chan int)
+		go func() {
+			defer close(c)
+		}()
+		return c
+	}
+
+	assert.PanicsWithValue(t, PanicNoSuchElement, func() { NewStream(emptyStream()).LastN(1) })
+	assert.PanicsWithValue(t, PanicNoSuchElement, func() { NewStream(emptyStream()).Last() })
+}
+
+func TestStream_LastNWithInvalidArgumentPanics(t *testing.T) {
+	tt := map[string]struct {
+		n         uint64
+		wantPanic bool
+	}{
+		"Should panic when N is less than 1": {
+			n:         0,
+			wantPanic: true,
+		},
+		"Should not panic when N is 1": {
+			n:         1,
+			wantPanic: false,
+		},
+	}
+
+	populatedStream := func() chan string {
+		c := make(chan string)
+		go func() {
+			defer close(c)
+			c <- "joy"
+		}()
+		return c
+	}
+
+	for name, tc := range tt {
+		tc := tc
+
+		t.Run(name, func(t *testing.T) {
+			s := Stream[string]{
+				stream: populatedStream(),
+			}
+			if tc.wantPanic {
+				assert.PanicsWithValue(t, PanicNoSuchElement, func() { s.LastN(tc.n) })
+			} else {
+				assert.NotPanics(t, func() { s.LastN(tc.n) })
+			}
+		})
+	}
+}
+
+func TestStream_LastN(t *testing.T) {
+	data := []any{
+		"one",
+		"two",
+		"thee",
+		"four",
+		"five",
+	}
+
+	largeData := []any{}
+	for i := 1; i < 1e5; i++ {
+		largeData = append(largeData, i)
+	}
+
+	populatedStream := func(slice []any) chan any {
+		c := make(chan any)
+		go func() {
+			defer close(c)
+			for _, val := range slice {
+				c <- val
+			}
+		}()
+		return c
+	}
+
+	tt := map[string]struct {
+		stream chan any
+		n      uint64
+		want   []any
+	}{
+		"Should return the last n elements when the stream is longer": {
+			stream: populatedStream(data),
+			n:      2,
+			want:   data[3:],
+		},
+		"Should return all the elements when the stream is shorter": {
+			stream: populatedStream(data),
+			n:      uint64(len(data) + 10),
+			want:   data,
+		},
+		"Should return the last n elements when the stream is significantly larger": {
+			stream: populatedStream(largeData),
+			n:      2e3,
+			want:   largeData[len(largeData)-2e3:],
+		},
+	}
+
+	for name, tc := range tt {
+		tc := tc
+
+		t.Run(name, func(t *testing.T) {
+			s := Stream[any]{
+				stream: tc.stream,
+			}
+			got := s.LastN(tc.n)
+			assert.EqualValues(t, tc.want, got)
+		})
+	}
+}
+
+func TestStream_HeadX_PanicsWhenNilChannel(t *testing.T) {
+	assert.PanicsWithValue(t, PanicMissingChannel, func() { Stream[any]{stream: nil}.HeadN(1) })
+	assert.PanicsWithValue(t, PanicMissingChannel, func() { Stream[any]{stream: nil}.Head() })
+}
+
+func TestStream_Head_PanicsWhenEmptyChannel(t *testing.T) {
+	emptyStream := func() chan any {
+		c := make(chan any)
+		go func() {
+			defer close(c)
+		}()
+		return c
+	}
+
+	assert.PanicsWithValue(t, PanicNoSuchElement, func() { NewStream(emptyStream()).Head() })
+}
+
+func TestStream_Head(t *testing.T) {
+	data1 := []any{
+		"one",
+	}
+
+	data5 := []any{
+		"one",
+		"two",
+		"thee",
+		"four",
+		"five",
+	}
+
+	generateStream := func(slice []any) chan any {
+		c := make(chan any)
+		go func() {
+			defer close(c)
+			for _, val := range slice {
+				c <- val
+			}
+		}()
+		return c
+	}
+
+	tt := map[string]struct {
+		stream chan any
+		want   any
+	}{
+		"Should return first element when the stream has one element": {
+			stream: generateStream(data1),
+			want:   "one",
+		},
+		"Should return first element when the stream has multiple elements": {
+			stream: generateStream(data5),
+			want:   "one",
+		},
+	}
+
+	for name, tc := range tt {
+		tc := tc
+
+		t.Run(name, func(t *testing.T) {
+			s := Stream[any]{
+				stream: tc.stream,
+			}
+			if got := s.Head(); !reflect.DeepEqual(got, tc.want) {
+				t.Errorf("Stream.Head() = %v, want %v", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestStream_HeadN(t *testing.T) {
+	data0 := []any{}
+
+	data := []any{
+		"one",
+		"two",
+		"thee",
+		"four",
+		"five",
+	}
+
+	largeData := []any{}
+	for i := 1; i < 1e5; i++ {
+		largeData = append(largeData, i)
+	}
+
+	generateStream := func(slice []any) chan any {
+		c := make(chan any)
+		go func() {
+			defer close(c)
+			for _, val := range slice {
+				c <- val
+			}
+		}()
+		return c
+	}
+
+	tt := map[string]struct {
+		stream chan any
+		n      uint64
+		want   []any
+	}{
+		"Should return empty slice when the stream is empty": {
+			stream: generateStream(data0),
+			n:      2,
+			want:   []any{},
+		},
+		"Should return the first n elements when the stream is longer": {
+			stream: generateStream(data),
+			n:      2,
+			want:   data[:2],
+		},
+		"Should return all the elements when the stream is shorter": {
+			stream: generateStream(data),
+			n:      2e3,
+			want:   data,
+		},
+		"Should return the first n elements when the stream is significantly larger": {
+			stream: generateStream(largeData),
+			n:      2e3,
+			want:   largeData[:2000],
+		},
+	}
+
+	for name, tc := range tt {
+		tc := tc
+
+		t.Run(name, func(t *testing.T) {
+			s := Stream[any]{
+				stream: tc.stream,
+			}
+			got := s.HeadN(tc.n)
+			assert.EqualValues(t, tc.want, got)
+		})
+	}
+}
+
+func TestStream_TakeX_LimitPanicWithNilChannel(t *testing.T) {
+	s := Stream[any]{stream: nil}
+	assert.PanicsWithValue(t, PanicMissingChannel, func() { s.Limit(1) })
+	assert.PanicsWithValue(t, PanicMissingChannel, func() { s.TakeUntil(False[any]()) })
+	assert.PanicsWithValue(t, PanicMissingChannel, func() { s.TakeWhile(True[any]()) })
+}
+
+func TestStream_Take_Limit(t *testing.T) {
+	data1 := []any{
+		1,
+	}
+
+	data := []any{
+		"a",
+		false,
+		"b",
+		-17,
+		"c",
+	}
+
+	dataGenerator := func(slice []any) chan any {
+		c := make(chan any, 2)
+		go func() {
+			defer close(c)
+			for _, val := range slice {
+				c <- val
+			}
+		}()
+		return c
+	}
+
+	tt := map[string]struct {
+		stream chan any
+		n      uint64
+		want   []any
+	}{
+		"Should return empty stream when n < 1": {
+			stream: dataGenerator(data),
+			n:      0,
+			want:   []any{},
+		},
+		"Should return all elements when n > number of elements in the stream": {
+			stream: dataGenerator(data),
+			n:      uint64(len(data) + 10),
+			want:   data,
+		},
+		"Should return the first n elements when n < number of elements in the stream": {
+			stream: dataGenerator(data),
+			n:      2,
+			want:   data[:2],
+		},
+		"Should return the sole element in the stream": {
+			stream: dataGenerator(data1),
+			n:      1,
+			want:   data1,
+		},
+	}
+
+	for name, tc := range tt {
+		tc := tc
+
+		t.Run(name, func(t *testing.T) {
+			s := Stream[any]{stream: tc.stream}
+			gotStream := s.Limit(tc.n)
+			if tc.want == nil {
+				assert.Nil(t, gotStream.stream)
+				return
+			}
+			got := []any{}
+			for val := range gotStream.stream {
+				got = append(got, val)
+			}
+			assert.EqualValues(t, tc.want, got)
+		})
+	}
+}
+
+func TestStream_TakeWhile(t *testing.T) {
+	data := []any{
+		"a",
+		false,
+		"b",
+		-17,
+		"c",
+	}
+
+	dataGenerator := func() chan any {
+		c := make(chan any, 2)
+		go func() {
+			defer close(c)
+			for _, val := range data {
+				c <- val
+			}
+		}()
+		return c
+	}
+
+	tt := map[string]struct {
+		stream chan any
+		p      Predicate[any]
+		want   []any
+	}{
+		"Should return empty stream if predicate never satisfies": {
+			stream: dataGenerator(),
+			p:      False[any](),
+			want:   []any{},
+		},
+		"Should take the first few elements that satisfy the predicate": {
+			stream: dataGenerator(),
+			p: func(e any) bool {
+				return e == "a" || e == false
+			},
+			want: data[:2],
+		},
+		"Should take all elements when the predicate always satisfies": {
+			stream: dataGenerator(),
+			p:      True[any](),
+			want:   data,
+		},
+	}
+
+	for name, tc := range tt {
+		tc := tc
+
+		t.Run(name, func(t *testing.T) {
+			s := Stream[any]{stream: tc.stream}
+			gotStream := s.TakeWhile(tc.p)
+			got := []any{}
+			for val := range gotStream.stream {
+				got = append(got, val)
+			}
+			assert.EqualValues(t, tc.want, got)
+		})
+	}
+}
+
+func TestStream_TakeUntil(t *testing.T) {
+	data := []any{
+		"a",
+		false,
+		"b",
+		-17,
+		"c",
+	}
+
+	dataGenerator := func() chan any {
+		c := make(chan any, 2)
+		go func() {
+			defer close(c)
+			for _, val := range data {
+				c <- val
+			}
+		}()
+		return c
+	}
+
+	tt := map[string]struct {
+		stream chan any
+		p      Predicate[any]
+		want   []any
+	}{
+		"Should return whole stream if predicate never satisfies": {
+			stream: dataGenerator(),
+			p:      False[any](),
+			want:   data,
+		},
+		"Should take the first few elements until predicate satisfies": {
+			stream: dataGenerator(),
+			p: func(e any) bool {
+				return e == "b"
+			},
+			want: []any{
+				"a",
+				false,
+			},
+		},
+		"Should return empty stream when the predicate always satisfies": {
+			stream: dataGenerator(),
+			p:      True[any](),
+			want:   []any{},
+		},
+	}
+
+	for name, tc := range tt {
+		tc := tc
+
+		t.Run(name, func(t *testing.T) {
+			s := Stream[any]{stream: tc.stream}
+			gotStream := s.TakeUntil(tc.p)
+			got := []any{}
+			for val := range gotStream.stream {
+				got = append(got, val)
+			}
+			assert.EqualValues(t, tc.want, got)
+		})
+	}
+}
+
+func TestStream_StartsWithPanicsWithNilChannel(t *testing.T) {
+	s := Stream[any]{stream: nil}
+	assert.PanicsWithValue(t, PanicMissingChannel, func() { s.StartsWith([]any{}) })
+}
+
+func TestStream_StartsWith(t *testing.T) {
+	data0 := []any{}
+	data1 := []any{16}
+	data4 := []any{
+		true,
+		1,
+		4,
+		"two",
+	}
+	data5 := []any{
+		1,
+		"two",
+		true,
+		4,
+		"five",
+	}
+
+	generateStream := func(data []any) chan any {
+		c := make(chan any)
+		go func() {
+			defer close(c)
+			for _, e := range data {
+				c <- e
+			}
+		}()
+		return c
+	}
+
+	tt := map[string]struct {
+		stream chan any
+		slice  []any
+		want   bool
+	}{
+		"Should not match with an empty stream": {
+			stream: generateStream(data0),
+			slice:  data1,
+			want:   false,
+		},
+		"Should not match with an empty slice: case with an empty stream ": {
+			stream: generateStream(data0),
+			slice:  data0,
+			want:   false,
+		},
+		"Should not match with an empty slice: case with a populated stream ": {
+			stream: generateStream(data1),
+			slice:  data0,
+			want:   false,
+		},
+		"Should not match when stream size is less than slice to compare even when the elements match": {
+			stream: generateStream(data5[:3]),
+			slice:  data5,
+			want:   false,
+		},
+		"Should match when stream size and data matches slice to compare": {
+			stream: generateStream(data5),
+			slice:  data5,
+			want:   true,
+		},
+		"Should match when stream starts with the slice to compare": {
+			stream: generateStream(data5),
+			slice:  data5[:3],
+			want:   true,
+		},
+		"Should not match when stream does not end with slice to compare": {
+			stream: generateStream(data5),
+			slice:  data4,
+			want:   false,
+		},
+	}
+
+	for name, tc := range tt {
+		tc := tc
+
+		t.Run(name, func(t *testing.T) {
+			s := Stream[any]{
+				stream: tc.stream,
+			}
+			assert.Equal(t, tc.want, s.StartsWith(tc.slice))
+		})
+	}
+}
+
+func TestStream_EndsWith(t *testing.T) {
+	data0 := []any{}
+	data1 := []any{16}
+	data4 := []any{
+		true,
+		1,
+		4,
+		"two",
+	}
+	data5 := []any{
+		1,
+		"two",
+		true,
+		4,
+		"five",
+	}
+
+	generateStream := func(data []any) chan any {
+		c := make(chan any)
+		go func() {
+			defer close(c)
+			for _, e := range data {
+				c <- e
+			}
+		}()
+		return c
+	}
+
+	tt := map[string]struct {
+		stream chan any
+		slice  []any
+		want   bool
+	}{
+		"Should not match with a nil channel": {
+			stream: nil,
+			slice:  data1,
+			want:   false,
+		},
+		"Should not match with an empty stream and with input": {
+			stream: generateStream(data0),
+			slice:  data1,
+			want:   false,
+		},
+		"Should not match with an empty stream and with no input": {
+			stream: generateStream(data0),
+			slice:  data0,
+			want:   false,
+		},
+		"Should not match when stream size is less than slice to compare even when the elements match": {
+			stream: generateStream(data5[:3]),
+			slice:  data5,
+			want:   false,
+		},
+		"Should match when stream size and data match slice to compare": {
+			stream: generateStream(data5),
+			slice:  data5,
+			want:   true,
+		},
+		"Should match when the stream ends with the slice to compare": {
+			stream: generateStream(data5),
+			slice:  data5[3:],
+			want:   true,
+		},
+		"Should not match when stream does not end with slice to compare": {
+			stream: generateStream(data5),
+			slice:  data4,
+			want:   false,
+		},
+		"Should not match when stream is shorter than slice to compare": {
+			stream: generateStream(data5[:2]),
+			slice:  data5,
+			want:   false,
+		},
+	}
+
+	for name, tc := range tt {
+		tc := tc
+
+		t.Run(name, func(t *testing.T) {
+			s := Stream[any]{
+				stream: tc.stream,
+			}
+			assert.Equal(t, tc.want, s.EndsWith(tc.slice))
+		})
+	}
+}
+
 func TestStream_ForEach(t *testing.T) {
 	computeSumTotal := func(callCount, total *int) Consumer[int] {
 		return func(value int) {
@@ -1090,24 +1719,21 @@ func TestStream_Peek(t *testing.T) {
 		}
 	}
 
-	tt := []struct {
-		name          string
+	tt := map[string]struct {
 		stream        chan int
 		consumer      func(callCount, total *int) Consumer[int]
 		want          []int
 		wantTotal     int
 		wantCallCount int
 	}{
-		{
-			name:          "Should peek and return empty stream when nil in-stream",
+		"Should peek and return empty stream when nil in-stream": {
 			stream:        nil,
 			consumer:      computeSumTotal,
 			want:          []int{},
 			wantTotal:     0,
 			wantCallCount: 0,
 		},
-		{
-			name: "Should peek and return empty stream when empty in-stream",
+		"Should peek and return empty stream when empty in-stream": {
 			stream: func() chan int {
 				c := make(chan int)
 				go func() {
@@ -1120,8 +1746,7 @@ func TestStream_Peek(t *testing.T) {
 			wantTotal:     0,
 			wantCallCount: 0,
 		},
-		{
-			name: "Should peek and return stream when populated in-stream",
+		"Should peek and return stream when populated in-stream": {
 			stream: func() chan int {
 				c := make(chan int)
 				go func() {
@@ -1147,8 +1772,10 @@ func TestStream_Peek(t *testing.T) {
 		},
 	}
 
-	for _, tc := range tt {
-		t.Run(tc.name, func(t *testing.T) {
+	for name, tc := range tt {
+		tc := tc
+
+		t.Run(name, func(t *testing.T) {
 			callCount, total := 0, 0
 
 			s := Stream[int]{
