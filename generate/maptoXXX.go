@@ -57,7 +57,7 @@ func main() {
 		},
 	}
 
-	file, err := os.Create(fmt.Sprintf("./mapto.go"))
+	file, err := os.Create("./mapto.go")
 	if err != nil {
 		panic(err)
 	}
