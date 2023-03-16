@@ -291,7 +291,7 @@ Some tests (e.g. `TestCollector_Filtering`) are using receiver Getter methods in
 
 A method Getter is typically defined as `func (T) Property() R {...}`.
 
-While `Property()` does not take any argument, Go allows `T.Property` be called as `T.Property(t)`, where `t` is the receiver. This is a `func(T) R` and hence a `Function[T, R any]`.
+With `t` as the receiver, Go allows `t.Property()` be called as `T.Property(t)`. This is a `func(T) R` and hence a `Function[T, R any]`.
 
 Example - `TestCollector_Filtering`:
 
