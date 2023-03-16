@@ -135,7 +135,7 @@ Set environment variable `FUEGO_LOG_LEVEL` to enable logging to the desired leve
 ## [Example Stream](#example-stream)
 
 ```go
-strs := []int{
+strs := []string{
     "a",
     "b",
     "bb",
