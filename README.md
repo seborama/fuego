@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  <a href="https://pkg.go.dev/github.com/seborama/fuego/v11">
+  <a href="https://pkg.go.dev/github.com/seborama/fuego/v12">
     <img src="https://img.shields.io/badge/godoc-reference-blue.svg" alt="fuego">
   </a>
   <a href="http://goreportcard.com/report/seborama/fuego">
@@ -68,17 +68,17 @@ Have fun!!
 
 ## [Type Parameters](#type-parameters)
 
-Starting with version v11.0.0, ___ƒuego___ uses Go 1.18's [Type Parameters](https://go.googlesource.com/proposal/+/master/design/43651-type-parameters.md).
+Starting with version 11, ___ƒuego___ uses Go 1.18's [Type Parameters](https://go.googlesource.com/proposal/+/master/design/43651-type-parameters.md).
 
 It is a drastic design change and fundamentally incompatible with previous versions of ___ƒuego___.
 
-Use v10 or prior if you need the pre-Go1.18 version of ___ƒuego___ that is based on interface `Entry`.
+Use version 10 or prior if you need the pre-Go1.18 version of ___ƒuego___ that is based on interface `Entry`.
 
 [(toc)](#table-of-content)
 
 ## [Documentation](#documentation)
 
-The code documentation and some examples can be found on [godoc](https://pkg.go.dev/github.com/seborama/fuego/v11).
+The code documentation and some examples can be found on [godoc](https://pkg.go.dev/github.com/seborama/fuego/v12).
 
 The tests form the best source of documentation. ___ƒuego___ comes with a good collection of unit tests and testable Go examples. Don't be shy, open them up and read them and tinker with them!
 
@@ -99,7 +99,7 @@ go get github.com/seborama/fuego
 Or for a specific version:
 
 ```bash
-go get gopkg.in/seborama/fuego.v11
+go get gopkg.in/seborama/fuego.v12
 ```
 
 ### Import in your code
@@ -111,7 +111,7 @@ To simplify usage, you can use an alias:
 ```go
 package sample
 
-import ƒ "gopkg.in/seborama/fuego.v11"
+import ƒ "gopkg.in/seborama/fuego.v12"
 ```
 
 ...or import as a blank import:
@@ -119,7 +119,7 @@ import ƒ "gopkg.in/seborama/fuego.v11"
 ```go
 package sample
 
-import _ "gopkg.in/seborama/fuego.v11"
+import _ "gopkg.in/seborama/fuego.v12"
 ```
 
 Note: dot imports should work just fine but the logger may be disabled, unless you initialised the zap global logger yourself.
@@ -239,7 +239,7 @@ Collectors:
 - ToSlice
 - ToMap*
 
-Check the [godoc](https://pkg.go.dev/github.com/seborama/fuego/v11) for full details.
+Check the [godoc](https://pkg.go.dev/github.com/seborama/fuego/v12) for full details.
 
 [(toc)](#table-of-content)
 
@@ -253,7 +253,7 @@ This is not possible yet with all Stream methods but it is available with e.g. `
 
 Concurrent streams are challenging to implement owing to ordering issues in parallel processing. At the moment, the view is that the most sensible approach is to delegate control to users. Multiple ___ƒuego___ streams can be created and data distributed across as desired. This empowers users of ___ƒuego___ to implement the desired behaviour of their pipelines.
 
-`Stream` has some methods that fan out (e.g. `ForEachC`). See the [godoc](https://pkg.go.dev/github.com/seborama/fuego/v11) for further information and limitations.
+`Stream` has some methods that fan out (e.g. `ForEachC`). See the [godoc](https://pkg.go.dev/github.com/seborama/fuego/v12) for further information and limitations.
 
 I recommend Rob Pike's slides on Go concurrency patterns:
 
